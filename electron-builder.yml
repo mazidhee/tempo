@@ -1,0 +1,15 @@
+appId: com.habittracker.app
+productName: Habit Tracker
+directories:
+  buildResources: build
+  output: release
+files:
+  - dist-electron
+  - dist
+mac:
+  category: public.app-category.productivity
+  target: dmg
+win:
+  target: nsis
+linux:
+  target: AppImage
