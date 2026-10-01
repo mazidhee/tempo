@@ -1,62 +1,64 @@
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useEffect, useState } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { TrendingUp } from 'lucide-react';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '../ui/chart';
 import type { TrendPoint, Habit } from '../../types';
-
-interface HabitTrendLineProps {
-  habits: Habit[];
-}
-
-export default function HabitTrendLine({ habits }: HabitTrendLineProps) {
+const config = {
+  completed: { label: 'Daily', color: 'var(--chart-2)' },
+  average: { label: '7-day average', color: 'var(--chart-1)' },
+};
+const chartMetrics = { axisWidth: 32 };
+export default function HabitTrendLine({ habits }: { habits: Habit[] }) {
   const privacy = usePrivacy();
-  const [selectedHabit, setSelectedHabit] = useState<number | null>(null);
-  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const [selected, setSelected] = useState<number | null>(habits[0]?.id || null),
+    [data, setData] = useState<TrendPoint[]>([]),
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState('');
   useEffect(() => {
-    if (habits.length > 0 && selectedHabit === null) {
-      setSelectedHabit(habits[0].id);
-    }
-  }, [habits]);
-
+    if (!habits.some((h) => h.id === selected)) setSelected(habits[0]?.id || null);
+  }, [habits, selected]);
   useEffect(() => {
-    if (selectedHabit) {
+    let alive = true;
+    if (selected) {
       setLoading(true);
-      window.habitAPI
-        .getHabitTrend(selectedHabit)
-        .then((data) => setTrendData(data))
-        .catch(console.error)
-        .finally(() => setLoading(false));
+      setError('');
+      void window.habitAPI
+        .getHabitTrend(selected)
+        .then((next) => {
+          if (alive) setData(next);
+        })
+        .catch((reason) => {
+          if (alive) setError(String(reason));
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
     }
-  }, [selectedHabit]);
-
-  const chartData = trendData.map((d) => ({
-    ...d,
-    label: format(parseISO(d.date), 'MMM d'),
-  }));
-
+    return () => {
+      alive = false;
+    };
+  }, [selected]);
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Habit Trend</h3>
+    <section className="panel">
+      <div className="section-heading">
+        <div>
+          <h2>Habit trend</h2>
+          <p className="muted">Last 30 days · Daily completion and 7-day average</p>
         </div>
+        <TrendingUp />
         <select
-          value={selectedHabit || ''}
-          onChange={(e) => setSelectedHabit(Number(e.target.value))}
-          className="select habit-name max-w-[180px] text-xs"
+          className="input compact-select habit-name"
+          aria-label="Habit for trend"
+          value={selected || ''}
+          onChange={(e) => setSelected(Number(e.target.value))}
         >
           {habits.map((h) => (
             <option key={h.id} value={h.id}>
@@ -65,70 +67,57 @@ export default function HabitTrendLine({ habits }: HabitTrendLineProps) {
           ))}
         </select>
       </div>
-
-      <p className="text-xs text-gray-400 dark:text-gray-600 mb-3">
-        Last 30 days · Daily completion with 7-day rolling average
-      </p>
-
-      <div className="h-[220px]">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span className="text-sm text-gray-400">Loading...</span>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                className="text-gray-100 dark:text-slate-800"
-              />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 9, fill: 'currentColor' }}
-                className="text-gray-400 dark:text-gray-600"
-                axisLine={false}
-                tickLine={false}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                domain={[0, 1]}
-                ticks={[0, 0.5, 1]}
-                tick={{ fontSize: 10, fill: 'currentColor' }}
-                className="text-gray-400 dark:text-gray-600"
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--tooltip-bg, #fff)',
-                  border: '1px solid var(--tooltip-border, #e5e7eb)',
-                  borderRadius: '8px',
-                  fontSize: '11px',
-                }}
-              />
-              <Legend iconType="line" iconSize={12} wrapperStyle={{ fontSize: '11px' }} />
-              <Line
-                type="stepAfter"
-                dataKey="completed"
-                stroke="#22c55e"
-                strokeWidth={1}
-                dot={false}
-                name="Daily"
-                opacity={0.4}
-              />
-              <Line
-                type="monotone"
-                dataKey="average"
-                stroke="#16a34a"
-                strokeWidth={2}
-                dot={false}
-                name="7-Day Avg"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
+      {error && (
+        <p role="alert" className="inline-error">
+          {error}
+        </p>
+      )}
+      {loading ? (
+        <p className="muted">Loading trend…</p>
+      ) : (
+        <ChartContainer
+          config={config}
+          className="advanced-chart-frame"
+          aria-label="Daily completion and seven-day rolling average"
+        >
+          <LineChart data={data.map((d) => ({ ...d, label: format(parseISO(d.date), 'MMM d') }))}>
+            <CartesianGrid vertical={false} stroke="var(--hairline)" />
+            <XAxis
+              dataKey="label"
+              stroke="var(--ink-subtle)"
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              width={chartMetrics.axisWidth}
+              domain={[0, 1]}
+              ticks={[0, 0.5, 1]}
+              stroke="var(--ink-subtle)"
+              axisLine={false}
+              tickLine={false}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Line
+              type="stepAfter"
+              dataKey="completed"
+              stroke="var(--color-completed)"
+              dot={false}
+              strokeWidth={1}
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="average"
+              stroke="var(--color-average)"
+              dot={false}
+              strokeWidth={2}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ChartContainer>
+      )}
+    </section>
   );
 }

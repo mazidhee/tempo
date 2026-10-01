@@ -2638,3 +2638,108 @@ h2 {
     margin-left: 0;
   }
 }
+/* Advanced habit analytics use the same neutral surfaces and chart ramp. */
+:root {
+  --advanced-chart-height: 240px;
+  --advanced-day-label: 88px;
+  --advanced-day-value: 44px;
+}
+.advanced-analytics {
+  margin-top: var(--space-6);
+}
+.advanced-sections {
+  display: grid;
+  gap: var(--space-6);
+}
+.advanced-analytics > .section-heading {
+  flex-wrap: wrap;
+}
+.advanced-analytics .chart-grid {
+  gap: var(--space-6);
+}
+.advanced-metric {
+  margin-block: var(--space-5);
+}
+.advanced-metric > strong {
+  display: block;
+  font-size: var(--type-title);
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--space-2);
+}
+.advanced-metric strong small {
+  font-size: var(--type-body);
+  font-weight: 500;
+  color: var(--ink-subtle);
+}
+.advanced-streaks td small {
+  display: block;
+}
+.advanced-best {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--ink-muted);
+}
+.advanced-rate {
+  margin-top: var(--space-4);
+}
+.advanced-rate > div:first-child {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+.advanced-rate > div:first-child span {
+  overflow-wrap: anywhere;
+}
+.advanced-rate .progress-track > i,
+.advanced-day-rate .progress-track > i {
+  background: var(--ink-subtle);
+}
+.advanced-day-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: 0 0 var(--space-6);
+}
+.advanced-day-summary dd {
+  margin: var(--space-2) 0 0;
+  font-size: var(--type-subhead);
+  font-weight: 600;
+}
+.advanced-day-summary dd small {
+  display: block;
+  font-weight: 400;
+}
+.advanced-day-rate {
+  display: grid;
+  grid-template-columns: var(--advanced-day-label) minmax(0, 1fr) var(--advanced-day-value);
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--type-caption);
+}
+.advanced-day-rate strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.advanced-chart-frame {
+  width: 100%;
+  height: var(--advanced-chart-height);
+  aspect-ratio: auto;
+}
+.advanced-chart-frame .recharts-text {
+  font-family: var(--font-sans);
+  font-size: var(--type-caption);
+}
+.advanced-chart-frame .recharts-legend-wrapper {
+  color: var(--ink-muted);
+}
+@media (max-width: 767px) {
+  .advanced-day-summary {
+    grid-template-columns: 1fr;
+  }
+  .advanced-analytics .row-actions {
+    flex-wrap: wrap;
+  }
+}

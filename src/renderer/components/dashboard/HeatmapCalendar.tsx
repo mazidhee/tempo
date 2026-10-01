@@ -7,7 +7,9 @@ export default function HeatmapCalendar({ data }: { data: HeatmapData }) {
   );
   return (
     <div className="panel">
-      <h3>Activity heatmap</h3>
+      <div className="section-heading">
+        <h2>Activity heatmap</h2>
+      </div>
       <Heatmap details={details} />
     </div>
   );

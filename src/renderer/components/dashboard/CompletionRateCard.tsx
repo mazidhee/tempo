@@ -1,92 +1,53 @@
 import { useState } from 'react';
 import { Target } from 'lucide-react';
 import type { CompletionRateData } from '../../types';
-
-interface CompletionRateCardProps {
-  data: CompletionRateData;
-}
-
 const periods = [
-  { key: '7d', label: '7 Days' },
-  { key: '30d', label: '30 Days' },
-  { key: '90d', label: '90 Days' },
+  { key: '7d', label: '7 days' },
+  { key: '30d', label: '30 days' },
+  { key: '90d', label: '90 days' },
 ];
-
-export default function CompletionRateCard({ data }: CompletionRateCardProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState('7d');
-
+export default function CompletionRateCard({ data }: { data: CompletionRateData }) {
+  const [period, setPeriod] = useState('7d');
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-brand-600 dark:text-brand-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Completion Rate</h3>
+    <section className="panel">
+      <div className="section-heading">
+        <h2>Completion rate</h2>
+        <Target />
+      </div>
+      <div className="tabs" aria-label="Completion rate period">
+        {periods.map((p) => (
+          <button
+            key={p.key}
+            className={period === p.key ? 'selected' : ''}
+            aria-pressed={period === p.key}
+            onClick={() => setPeriod(p.key)}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div className="advanced-metric">
+        <span className="muted">Overall · {periods.find((p) => p.key === period)?.label}</span>
+        <strong>{data.overall[period] || 0}%</strong>
+      </div>
+      {data.habits.map((h) => (
+        <div className="advanced-rate" key={h.habitId}>
+          <div>
+            <span className="habit-name">{h.habitName}</span>
+            <strong>{h.rates[period] || 0}%</strong>
+          </div>
+          <div
+            className="progress-track"
+            role="progressbar"
+            aria-label={`${h.habitName} completion rate`}
+            aria-valuenow={h.rates[period] || 0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <i style={{ width: `${h.rates[period] || 0}%` }} />
+          </div>
         </div>
-        <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-lg p-0.5">
-          {periods.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setSelectedPeriod(p.key)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                selectedPeriod === p.key
-                  ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-brand-50 dark:bg-brand-900/20 rounded-xl p-4 mb-4">
-        <p className="text-xs text-brand-600 dark:text-brand-400 font-medium uppercase tracking-wider">
-          Overall ({periods.find((p) => p.key === selectedPeriod)?.label})
-        </p>
-        <p className="text-3xl font-bold text-brand-700 dark:text-brand-300 mt-1">
-          {data.overall[selectedPeriod] || 0}%
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {data.habits.map((h) => {
-          const rate = h.rates[selectedPeriod] || 0;
-          return (
-            <div key={h.habitId}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="habit-name text-xs text-gray-600 dark:text-gray-400 truncate mr-2">
-                  {h.habitName}
-                </span>
-                <span
-                  className={`text-xs font-bold ${
-                    rate >= 80
-                      ? 'text-brand-600 dark:text-brand-400'
-                      : rate >= 50
-                        ? 'text-amber-600'
-                        : 'text-red-500'
-                  }`}
-                >
-                  {rate}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    rate >= 80
-                      ? 'bg-brand-500'
-                      : rate >= 50
-                        ? 'bg-amber-400'
-                        : rate > 0
-                          ? 'bg-red-400'
-                          : 'bg-gray-200 dark:bg-slate-700'
-                  }`}
-                  style={{ width: `${rate}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      ))}
+    </section>
   );
 }

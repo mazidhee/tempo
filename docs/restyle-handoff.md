@@ -34,3 +34,11 @@ Stage C implements the authorized Linear restyle on Foundation `33f3c19`, with t
 6. Root owns registry merge resolution, new-module backup coverage, packaged release validation and the independent score/fix loop. Keep compatibility routes `/weekly`, `/history`, `/habits/:id`, `/analytics`, and new `/habits/today`.
 
 All reused component/library sources and licences are already recorded in `docs/component-sources.md`; Stage C installs no additional resources.
+
+## Advanced analytics follow-up
+
+The active `components/dashboard` views were restyled after source review: neutral streak/overall metrics and day comparisons, neutral completion bars, lavender + neutral weekly/trend chart series, shared ChartTooltip/ChartLegend, and token-based labels/surfaces/hairlines. The advanced Analytics section now uses the common page language, keeps period controls, refresh, CSV export, heatmap and selectable trends, and reports load/export errors inline. Trend requests ignore late results after selection changes/unmounting.
+
+The unmounted `LockBadge.tsx` and `NoteModal.tsx` components were removed after checking all src/tests imports. Unused `useTodayLogs`, `useWeeklyLogs`, and the unused trend cache/fetch helper in `useAnalytics` were removed. `useHabits` itself remains because the Foundation Focus page still imports it until A's replacement integrates. No kit or main-process source changed.
+
+Production build/typecheck passed. `scripts/advanced-restyle-smoke.cjs` passed through the actual Statistics details expander in isolated Electron, then exercised all three completion periods, habit selection, refresh and chart tooltip hover in dark/light. Final evidence is `.review/advanced-restyle-1790858340477`: 12 screenshots covering the viewport, both panel rows, heatmap, trend and tooltip in each theme; every file was opened and checked. No renderer errors occurred. The earlier full-region captures under `advanced-restyle-1790858244399` contain scroll-container blank areas and are superseded by this panel-based capture set.

@@ -1,22 +1,17 @@
 import { useState, useCallback } from 'react';
-import type {
-  StreakData,
-  CompletionRateData,
-  HeatmapData,
-  BestWorstDayData,
-  TrendPoint,
-} from '../types';
+import type { StreakData, CompletionRateData, HeatmapData, BestWorstDayData } from '../types';
 
 export function useAnalytics() {
   const [streaks, setStreaks] = useState<StreakData | null>(null);
   const [completionRates, setCompletionRates] = useState<CompletionRateData | null>(null);
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [bestWorstDay, setBestWorstDay] = useState<BestWorstDayData | null>(null);
-  const [habitTrends, setHabitTrends] = useState<Record<number, TrendPoint[]>>({});
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const [s, c, h, b] = await Promise.all([
         window.habitAPI.getStreaks(),
@@ -29,18 +24,9 @@ export function useAnalytics() {
       setHeatmapData(h);
       setBestWorstDay(b);
     } catch (err) {
-      console.error('Failed to fetch analytics:', err);
+      setError(`Analytics could not be loaded: ${String(err)}`);
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  const fetchHabitTrend = useCallback(async (habitId: number) => {
-    try {
-      const data = await window.habitAPI.getHabitTrend(habitId);
-      setHabitTrends((prev) => ({ ...prev, [habitId]: data }));
-    } catch (err) {
-      console.error('Failed to fetch habit trend:', err);
     }
   }, []);
 
@@ -49,9 +35,8 @@ export function useAnalytics() {
     completionRates,
     heatmapData,
     bestWorstDay,
-    habitTrends,
+    error,
     loading,
     fetchAll,
-    fetchHabitTrend,
   };
 }
