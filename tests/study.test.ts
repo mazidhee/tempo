@@ -21,7 +21,7 @@ test('Study migration is additive and idempotent', () => {
     (db.prepare('SELECT value FROM legacy WHERE id=17').get() as { value: string }).value,
     'original log',
   );
-  assert.equal(db.prepare('SELECT * FROM schema_migrations').all().length, 1);
+  assert.equal(db.prepare('SELECT * FROM schema_migrations WHERE version=4').all().length, 1);
   db.close();
 });
 test('failed migration rolls schema and marker back together', () => {

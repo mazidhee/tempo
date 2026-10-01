@@ -17,6 +17,7 @@
   --primary-hover: #828fff;
   --primary-focus: #5e69d1;
   --on-primary: #ffffff;
+  --on-primary-hover: #010102; /* derived: readable ink on the spec's lighter hover */
   --success: #27a644;
   /* derived: semantic states, backdrop and heatmap ramp */
   --danger: #f0a6a6;
