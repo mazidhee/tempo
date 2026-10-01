@@ -71,7 +71,8 @@ export class StudyStore {
       const markdown = text(data.markdown, 'Markdown outline', 1000000);
       const outline = parseStudyOutline(markdown, title);
       const id = createHash('sha256')
-        .update(JSON.stringify([title, markdown]))
+        // Windows editors can change line endings without changing the outline.
+        .update(JSON.stringify([title, markdown.replace(/\r\n?/g, '\n')]))
         .digest('hex');
       return { id, markdown, outline };
     });

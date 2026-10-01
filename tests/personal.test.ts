@@ -83,6 +83,25 @@ test('roadmap import is atomic, idempotent and retains edited progress and sourc
   assert.equal(study.snapshot().curricula.length, 1);
   db.close();
 });
+test('Windows line-ending changes retain outline identity, original source and edited progress', () => {
+  for (const windowsFirst of [false, true]) {
+    const { db, study } = fixture();
+    const crlf = outline.replace(/\n/g, '\r\n');
+    const source = windowsFirst ? crlf : outline;
+    const imported = study.importOutlines([{ title: 'SWE', markdown: source }])[0];
+    const child = study.snapshot().topics.find((t) => t.title === 'Types')!;
+    study.learn({ id: child.id, learned: true });
+    assert.equal(
+      study.importOutlines([{ title: 'SWE', markdown: windowsFirst ? outline : crlf }])[0].id,
+      imported.id,
+    );
+    assert.equal(study.snapshot().curricula.length, 1);
+    assert.equal(study.snapshot().imports!.length, 1);
+    assert.equal(study.snapshot().imports![0].markdown, source);
+    assert.ok(study.snapshot().topics.find((t) => t.id === child.id)!.learnedAt);
+    db.close();
+  }
+});
 test('version 201 is repeatable and preserves existing preferences, sessions, timer and task data', () => {
   const { db } = fixture();
   const state = defaultProductivity();
