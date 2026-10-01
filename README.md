@@ -2,10 +2,11 @@
 
 A quiet, local personal productivity workspace built on the original Habit Tracker.
 
-Development is **paused at the user's request**. Resume context, visible session
-history, review evidence and remaining milestones are linked from
-[the session handoff](docs/session-handoff.md). Phase 1 Round 3 has no final
-review score yet; the expanded master build is still pending.
+Development **resumed on October 1, 2026** at the user's request, following the
+saved master brief and installed design skills. Context, session history,
+review evidence and remaining milestones are linked from
+[the session handoff](docs/session-handoff.md). The confirmed product record is
+in [PRODUCT.md](PRODUCT.md); new screens use a code-first workflow with visual review.
 
 ## Run
 

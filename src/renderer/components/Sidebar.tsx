@@ -1,26 +1,9 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  House,
-  CircleCheck,
-  ListTodo,
-  Timer,
-  ChartNoAxesColumnIncreasing,
-  Settings2,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Command,
-  AudioLines,
-} from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Command, AudioLines } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
-export const navigation = [
-  { to: '/', label: 'Home', icon: House },
-  { to: '/habits', label: 'Habits', icon: CircleCheck },
-  { to: '/tasks', label: 'Tasks', icon: ListTodo },
-  { to: '/focus', label: 'Focus', icon: Timer },
-  { to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },
-  { to: '/settings', label: 'Settings', icon: Settings2 },
-];
+import { navigation } from '../registry/navigation';
+export { navigation } from '../registry/navigation';
 export default function Sidebar({ openCommand }: { openCommand: () => void }) {
   const { state } = useProductivity();
   const [collapsed, setCollapsed] = useState(

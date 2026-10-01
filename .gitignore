@@ -154,3 +154,9 @@ release/
 
 # Impeccable downloads its verified platform engine locally.
 .agents/skills/impeccable/scripts/bin/
+
+# Local design references and review notes.
+design/
+
+# Isolated master-build worktrees.
+.worktrees/

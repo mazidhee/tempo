@@ -2,8 +2,8 @@
 
 This is the implementation contract for Stage 0, derived from the complete
 [master brief](master-build-brief.md) and the preserved root `DESIGN.md`.
-It is a plan, not a claim that Stage 0 has been implemented. Stage 1 must wait
-for the tested Foundation commit and tag.
+Stage 0 is implemented and validated as recorded in build-status.md. Stage 1
+starts from its tested Foundation commit/tag.
 
 ## Design system
 
@@ -98,3 +98,26 @@ Commit Foundation to main and tag the passing revision. Only then create isolate
 Focus, Reflection and Restyle worktrees from that tag. Integrate A, B, C in order
 and apply the release acceptance checks; the original user required a separate
 reviewer that actually launches the app.
+
+## Implementation handoff
+
+Typed transport: window.workspaceAPI.invoke/on from src/shared/workspace.ts.
+Add module-owned interface augmentations to WorkspaceRequests/WorkspaceEvents;
+channels match namespace:camelCase and events namespace:changed. Keep preload
+unchanged. Add main registrations to src/main/modules/registry.ts and migrations
+to database/migrationRegistry.ts. The ModuleContext supplies SQLite, getWindow,
+showWindow and isQuitting. beforeQuit is awaited before SQLite closes.
+
+A owns src/main/focus, src/shared/focus.ts, src/renderer/modules/focus,
+pages/Focus.tsx and hooks/ProductivityProvider.tsx plus ipc/productivity.ts
+for main-owned timer protection. Add its Settings section and main module.
+B owns src/main/reflection, src/shared/reflection.ts, src/renderer/modules/reflection
+and module-specific tests. Register routes, nav flags, sections and Home widgets.
+C owns remaining pages, components/Sidebar.tsx, App.tsx, app.css and Study UI;
+shared kit/token adjustments go through the integrator. Do not downgrade pinned
+dependencies or alter userData identity. root is the integration agent.
+
+Study review grades: Again resets to 1 calendar day; Hard multiplies previous
+interval by 1.2; Good by 2; Easy by 3 (rounded up, capped at 3650 days). This is a
+transparent minimal scheduler, not an unsupported claim of an SM-2 algorithm.
+Backups for module-owned tables are required during integration before shipping.

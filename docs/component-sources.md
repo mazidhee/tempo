@@ -1,13 +1,14 @@
 # Free component sources
 
-Proposed Foundation picks published to the user before installation, October 1,
-2026. Recharts and Lucide are already installed. The other entries below are
-planned, not installed in this checkout. Their version numbers are the previous
-discovery snapshot; verify the current stable release and pin it when installing.
+Foundation picks were published before installation. Installed versions are pinned
+in package.json and package-lock.json. Official shadcn CLI 4.21.1 installed the
+free new-york components from official registry JSON retrieved using Windows
+networking (the CLI's direct fetch timed out). The local source matches the
+official registry; no paid registry or subscription was used.
 
 | Family | Source | Licence | Verified version / use |
 |---|---|---|---|
-| Shared components, sidebar, forms, menus, chart wrappers | https://ui.shadcn.com / https://github.com/shadcn-ui/ui | MIT | shadcn CLI 4.21.0 proposed; copy source through official CLI |
+| Shared components, sidebar, forms, menus, chart wrappers | https://ui.shadcn.com / https://github.com/shadcn-ui/ui | MIT | shadcn CLI 4.21.1; official copied sources, adapted for Recharts 3 and local themes |
 | Command palette | https://github.com/dip/cmdk | MIT | cmdk 1.1.1 |
 | Drawer | https://github.com/emilkowalski/vaul | MIT | vaul 1.1.2 |
 | Toasts | https://github.com/emilkowalski/sonner | MIT | sonner 2.0.8 |
@@ -27,3 +28,7 @@ included before packaging.
 Existing React, React DOM, React Router, date-fns, Electron, Tailwind and Vite
 remain in place. SQLite is the Node/Electron bundled implementation; no
 better-sqlite3 native module or external database service is introduced.
+
+Supporting Radix primitives, react-day-picker, class-variance-authority, clsx and
+tailwind-merge use MIT licences. Installed dependency notices and font OFL text
+are retained in THIRD-PARTY-NOTICES.txt. Next.js theme dependencies were removed.

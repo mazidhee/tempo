@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import './habit.test';
+import './study.test';
 import assert from 'node:assert/strict';
 import {
   defaultProductivity,

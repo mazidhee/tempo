@@ -1,9 +1,11 @@
-import { app, BrowserWindow, Notification } from 'electron';
+import { app, BrowserWindow, Notification, ipcMain } from 'electron';
 import path from 'path';
 import { initDatabase, getIncompleteCount, getDb } from './database/db';
 import { registerIpcHandlers } from './ipc/handlers';
 import { registerProductivityHandlers } from './ipc/productivity';
 import { localDate } from '../shared/productivity';
+import { mainModules } from './modules/registry';
+import type { ModuleLifecycle } from './modules/contracts';
 
 if (process.env.HABIT_TRACKER_DATA_DIR)
   app.setPath('userData', path.resolve(process.env.HABIT_TRACKER_DATA_DIR));
@@ -11,6 +13,9 @@ const hasLock = app.requestSingleInstanceLock();
 if (!hasLock) app.quit();
 
 let mainWindow: BrowserWindow | null = null;
+let quitting = false;
+let initialized = false;
+const lifecycles: ModuleLifecycle[] = [];
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -24,9 +29,12 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
+    frame: process.platform === 'darwin',
+    ...(process.platform === 'win32' ? { backgroundMaterial: 'mica' as const } : {}),
+    ...(process.platform === 'darwin' ? { vibrancy: 'sidebar' as const } : {}),
     trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: '#f7f8fa',
+    backgroundColor: '#010102',
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -75,9 +83,31 @@ function scheduleEndOfDayReminder(): void {
 app.whenReady().then(() => {
   if (!hasLock) return;
   initDatabase();
+  initialized = true;
   registerIpcHandlers();
   registerProductivityHandlers();
   createWindow();
+  ipcMain.handle('window:control', (_event, action: unknown) => {
+    if (action === 'minimize') mainWindow?.minimize();
+    else if (action === 'maximize') {
+      if (mainWindow?.isMaximized()) mainWindow.unmaximize();
+      else mainWindow?.maximize();
+    } else if (action === 'close') mainWindow?.close();
+    else throw new Error('Unsupported window action.');
+  });
+  for (const register of mainModules) {
+    const lifecycle = register({
+      db: getDb(),
+      getWindow: () => mainWindow,
+      showWindow: () => {
+        if (!mainWindow) createWindow();
+        mainWindow?.show();
+        mainWindow?.focus();
+      },
+      isQuitting: () => quitting,
+    });
+    if (lifecycle) lifecycles.push(lifecycle);
+  }
   if (!process.env.HABIT_TRACKER_DATA_DIR) scheduleEndOfDayReminder();
 
   app.on('activate', () => {
@@ -85,6 +115,22 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+app.on('before-quit', (event) => {
+  if (quitting || !initialized || !hasLock) return;
+  event.preventDefault();
+  quitting = true;
+  void Promise.all(lifecycles.map((module) => module.beforeQuit?.()))
+    .then(() => {
+      getDb().close();
+      app.quit();
+    })
+    .catch((error) => {
+      // Guard cleanup failures must remain visible and repairable, never ignored.
+      quitting = false;
+      mainWindow?.show();
+      console.error('Could not safely quit:', error);
+    });
 });
 
 app.on('second-instance', () => {

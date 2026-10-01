@@ -1,4 +1,20 @@
-# Session handoff — paused October 1, 2026
+# Active continuation — October 1, 2026
+
+The user resumed in the desktop chat. Foundation passes typecheck, 40 tests,
+production build and actual Electron smoke. See build-status.md for current
+state. Historical pause details below are retained for provenance; they are not
+current instructions to pause. No new product discovery or approval is needed.
+
+# Session handoff — resumed October 1, 2026
+
+## Current continuation
+
+The user explicitly resumed development, reconfirmed the saved master brief and
+chose code-first construction with visual review. PRODUCT.md records that scope;
+.impeccable/config.json records the workflow preference. Impeccable context and
+the installed Frontend UI Standards skill were read. Phase 1 Round 3 independent
+review is being completed before Foundation implementation. The historical pause
+instructions below are superseded by this resume request.
 
 ## User's latest instruction
 

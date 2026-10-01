@@ -1,17 +1,10 @@
-import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Search, X, ArrowUpRight, Timer, EyeOff } from 'lucide-react';
 import Sidebar, { navigation } from './components/Sidebar';
-import Today from './pages/Today';
-import Weekly from './pages/Weekly';
-import History from './pages/History';
-import Home from './pages/Home';
-import Tasks from './pages/Tasks';
-import Focus from './pages/Focus';
-import HabitDetail from './pages/HabitDetail';
 import RecoveryNotice from './components/RecoveryNotice';
-const Statistics = lazy(() => import('./pages/Statistics'));
-import Settings from './pages/Settings';
+import { routeRegistry } from './registry/routes';
+import { WindowControls } from './components/WindowControls';
 import { Modal } from './components/ui';
 import { useProductivity } from './hooks/ProductivityProvider';
 import { PrivacyContext } from './hooks/PrivacyContext';
@@ -77,12 +70,12 @@ export default function App() {
           }}
         />
         <div className="main-shell">
-          <div className="topbar">
+          <div className="topbar drag-region">
             <div className="breadcrumb">
               Workspace<span>/</span>
               <strong>{label}</strong>
             </div>
-            <div className="topbar-actions">
+            <div className="topbar-actions no-drag">
               <button
                 className="icon-button"
                 aria-label="Toggle habit privacy"
@@ -113,6 +106,7 @@ export default function App() {
               >
                 <Search />
               </button>
+              <WindowControls />
             </div>
           </div>
           {error && (
@@ -136,38 +130,13 @@ export default function App() {
             ) : (
               <Suspense fallback={<div className="empty muted">Opening your insights…</div>}>
                 <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route
-                    path="/habits"
-                    element={
-                      <HabitsLayout>
-                        <Today />
-                      </HabitsLayout>
-                    }
-                  />
-                  <Route
-                    path="/weekly"
-                    element={
-                      <HabitsLayout>
-                        <Weekly />
-                      </HabitsLayout>
-                    }
-                  />
-                  <Route
-                    path="/history"
-                    element={
-                      <HabitsLayout>
-                        <History />
-                      </HabitsLayout>
-                    }
-                  />
-                  <Route path="/habits/:id" element={<HabitDetail />} />
-                  <Route path="/tasks" element={<Tasks />} />
-                  <Route path="/focus" element={<Focus zen={zen} setZen={setZen} />} />
-                  <Route path="/statistics" element={<Statistics />} />
-                  <Route path="/analytics" element={<Statistics />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="*" element={<Home />} />
+                  {routeRegistry.map((route) => (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={route.render({ zen, setZen })}
+                    />
+                  ))}
                 </Routes>
               </Suspense>
             )}
@@ -230,23 +199,5 @@ function TimerBadge({ timer, onOpen }: { timer: TimerState; onOpen: () => void }
       {String(Math.floor(remaining / 60)).padStart(2, '0')}:
       {String(remaining % 60).padStart(2, '0')}
     </button>
-  );
-}
-function HabitsLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="legacy-page">
-      <div className="tabs habit-tabs">
-        {[
-          ['/habits', 'Today & manage'],
-          ['/weekly', 'Weekly view'],
-          ['/history', 'History'],
-        ].map(([to, label]) => (
-          <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'selected' : '')}>
-            {label}
-          </NavLink>
-        ))}
-      </div>
-      {children}
-    </div>
   );
 }

@@ -19,10 +19,11 @@ export interface Preset {
   cycles: number;
 }
 export interface Link {
-  type: 'task' | 'habit';
+  type: 'task' | 'habit' | 'study';
   id: string;
   name: string;
   project?: string;
+  curriculumId?: string;
 }
 export interface Timer {
   phase: Phase;
@@ -149,7 +150,13 @@ export function validProductivity(value: unknown): value is Productivity {
   const finite = (n: unknown) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
   const text = (v: unknown) => typeof v === 'string';
   const link = (l: Link | null) =>
-    l === null || (!!l && ['task', 'habit'].includes(l.type) && text(l.id) && text(l.name));
+    l === null ||
+    (!!l &&
+      ['task', 'habit', 'study'].includes(l.type) &&
+      text(l.id) &&
+      text(l.name) &&
+      (l.project === undefined || text(l.project)) &&
+      (l.curriculumId === undefined || text(l.curriculumId)));
   return (
     s.version === 1 &&
     Array.isArray(s.tasks) &&

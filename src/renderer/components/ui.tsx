@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 export function PageHeader({
   eyebrow,
   title,
@@ -51,61 +51,39 @@ export function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement;
-    const main = document.getElementById('main-content');
-    const previousOverflow = main?.style.overflowY || '';
-    if (main) main.style.overflowY = 'hidden';
-    const el = ref.current!;
-    (
-      el.querySelector<HTMLElement>('input,select,textarea') ||
-      el.querySelector<HTMLElement>('button')
-    )?.focus({ preventScroll: true });
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-      if (e.key === 'Tab') {
-        const list = Array.from(
-          el.querySelectorAll<HTMLElement>('button:not(:disabled),input,select,textarea,a[href]'),
-        );
-        if (e.shiftKey && document.activeElement === list[0]) {
-          e.preventDefault();
-          list.at(-1)?.focus();
-        } else if (!e.shiftKey && document.activeElement === list.at(-1)) {
-          e.preventDefault();
-          list[0]?.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', key);
-    return () => {
-      document.removeEventListener('keydown', key);
-      if (main) main.style.overflowY = previousOverflow;
-      previous?.focus({ preventScroll: true });
-    };
-  }, []);
+  const previous = useRef(document.activeElement as HTMLElement | null);
   return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
     >
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={title} className="modal-content">
-        <div className="section-heading">
-          <h2>{title}</h2>
-          <button className="icon-button" aria-label="Close dialog" onClick={onClose}>
-            <X />
-          </button>
-        </div>
+      <DialogContent
+        className="modal-content"
+        aria-describedby={undefined}
+        onOpenAutoFocus={(event) => {
+          const input = event.currentTarget as HTMLElement;
+          const first = input?.querySelector<HTMLElement>('input,select,textarea');
+          if (first) {
+            event.preventDefault();
+            first.focus();
+          }
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          previous.current?.focus({ preventScroll: true });
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
+
 export const durationLabel = (seconds: number) =>
   seconds < 60 ? `${Math.round(seconds)}s` : `${Math.round(seconds / 60)} min`;
 export function download(name: string, content: string, type = 'application/json') {

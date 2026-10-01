@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { WorkspaceAPI, WorkspaceEvents } from '../shared/workspace';
 
 const api = {
   getProductivity: () => ipcRenderer.invoke('productivity:get'),
@@ -46,5 +47,21 @@ const api = {
 };
 
 contextBridge.exposeInMainWorld('habitAPI', api);
+const workspaceAPI: WorkspaceAPI = {
+  invoke(channel, ...args) {
+    if (!/^(focus|plan|journal|review|goals|study|window):[a-zA-Z]+$/.test(channel))
+      throw new Error('Unsupported workspace channel.');
+    return ipcRenderer.invoke(channel, ...args);
+  },
+  on<K extends keyof WorkspaceEvents>(channel: K, listener: (payload: WorkspaceEvents[K]) => void) {
+    if (!/^(focus|plan|journal|review|goals|study):changed$/.test(channel))
+      throw new Error('Unsupported workspace event.');
+    const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
+      listener(payload as WorkspaceEvents[K]);
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
+};
+contextBridge.exposeInMainWorld('workspaceAPI', workspaceAPI);
 
 export type HabitAPI = typeof api;

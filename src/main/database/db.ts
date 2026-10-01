@@ -3,6 +3,7 @@ import Database from './sqlite';
 import path from 'path';
 import { app } from 'electron';
 import { migrateProductivity, migrateHabitEngine } from './migrations';
+import { runModuleMigrations } from './migrationRegistry';
 import { localDate } from '../../shared/productivity';
 import {
   habitStats,
@@ -80,6 +81,7 @@ export function initDatabase(): Database {
     db.exec(`VACUUM INTO '${safety.replace(/'/g, "''")}'`);
     migrateHabitEngine(db);
   }
+  runModuleMigrations(db);
   return db;
 }
 

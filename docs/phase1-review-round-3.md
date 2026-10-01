@@ -1,14 +1,32 @@
-# Phase 1 independent review — round 3 progress
+# Phase 1 independent review — round 3 final
 
-**INCOMPLETE / PAUSED at the user's explicit request. No final score or approval has been issued.**
+**Score: 9.2 / 10 (weighted 9.160). Phase 1 accepted; the 9+ review-loop stop condition is met. Foundation may begin.**
 
-Reviewed October 1, 2026. The user paused the build to install skills and resume in a new session. This file records completed evidence and remaining review work; it does not declare Phase 1 or the whole application finished. The expanded master build remains pending.
+Finalized October 1, 2026 after the user explicitly resumed. This acceptance covers the submitted Phase 1 habit-engine build and its existing visual direction. The later Linear design system, Study, Reflection and main-process Focus/Guard requirements belong to the expanded master build and remain pending; this score does not certify those features or whole-app release readiness. The earlier pause record was incomplete and was not itself acceptance.
 
-Application implementation was not edited by the reviewer. Electron tests exercised the real renderer, preload, IPC and SQLite using isolated fixtures under `.review/phase1`. Live user data and the installed application were not read or changed. The last already-running test completed before cleanup; the runtime closed its Electron child in `finally`. A read-only process check after cleanup found no `electron` process.
+| Rubric | Weight | Score | Independent justification |
+|---|---:|---:|---|
+| Feature completeness | 20% | 9.3 | Check/Quantity/Avoid, all four schedules, due-occurrence/weekly streaks, freeze budgets/recovery, capped pauses, sections/stacking/non-negotiables, detail and privacy are present. Saved actual UI/IPC checks include quantity correction and existing task/focus/backup flows. |
+| Functionality and correctness | 25% | 9.3 | Fresh 36/36 tests pass; saved real SQLite migration, preservation, budget/month/refund, note versus completion, weekly partial, anchor and backup checks pass. Saved clock regression records exactly one completion and notification invocation after refresh and simulated midnight. Native OS delivery and an actual installer upgrade remain unverified. |
+| Design quality | 25% | 9.1 | Independently inspected saved light/dark Habits, 360px expanded controls and active Statistics screenshots: consistent existing green accent, readable hierarchy, Lucide icons and coherent cards/controls. Saved Home imagery is consistent. This assesses Phase 1's established style, not compliance with the forthcoming lavender Linear restyle. No complete contrast or screen-reader audit is claimed. |
+| Code quality and structure | 15% | 9.0 | Source inspection confirms one indexed shared habit engine, guarded main-process writes, versioned transactional migrations, backup safety copies/merges, serialized productivity writes and separation of clock subscriptions from stable productivity state. Snapshot identity is an explicit cache contract. Fresh typecheck/build pass. Cold-load attribution and larger-history scalability are still limited. |
+| UX, accessibility and responsiveness | 15% | 9.0 | Saved real-Electron evidence demonstrates labeled quantity correction, modal focus trap/restoration, safe native privacy labels and 360px controls without document overflow. Warm idle/active profiles remove the prior repeated route stalls; main-content mutations remain zero while the badge updates. Cold navigation timing and physical overnight behavior remain follow-ups. |
 
-## Completed evidence
+Weighted calculation: `9.3×0.20 + 9.3×0.25 + 9.1×0.25 + 9.0×0.15 + 9.0×0.15 = 9.160`. This is a review judgment from source, visual inspection and exercised behavior; passing tests alone did not determine it. The previous weighted score was 8.935, so this round improved by 0.225.
 
-- The builder freshly reported successful `npm run typecheck`, **36/36 project tests**, and `npm run build`. These are builder-run checks, not a new independent test-suite run in this resumed reviewer turn.
+## Evidence provenance and fresh resumed checks
+
+- The resumed independent reviewer ran `npm run typecheck`, `npm test` (**36/36**) and `npm run build`; all completed successfully. Build output names include `index-BTfMxwb8.js` and `Statistics-CF0eMELa.js`, consistent with the saved active profile's application bundle. No app source or dependency change was made during this review.
+- Source inspected directly: `src/shared/habits.ts`, `habitValidation.ts`, main IPC/productivity/backup handlers, migrations and main window configuration, `ProductivityProvider.tsx`, `useClock.ts`, `useHabitData.ts`, `App.tsx` and `Statistics.tsx`. The narrow timer clock and minute calendar snapshot are implemented rather than merely documented.
+- All real-Electron behavior/profile/migration results below are **saved pre-pause Round 3 evidence**, read and consolidated now. Screenshots were visually inspected in this resumed review. They are not represented as freshly rerun Electron results.
+- A bounded fresh cold-Statistics/privacy/responsive harness was saved as `.review/phase1/resume-review-round3.cjs`, but its native Electron escalation was **aborted by the user before any result returned**. No new fixture/result was produced. The reviewer did not bypass the interruption or count this harness as a pass. Cold navigation remains an explicit limitation.
+- The reviewer changed only review artifacts and this report. Live user data and the installed application were not read or modified.
+
+Before the pause, Electron tests exercised the real renderer, preload, IPC and SQLite using isolated fixtures under `.review/phase1`. Live user data and the installed application were not read or changed. The last already-running test completed before cleanup; the runtime closed its Electron child in `finally`. The saved pre-pause read-only process check after cleanup found no `electron` process; this is not a newly run process inventory.
+
+## Saved completed evidence
+
+- Before the pause, the builder reported successful `npm run typecheck`, **36/36 project tests**, and `npm run build`. These saved builder-run checks are separate from the fresh independent resumed checks listed above.
 - The previous Round 3 UI artifacts contain **13/14 passing checks**. The Statistics privacy assertion failed in that first harness. The Round 3 supplement independently passes **8/8**, including computed blur/native-label privacy, note-modal focus trap/restoration, quantity correction, freeze budget guards, weekly partial state, anchor cycle/archive/delete behavior and responsive controls. The packaged-app suite passes **14/14**, including privacy. The initial failure is therefore retained as a timing/selector discrepancy, not silently counted as a pass or a confirmed application privacy defect.
 - Both fresh Round 3 legacy migration fixtures passed comparisons of every original habit/log field, IDs, archive state, notes, reasons and schedule metadata. V2 productivity JSON was preserved exactly and migration safety copies exist. `productivityPreserved: false` in the oldest fixture means that schema had no productivity JSON to compare, not that existing productivity data was lost.
 - The existing packaged **1.1.0** application suite passed habit creation/checking, quantity thresholds, ordinary-note versus completion distinction, Avoid clean/slip behavior, freeze/undo preservation, schedules, detail/pause editing, weekly cells, privacy, tasks, linked fractional Focus, backup merge and desktop/360px views. This was packaged-executable smoke; Windows installer installation or upgrade was not performed by this reviewer.
@@ -44,11 +62,14 @@ The remaining performance uncertainty is **cold navigation / initial history loa
 - `.review/phase1/running-clock-round3-1790819286900/running-clock-results.json` and `midnight-home.png` (final passing timer, notification-invocation, Statistics and simulated-midnight evidence).
 - `.review/phase1/active-performance-round3.cjs` and `.review/phase1/running-clock-round3.cjs` (corrected, repeatable isolated harnesses).
 
-## Remaining work after explicit resume
+## Fixed since Round 2 and remaining follow-ups
 
-1. Inspect and consolidate the Round 3 visual artifacts against the unchanged Phase 1 build; independently rerun the project suite/build if source or dependencies changed in the new session.
-2. Decide whether a targeted cold-Statistics-load profile is warranted. Warm active-timer rendering is now supported by direct profile and mutation evidence; cold-load timing remains a separate limitation.
-3. Complete the weighted rubric—feature completeness 20%, correctness 25%, design 25%, code quality 15%, UX/accessibility/responsiveness 15%—and issue the actual independent final score. Apply the agreed stop condition of 9+ or the review-loop limit; no score is inferred here.
-4. Keep native notification/sound delivery, real overnight/DST testing and Windows installer/upgrade verification explicit. Those were not established by this round. The whole-app release checklist additionally requires the expanded modules and integrated end-to-end use; Phase 1 acceptance alone cannot satisfy it.
+The builder isolated fast clock subscriptions to timer displays, retained minute/local-date subscriptions for calendar consumers, and stopped publishing clock ticks through productivity context. Source inspection and saved idle/active profile plus clock-regression evidence support resolution of Round 2's repeated warm-render stalls. No application fix was made by this reviewer.
 
-**Work stopped after cleanup and progress preservation. Resume only when the user asks to continue.**
+No confirmed blocking Phase 1 defect remains in the exercised scope. Carry these bounded follow-ups into the integrated master review:
+
+1. Measure first Statistics navigation from click to usable history/chart content with a defined threshold, then attribute any long tasks. Keep the earlier cold/unwarmed/debugger delays visible; warm measurements do not erase them. Repeat at larger histories if supported sizes increase.
+2. Verify native Windows notification and sound delivery, physical overnight/restart behavior and the actual installer upgrade against isolated data. The saved packaged-executable smoke and simulated renderer midnight do not establish these outcomes.
+3. Run complete contrast, keyboard and assistive-technology checks on the forthcoming component kit and restyled screens. Existing focus/label/mobile checks establish particular flows, not universal accessibility compliance.
+
+Proceed to Stage 0 Foundation under the master brief. Phase 1 acceptance does not satisfy the expanded application's integration, Focus Guard safety, packaging/upgrade or final release checklist.

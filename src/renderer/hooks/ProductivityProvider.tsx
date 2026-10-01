@@ -108,11 +108,12 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
   }, [ready, update]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () =>
-      document.documentElement.classList.toggle(
-        'dark',
-        state.settings.theme === 'dark' || (state.settings.theme === 'system' && media.matches),
-      );
+    const apply = () => {
+      const dark =
+        state.settings.theme === 'dark' || (state.settings.theme === 'system' && media.matches);
+      document.documentElement.classList.toggle('dark', dark);
+      document.documentElement.classList.toggle('light', !dark);
+    };
     apply();
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
