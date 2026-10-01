@@ -8,5 +8,7 @@ export interface ModuleContext {
 }
 export interface ModuleLifecycle {
   beforeQuit?: () => Promise<void> | void;
+  /** Return true after hiding the window to intercept its close action. */
+  onWindowClose?: () => boolean;
 }
 export type ModuleRegistration = (context: ModuleContext) => ModuleLifecycle | void;
