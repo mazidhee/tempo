@@ -1,10 +1,12 @@
 import type { Curriculum, StudySnapshot, StudyTopic, ReviewGrade } from './study';
+import type { StudyOutlineInput } from './studyImport';
 export type WorkspaceNamespace =
   'focus' | 'plan' | 'journal' | 'review' | 'goals' | 'study' | 'window';
 
 // Modules augment these maps in their own contracts files. Preload remains one
 // typed transport; adding a module never exposes Electron or arbitrary channels.
 export interface WorkspaceRequests {
+  'study:importOutlines': { input: StudyOutlineInput[]; output: Curriculum[] };
   'study:snapshot': { input: undefined; output: StudySnapshot };
   'study:saveCurriculum': {
     input: Pick<Curriculum, 'title' | 'description'> & { id?: string; archived?: boolean };

@@ -47,6 +47,7 @@ export function validateStudySnapshot(value: unknown): asserts value is StudySna
       t.order < 0 ||
       t.order > 100000 ||
       typeof t.archived !== 'boolean' ||
+      (t.details !== undefined && !text(t.details, 1000000)) ||
       !Number.isInteger(t.interval) ||
       t.interval < 0 ||
       t.interval > 3650 ||
@@ -81,6 +82,22 @@ export function validateStudySnapshot(value: unknown): asserts value is StudySna
       r.interval > 3650
     )
       fail();
+  if (data.imports !== undefined) {
+    if (
+      !Array.isArray(data.imports) ||
+      new Set(data.imports.map((i) => i.id)).size !== data.imports.length
+    )
+      fail();
+    for (const item of data.imports)
+      if (
+        !item ||
+        !/^[a-f0-9]{64}$/.test(item.id) ||
+        !curricula.has(item.curriculumId) ||
+        !text(item.title, 200) ||
+        !text(item.markdown, 1000000)
+      )
+        fail();
+  }
 }
 // Stable remapping makes repeated imports safe even when original IDs collide.
 const importedId = (...parts: string[]) =>
@@ -140,6 +157,14 @@ function mergeStudy(db: Database, value: unknown, links: BackupLinks) {
       review.topicId,
       review.reviewedAt,
       JSON.stringify(review),
+    );
+  }
+  for (const source of value.imports ?? []) {
+    const mapped = { ...source, curriculumId: links.studyCurricula.get(source.curriculumId)! };
+    db.prepare('INSERT OR IGNORE INTO study_imports(id,curriculum_id,json) VALUES(?,?,?)').run(
+      mapped.id,
+      mapped.curriculumId,
+      JSON.stringify(mapped),
     );
   }
 }

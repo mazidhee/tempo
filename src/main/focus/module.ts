@@ -21,7 +21,12 @@ import { FocusStore } from './store';
 import { FocusGuard } from './guard';
 import { FileHostsAdapter, SystemHostsAdapter } from './hosts';
 import { NoProcessAdapter, SystemProcessAdapter } from './processes';
-import { secondsLeft, type Productivity } from '../../shared/productivity';
+import {
+  secondsLeft,
+  stopwatchSeconds,
+  timerIsRunning,
+  type Productivity,
+} from '../../shared/productivity';
 export function registerFocus(context: ModuleContext) {
   const store = new FocusStore(context.db, Date.now, (ended) => phaseEnded(ended)),
     isolated = !!process.env.HABIT_TRACKER_DATA_DIR;
@@ -112,7 +117,7 @@ export function registerFocus(context: ModuleContext) {
         const ok = globalShortcut.register(accelerator, () => {
           const actionName =
             key === 'toggle'
-              ? store.productivity().timer.deadline === null
+              ? !timerIsRunning(store.productivity().timer)
                 ? 'start'
                 : 'pause'
               : key === 'skip'
@@ -150,16 +155,18 @@ export function registerFocus(context: ModuleContext) {
     if (!tray) return;
     const s = store.productivity(),
       t = s.timer,
-      left = Math.ceil(secondsLeft(t, Date.now())),
+      left = Math.ceil(t.stopwatch ? stopwatchSeconds(t, Date.now()) : secondsLeft(t, Date.now())),
       label = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-    const signature = `${t.runId}:${left}:${t.deadline !== null}:${guard.active}`;
+    const signature = `${t.runId}:${left}:${timerIsRunning(t)}:${guard.active}`;
     if (lastTraySecond === signature) return;
     lastTraySecond = signature;
     const attempts = store
       .events()
       .filter((e) => e.runId === t.runId && e.kind === 'attempt').length;
-    tray.setToolTip(`Tempo · ${t.phase} ${label} · ${attempts} attempts`);
-    tray.setImage(trayIcon(Math.max(0.05, left / t.duration)));
+    tray.setToolTip(
+      `Tempo · ${t.stopwatch ? 'Tracking' : t.phase} ${label} · ${attempts} attempts`,
+    );
+    tray.setImage(trayIcon(t.stopwatch ? 1 : Math.max(0.05, left / t.duration)));
     if (process.platform === 'darwin') tray.setTitle(label);
     const run = (c: unknown) =>
       void action(c).catch((e) => {
@@ -170,7 +177,7 @@ export function registerFocus(context: ModuleContext) {
     tray.setContextMenu(
       Menu.buildFromTemplate([
         {
-          label: `${t.presetName} · ${label}${t.deadline === null ? ' · paused' : ''}`,
+          label: `${t.presetName} · ${label}${!timerIsRunning(t) ? ' · paused' : ''}`,
           enabled: false,
         },
         {
@@ -180,7 +187,7 @@ export function registerFocus(context: ModuleContext) {
             enabled: t.startedAt === null,
             click: () => {
               void enqueue(async () => {
-                store.command({ action: 'configure', presetId: p.id });
+                store.command({ action: 'configure', presetId: p.id, timerMode: 'pomodoro' });
                 store.command({ action: 'start' });
                 await sync();
                 emit();
@@ -192,17 +199,17 @@ export function registerFocus(context: ModuleContext) {
           })),
         },
         {
-          label: t.deadline === null ? 'Start / Resume' : 'Pause',
-          enabled: !(store.settings().strict && t.deadline !== null),
-          click: () => run({ action: t.deadline === null ? 'start' : 'pause' }),
+          label: !timerIsRunning(t) ? 'Start / Resume' : 'Pause',
+          enabled: !(store.settings().strict && timerIsRunning(t)),
+          click: () => run({ action: !timerIsRunning(t) ? 'start' : 'pause' }),
         },
         {
           label: 'Skip phase',
-          enabled: !store.settings().strict || t.startedAt === null,
+          enabled: !t.stopwatch && (!store.settings().strict || t.startedAt === null),
           click: () => run({ action: 'skip' }),
         },
         {
-          label: 'Stop',
+          label: t.stopwatch ? 'Save and stop' : 'Stop',
           enabled: !store.settings().strict || t.startedAt === null,
           click: () => run({ action: 'stop' }),
         },
@@ -236,6 +243,18 @@ export function registerFocus(context: ModuleContext) {
   });
   ipcMain.handle('focus:snapshot', () => snapshot());
   ipcMain.handle('focus:command', (_e, input) => action(input));
+  ipcMain.handle('focus:saveSession', (_e, input) =>
+    enqueue(() => {
+      store.saveSession(input);
+      return emit();
+    }),
+  );
+  ipcMain.handle('focus:deleteSession', (_e, input) =>
+    enqueue(() => {
+      store.deleteSession(input);
+      return emit();
+    }),
+  );
   ipcMain.handle('focus:legacyTimer', (_e, input) =>
     enqueue(async () => {
       store.legacy(input);

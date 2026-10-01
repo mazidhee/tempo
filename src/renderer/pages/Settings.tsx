@@ -5,8 +5,12 @@ import { PageHeader, download, Modal } from '../components/ui';
 import { localDate } from '../../shared/productivity';
 import { navigation } from '../components/Sidebar';
 import { settingsSections } from '../registry/settings';
+import Personalization from '../components/Personalization';
+import { useSearchParams } from 'react-router-dom';
 export default function Settings() {
-  const [section, setSection] = useState('general');
+  const [params, setParams] = useSearchParams();
+  const section = params.get('section') || 'general';
+  const setSection = (next: string) => setParams({ section: next });
   const contribution = settingsSections.find((item) => item.id === section);
   const Section = contribution?.component;
   return (
@@ -77,6 +81,7 @@ function GeneralSettings() {
         <div className="section-heading">
           <h2>Profile and appearance</h2>
         </div>
+        <Personalization />
         <label className="setting-name">
           What should we call you?
           <input
@@ -189,8 +194,8 @@ function GeneralSettings() {
         </div>
         <p className="muted small">
           Import merges habits, tasks, focus history, Study and Reflection records. Existing records
-          and running timers are kept. An empty workspace also restores preferences and presets;
-          its timer stays idle and Focus Guard stays off. A safety copy is saved before import.
+          and running timers are kept. An empty workspace also restores preferences and presets; its
+          timer stays idle and Focus Guard stays off. A safety copy is saved before import.
         </p>
         <input
           ref={input}

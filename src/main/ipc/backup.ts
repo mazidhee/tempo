@@ -118,7 +118,8 @@ export async function importBackup(db: Database, input: unknown) {
       !original.tasks.length &&
       !original.sessions.length &&
       original.timer.startedAt === null &&
-      JSON.stringify(original.settings) === JSON.stringify(defaults.settings) &&
+      JSON.stringify({ ...defaults.settings, ...original.settings }) ===
+        JSON.stringify(defaults.settings) &&
       JSON.stringify(original.presets) === JSON.stringify(defaults.presets);
 
     const map = new Map<number, number>();

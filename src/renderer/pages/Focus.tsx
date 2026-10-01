@@ -11,6 +11,7 @@ import {
   Minimize2,
   Shield,
   Timer,
+  Square,
 } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { useClock } from '../hooks/useClock';
@@ -18,6 +19,8 @@ import { usePrivacy } from '../hooks/PrivacyContext';
 import { useHabits } from '../hooks/useHabits';
 import {
   secondsLeft,
+  stopwatchSeconds,
+  timerIsRunning,
   newTimer,
   localDate,
   type Preset,
@@ -57,12 +60,15 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
   const timer = state.timer;
   const [editing, setEditing] = useState<Preset | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<Preset | null>(null);
-  const running = timer.deadline !== null;
+  const running = timerIsRunning(timer);
+  const tracking = !!timer.stopwatch;
   const inProgress = timer.startedAt !== null;
   const strict = !!snapshot?.settings.strict && inProgress;
   const preset = state.presets.find((p) => p.id === timer.presetId) || state.presets[0];
-  const remaining = Math.min(Math.ceil(timer.duration), Math.ceil(secondsLeft(timer, now)));
-  const progress = Math.min(1, Math.max(0, 1 - remaining / timer.duration));
+  const remaining = tracking
+    ? Math.floor(stopwatchSeconds(timer, now))
+    : Math.min(Math.ceil(timer.duration), Math.ceil(secondsLeft(timer, now)));
+  const progress = tracking ? 0 : Math.min(1, Math.max(0, 1 - remaining / timer.duration));
   const linked = timer.link ? `${timer.link.type}:${timer.link.id}` : '';
   const links: Link[] = [
     ...state.tasks
@@ -78,10 +84,18 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
         curriculumId: t.curriculumId,
       })),
   ];
-  const configure = (options: { presetId?: string; phase?: Phase; link?: Link | null }) =>
-    void run(window.workspaceAPI.invoke('focus:command', { action: 'configure', ...options }));
+  const configure = (options: {
+    presetId?: string;
+    phase?: Phase;
+    link?: Link | null;
+    timerMode?: 'pomodoro' | 'stopwatch';
+  }) => void run(window.workspaceAPI.invoke('focus:command', { action: 'configure', ...options }));
   const reset = () => {
-    if (inProgress && !window.confirm('Stop this phase? Unfinished time will not be logged.'))
+    if (
+      !tracking &&
+      inProgress &&
+      !window.confirm('Stop this phase? Unfinished time will not be logged.')
+    )
       return;
     void run(window.workspaceAPI.invoke('focus:command', { action: 'stop' }));
   };
@@ -105,7 +119,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
     <div className="page focus-page">
       <PageHeader
         title="Focus"
-        description="A saved rhythm, one phase at a time."
+        description="Use a focus rhythm or track your time as you work."
         action={
           <div className="focus-actions">
             <FocusEmergency />
@@ -123,19 +137,39 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
       )}
       <div className="focus-workspace">
         <section className="panel focus-timer-card" aria-label="Focus timer">
-          <div className="focus-phase-tabs" role="group" aria-label="Timer phase">
-            {(Object.keys(phases) as Phase[]).map((p) => (
-              <Button
-                variant={timer.phase === p ? 'secondary' : 'ghost'}
-                aria-pressed={timer.phase === p}
-                disabled={inProgress}
-                key={p}
-                onClick={() => configure({ phase: p })}
-              >
-                {phases[p]}
-              </Button>
-            ))}
+          <div className="focus-phase-tabs" role="group" aria-label="Timer mode">
+            <Button
+              variant={!tracking ? 'secondary' : 'ghost'}
+              aria-pressed={!tracking}
+              disabled={inProgress}
+              onClick={() => configure({ timerMode: 'pomodoro', phase: 'focus' })}
+            >
+              Pomodoro
+            </Button>
+            <Button
+              variant={tracking ? 'secondary' : 'ghost'}
+              aria-pressed={tracking}
+              disabled={inProgress}
+              onClick={() => configure({ timerMode: 'stopwatch', phase: 'focus' })}
+            >
+              Time tracking
+            </Button>
           </div>
+          {!tracking && (
+            <div className="focus-phase-tabs" role="group" aria-label="Timer phase">
+              {(Object.keys(phases) as Phase[]).map((p) => (
+                <Button
+                  variant={timer.phase === p ? 'secondary' : 'ghost'}
+                  aria-pressed={timer.phase === p}
+                  disabled={inProgress}
+                  key={p}
+                  onClick={() => configure({ phase: p })}
+                >
+                  {phases[p]}
+                </Button>
+              ))}
+            </div>
+          )}
           <div className="focus-ring">
             <svg viewBox="0 0 300 300" aria-hidden="true">
               <circle
@@ -154,11 +188,11 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
               />
             </svg>
             <div className="focus-ring-content">
-              <span className="muted">{phases[timer.phase]}</span>
+              <span className="muted">{tracking ? 'Time tracked' : phases[timer.phase]}</span>
               <div
                 className="focus-timer-number"
                 role="timer"
-                aria-label={`${remaining} seconds remaining`}
+                aria-label={`${remaining} seconds ${tracking ? 'tracked' : 'remaining'}`}
               >
                 {String(Math.floor(remaining / 60)).padStart(2, '0')}:
                 {String(remaining % 60).padStart(2, '0')}
@@ -171,13 +205,20 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
           <div className="focus-actions">
             <Button
               variant="outline"
-              size="icon"
-              aria-label="Stop timer"
-              title="Stop timer"
+              size={tracking ? 'default' : 'icon'}
+              aria-label={tracking ? 'Save and stop tracking' : 'Stop timer'}
+              title={tracking ? 'Save and stop tracking' : 'Stop timer'}
               disabled={strict}
               onClick={reset}
             >
-              <RotateCcw />
+              {tracking ? (
+                <>
+                  <Square />
+                  Save and stop
+                </>
+              ) : (
+                <RotateCcw />
+              )}
             </Button>
             <Button
               disabled={strict && running}
@@ -194,14 +235,16 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
                 ? 'Pause'
                 : inProgress
                   ? 'Resume'
-                  : `Start ${timer.phase === 'focus' ? 'focus' : 'break'}`}
+                  : tracking
+                    ? 'Start tracking'
+                    : `Start ${timer.phase === 'focus' ? 'focus' : 'break'}`}
             </Button>
             <Button
               variant="outline"
               size="icon"
               aria-label="Skip phase"
               title="Skip phase"
-              disabled={strict}
+              disabled={strict || tracking}
               onClick={() => {
                 if (
                   inProgress &&
@@ -215,7 +258,9 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
             </Button>
           </div>
           <p className="muted small">
-            {timer.completed} completed · long break every {preset.cycles} sessions
+            {tracking
+              ? 'Counts up. Pauses are excluded. Save and stop adds this time to your history.'
+              : `${timer.completed} completed · long break every ${preset.cycles} sessions`}
           </p>
           <label className="focus-field">
             Working on
@@ -266,8 +311,9 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
             </span>
           </div>
           <p className="muted small">
-            Phases save automatically. The next phase waits for you. Your timer continues in the
-            tray when the window closes.
+            {tracking
+              ? 'Tracked time stays active until you save and stop. Pauses do not add time. Your tracker continues in the tray when the window closes.'
+              : 'Phases save automatically. The next phase waits for you. Your timer continues in the tray when the window closes.'}
           </p>
         </section>
         <div>
@@ -290,7 +336,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
                   variant={p.id === timer.presetId ? 'secondary' : 'ghost'}
                   className="focus-rhythm-select"
                   disabled={inProgress}
-                  onClick={() => configure({ presetId: p.id })}
+                  onClick={() => configure({ presetId: p.id, timerMode: 'pomodoro' })}
                 >
                   <strong>{p.name}</strong>
                   <span className="muted small">

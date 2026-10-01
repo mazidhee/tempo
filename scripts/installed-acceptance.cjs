@@ -12,6 +12,7 @@ const crypto = require('node:crypto');
 const baselinePath = process.argv[2];
 if (!baselinePath) throw Error('Supply the fresh baseline.json path.');
 const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+const expectedVersion = require('../package.json').version;
 const directory = path.dirname(path.resolve(baselinePath));
 const executablePath = path.join(
   process.env.LOCALAPPDATA,
@@ -34,6 +35,8 @@ let electronApp;
 const checks = [];
 const errors = [];
 const temporaryTitle = `Installation verification ${Date.now()}`;
+const importRoadmaps = process.argv.includes('--import-roadmaps');
+let roadmapSummary = [];
 async function launch() {
   electronApp = await _electron.launch({ executablePath, args: [], env, timeout: 30000 });
   const page = await electronApp.firstWindow();
@@ -68,6 +71,30 @@ function verifyPreservation() {
         subset(row, retained, `${table}.${row.id}`);
       }
     }
+    const oldTables = before
+      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+      .all()
+      .map((row) => row.name);
+    for (const table of [
+      'habit_pauses',
+      'study_curricula',
+      'study_topics',
+      'study_reviews',
+      'study_imports',
+      'reflection_plans',
+      'reflection_journal',
+      'reflection_goals',
+      'reflection_reviews',
+      'focus_break_events',
+    ]) {
+      if (!oldTables.includes(table)) continue;
+      for (const row of before.prepare(`SELECT * FROM ${table}`).all())
+        subset(
+          row,
+          after.prepare(`SELECT * FROM ${table} WHERE id=?`).get(row.id),
+          `${table}.${row.id}`,
+        );
+    }
     const a = JSON.parse(
       before.prepare('SELECT json FROM productivity_state WHERE id=1').get().json,
     );
@@ -88,12 +115,12 @@ function verifyPreservation() {
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
       .map((r) => r.version);
-    for (const version of [2, 3, 4, 100, 200])
+    for (const version of [2, 3, 4, 100, 200, 201])
       assert.ok(versions.includes(version), `Migration ${version}`);
     assert.equal(after.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
     checks.push(
       'Original habit/log records, tasks, sessions, presets and preferences retained',
-      'Migrations 2/3/4/100/200 recorded; SQLite integrity check OK',
+      'Migrations 2/3/4/100/200/201 recorded; SQLite integrity check OK',
     );
     return { versions, originalCounts: baseline.counts };
   } finally {
@@ -108,10 +135,21 @@ function verifyPreservation() {
     userData: app.getPath('userData'),
     packaged: app.isPackaged,
   }));
-  assert.equal(identity.version, '1.2.0');
+  assert.equal(identity.version, expectedVersion);
   assert.equal(identity.packaged, true);
   assert.equal(path.normalize(identity.userData), path.normalize(path.dirname(baseline.source)));
-  checks.push('Installed 1.2.0 uses the original userData path and reviewed ASAR');
+  checks.push(`Installed ${expectedVersion} uses the original userData path and reviewed ASAR`);
+  if (importRoadmaps) {
+    // These are the owner's supplied curricula, not review fixtures or sample data.
+    const sources = [['Software engineering', 'software-engineering.md'], ['Mathematics', 'mathematics.md'], ['Economics & markets', 'economics-markets.md']].map(([title, file]) => ({ title, markdown: fs.readFileSync(path.resolve('src/renderer/assets/curricula', file), 'utf8') }));
+    const beforeStudy = await page.evaluate(() => window.workspaceAPI.invoke('study:snapshot'));
+    const imported = await page.evaluate((sources) => window.workspaceAPI.invoke('study:importOutlines', sources), sources);
+    const study = await page.evaluate(() => window.workspaceAPI.invoke('study:snapshot'));
+    roadmapSummary = imported.map((c) => ({ title: c.title, topics: study.topics.filter((t) => t.curriculumId === c.id).length, learned: study.topics.filter((t) => t.curriculumId === c.id && t.learnedAt).length, alreadyImported: beforeStudy.curricula.some((old) => old.id === c.id) }));
+    const expected = [[984, 0], [483, 6], [356, 1]];
+    roadmapSummary.forEach((r, index) => { if (!r.alreadyImported) assert.deepEqual([r.topics, r.learned], expected[index]); });
+    checks.push('Owner-provided three curricula available with original source checkmarks and existing progress preserved');
+  }
   await nav(page, 'Tasks');
   await page.getByLabel('Quick add task').fill(temporaryTitle);
   await page.getByLabel('Quick add task').press('Enter');
@@ -196,6 +234,7 @@ function verifyPreservation() {
     errors,
     at: new Date().toISOString(),
     nativeGuardModified: false,
+    roadmapSummary,
   };
   fs.writeFileSync(path.join(directory, 'acceptance.json'), JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify({ directory, ...evidence }, null, 2));

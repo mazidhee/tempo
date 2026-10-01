@@ -2,11 +2,17 @@
 
 Tempo keeps your workspace on this computer. Production features work offline;
 there is no cloud synchronization. The original Habit Tracker database and
-history remain in use. This guide describes the reviewed and installed Windows
-1.2.0 release. Acceptance evidence and native verification limits are tracked in
+history remain in use. This guide covers the Windows 1.3 personal study update.
+Acceptance evidence and native verification limits are tracked in
 [release readiness](release-readiness.md).
 
 ## Move around
+
+For a first visit: set your name in **Settings → General**, import your outlines
+in **Study → Import roadmaps**, expand a topic, and choose **Track**. When you finish,
+choose **Save and stop**. Your time appears beside the topic and all its parents.
+Use **Statistics → Time explorer** to see the calendar and study-time sunburst.
+The entire guide is available in **Settings → User guide**, with a `.md` download.
 
 Use the sidebar for Home, Plan, Habits, Tasks, Focus, Study, Statistics, Goals,
 Review and Settings. Plan and Review also link to Journal. At narrow window sizes,
@@ -35,7 +41,7 @@ sensitive displayed content; it does not encrypt the database or exported files.
 ## Check habits and manage tasks
 
 Home shows the annual calendar directly below your greeting. Hover or use the
-calendar's keyboard controls to inspect a day. Completed work uses a lavender
+calendar's keyboard controls to inspect a day. Completed work uses your chosen accent
 ramp; freeze days are hatched, and days without due activity remain neutral.
 
 Habits opens to the weekly grid. Open a habit for its detail drawer, history,
@@ -50,8 +56,9 @@ protection limits and permitted recovery.
 Tasks supports quick add and a full editor for due dates, priority, project,
 tags and subtasks. Use Today, Upcoming, All or Completed, plus text and priority
 filters. Complete or reopen a task from its row; use its Focus action to start
-linked work. Replacing an unfinished phase requires confirmation and does not
-record that phase as completed.
+linked work. Replacing unfinished Pomodoro work requires confirmation and does
+not record that phase as completed. Replacing tracked work saves its elapsed
+time before switching to the new task or habit.
 
 ## Plan and reflect
 
@@ -88,6 +95,12 @@ The timer runs in the desktop main process and recovers its timestamp state afte
 restart. Completed phases are recorded once. Skipped or stopped unfinished phases
 do not become completed focus time, and the next phase waits for you to start it.
 **Focus mode** reduces workspace chrome; **Exit focus mode** or Escape restores it.
+
+Choose **Time tracking** for an open-ended session that counts up instead of ending
+at a preset duration. Pause/resume excludes paused time. **Save and stop** records
+the elapsed attention once; a refresh or app restart preserves it. Time is recorded
+when you save, and appears in the same history as completed Pomodoro focus phases.
+Use Pomodoro for structured breaks and Track for flexible study blocks.
 
 Closing the window keeps Tempo in the tray. The tray menu offers presets,
 Start/Resume or Pause, Skip phase, Stop, **Open Tempo / Emergency exit** and
@@ -127,6 +140,22 @@ physical native notification/sound delivery remain outside the certified evidenc
 
 ## Learn with Study and track goals
 
+**Import roadmaps** includes the three outlines you supplied: Software engineering,
+Mathematics, and Economics & markets. Preview and select any or all of them, or
+paste/upload another Markdown outline. Headings become parent topics; indented
+checklists become children. `[x]` items retain their learned state. Resource prose
+is retained in the original imported source, rather than turned into extra tasks.
+An identical title and outline reopens its existing curriculum without duplicating
+topics or replacing your progress. Changed outlines import as a new curriculum.
+
+Curricula initially show top-level branches. Expand one branch, **Expand all**,
+or search for a topic; search reveals matching descendants and their ancestors.
+**Track** starts count-up time and the timer icon starts a Pomodoro. A topic's
+recorded time includes its own sessions and every descendant's sessions; curriculum
+time counts each session once. Checking a topic keeps all its time. Archive a
+studied topic to preserve its records. Checking children does not automatically
+check the parent: mark the parent when you consider the whole topic learned.
+
 In **Study**, create a curriculum, then add ordered topics or nested chapters.
 Mark a topic learned to schedule review. **Study with focus** links work to Study.
 Archive studied topics to retain history; deletion is restricted to unstudied
@@ -143,11 +172,43 @@ and dates, then **Save goal**. Progress and on-track status come from recorded
 activity. Archive and restore goals as needed. Statistics provides date-filtered
 summaries and **Export sessions** for CSV.
 
+## Explore and correct your time
+
+Open **Statistics → Time explorer** or **Study → View study time**. The weekly
+calendar shows your entries in local time. Use previous/next week, **This week**,
+or **Session list** to find an entry. Curriculum and date filters also update the
+sunburst below. The calendar can scroll within its panel on a small window.
+
+Choose **Add session** for work you forgot to time: enter start, end, an optional
+task/habit/study topic, and a note. Click a calendar entry or its pencil to edit it.
+Changing start/end records the full new interval; editing only its link or note
+preserves the original recorded duration, excluding pauses. Overlapping entries
+require an explicit confirmation before they count. Delete removes its time from
+all totals. Daily statistics use the entry's end date, even across midnight.
+
+The sunburst's inner ring shows curricula and the outer rings show nested topics.
+Select a slice or list row to drill deeper; the breadcrumbs return to a parent.
+Direct study on a parent has a separate slice so children never double-count it.
+Archived topics remain included. Entries whose old topics are no longer present
+appear under **Unassigned study**. The calendar spans a session's start/end;
+recorded duration excludes timer pauses and may therefore be shorter than its span.
+
 ## Appearance, backups and recovery
 
 Settings General offers your greeting name, system/light/dark appearance,
 sound/notifications and the existing end-of-day habit reminder. Fonts and Lucide
 icons are packaged locally.
+
+Choose a solid accent: **Lavender, Cedar, Terracotta, Mulberry, Ochre or Petrol**.
+It applies to actions, charts and calendars in either theme. Upload a local JPG,
+PNG or WebP profile photo; Tempo crops it square and saves a small local copy in
+preferences and JSON backups. **Remove profile photo** restores your initials.
+Home greetings can mix friendly prompts, humour and explained language greetings,
+or use the simple time-of-day option. No online service generates them.
+
+If habit names look blurred, check the eye icon in the top bar or press
+**Ctrl/Cmd+Shift+P**. This is Privacy mode for screen sharing; toggling it restores
+names immediately. Privacy mode does not change the underlying habit data.
 
 1. Use **Settings → General → Export JSON backup** before a major change. Keep
    the downloaded `tempo-backup-YYYY-MM-DD.json` somewhere safe.

@@ -1,24 +1,40 @@
-import { useState } from 'react';
-import { Plus, BookOpen, Pencil, Archive, RotateCcw, Trash2, Check, Timer } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  Plus,
+  BookOpen,
+  Pencil,
+  Archive,
+  RotateCcw,
+  Trash2,
+  Check,
+  Timer,
+  ChevronRight,
+  ChevronDown,
+  Upload,
+  ChartNoAxesColumn,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStudy } from '../hooks/useStudy';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import {
   curriculumProgress,
+  studyTimeTotals,
   reviewGrades,
   type Curriculum,
   type StudyTopic,
   type ReviewGrade,
 } from '../../shared/study';
-import { localDate, newTimer, focusRequest } from '../../shared/productivity';
+import { localDate, focusRequest } from '../../shared/productivity';
 import { PageHeader, Modal, Empty } from '../components/ui';
 import { Progress } from '../components/ui/progress';
 import { ChartContainer } from '../components/ui/chart';
 import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import StudyImport from '../components/StudyImport';
+import { formatStudyTime } from '../../shared/time';
 const progressChart = { progress: { label: 'Learned', color: 'var(--ink-muted)' } };
 export default function Study() {
   const { snapshot, ready, error } = useStudy();
-  const { state, update } = useProductivity();
+  const { state } = useProductivity();
   const navigate = useNavigate();
   const [selected, setSelected] = useState('');
   const [archived, setArchived] = useState(false);
@@ -26,11 +42,32 @@ export default function Study() {
   const [topicDraft, setTopicDraft] = useState<Partial<StudyTopic> | null>(null);
   const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(false),
+    [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const time = useMemo(() => studyTimeTotals(snapshot, state.sessions), [snapshot, state.sessions]);
   const curricula = snapshot.curricula.filter((c) => archived || !c.archived);
   const curriculum = curricula.find((c) => c.id === selected) || curricula[0];
   const topics = snapshot.topics
     .filter((t) => t.curriculumId === curriculum?.id && (archived || !t.archived))
     .sort((a, b) => a.order - b.order);
+  const visible = new Set<string>();
+  if (search.trim())
+    for (const topic of topics.filter((t) =>
+      t.title.toLowerCase().includes(search.toLowerCase()),
+    )) {
+      let current: StudyTopic | undefined = topic;
+      while (current && !visible.has(current.id)) {
+        visible.add(current.id);
+        current = topics.find((t) => t.id === current!.parentId);
+      }
+    }
+  const children = new Map<string | null, StudyTopic[]>();
+  for (const topic of topics) {
+    const key =
+      topic.parentId && topics.some((t) => t.id === topic.parentId) ? topic.parentId : null;
+    children.set(key, [...(children.get(key) ?? []), topic]);
+  }
   const progress = curriculum
     ? curriculumProgress(snapshot, curriculum.id)
     : { learned: 0, total: 0, percent: 0 };
@@ -53,42 +90,63 @@ export default function Study() {
       setBusy(false);
     }
   };
-  const startFocus = () => {
+  const startFocus = (topic?: StudyTopic, tracking = false) => {
     if (!curriculum) return;
     const link = {
       type: 'study' as const,
-      id: curriculum.id,
-      name: curriculum.title,
+      id: topic?.id ?? curriculum.id,
+      name: topic?.title ?? curriculum.title,
       curriculumId: curriculum.id,
     };
     const action = focusRequest(state.timer, link);
     if (
       action === 'confirm' &&
-      !window.confirm('Replace the current focus session? Unfinished time will not be logged.')
+      !window.confirm(
+        state.timer.stopwatch
+          ? 'Save the current tracked time and switch to this topic?'
+          : 'Replace the current focus session? Unfinished time will not be logged.',
+      )
     )
       return;
-    if (action !== 'resume')
-      update((s) => ({
-        ...s,
-        timer: newTimer(
-          s.presets.find((p) => p.id === s.timer.presetId)!,
-          'focus',
-          s.timer.completed,
+    void act(async () => {
+      if (action !== 'resume') {
+        if (state.timer.stopwatch && state.timer.startedAt !== null)
+          await window.workspaceAPI.invoke('focus:command', { action: 'stop' });
+        await window.workspaceAPI.invoke('focus:command', {
+          action: 'configure',
+          phase: 'focus',
+          timerMode: tracking ? 'stopwatch' : 'pomodoro',
           link,
-        ),
-      }));
-    navigate('/focus');
+        });
+        await window.workspaceAPI.invoke('focus:command', { action: 'start' });
+      }
+      navigate('/focus');
+    });
   };
   const renderTree = (parent: string | null, level = 0): React.ReactNode =>
-    topics
-      .filter((t) =>
-        parent === null
-          ? !t.parentId || !topics.some((p) => p.id === t.parentId)
-          : t.parentId === parent,
-      )
+    (children.get(parent) ?? [])
+      .filter((t) => !search.trim() || visible.has(t.id))
       .map((topic) => (
         <li key={topic.id}>
           <div className="study-topic-row">
+            {(children.get(topic.id)?.length ?? 0) > 0 ? (
+              <button
+                className="icon-button topic-expand"
+                aria-label={`${expanded.has(topic.id) || search.trim() ? 'Collapse' : 'Expand'} ${topic.title}`}
+                aria-expanded={expanded.has(topic.id) || !!search.trim()}
+                onClick={() =>
+                  setExpanded((old) => {
+                    const next = new Set(old);
+                    next.has(topic.id) ? next.delete(topic.id) : next.add(topic.id);
+                    return next;
+                  })
+                }
+              >
+                {expanded.has(topic.id) || search.trim() ? <ChevronDown /> : <ChevronRight />}
+              </button>
+            ) : (
+              <span className="topic-spacer" />
+            )}
             <label>
               <input
                 type="checkbox"
@@ -103,9 +161,12 @@ export default function Study() {
                   )
                 }
               />
-              <span>{topic.title}</span>
+              <span title={topic.details}>{topic.title}</span>
             </label>
             <span className="muted small">
+              <strong className="study-topic-time" title="Recorded time, including subtopics">
+                {formatStudyTime(time.topicSeconds[topic.id] || 0)}
+              </strong>{' '}
               {topic.archived
                 ? 'Archived'
                 : topic.reviewDue
@@ -113,6 +174,24 @@ export default function Study() {
                   : 'To learn'}
             </span>
             <div className="row-actions">
+              <button
+                className="btn-secondary topic-track"
+                disabled={busy || topic.archived || curriculum?.archived}
+                aria-label={`Track time for ${topic.title}`}
+                onClick={() => startFocus(topic, true)}
+              >
+                <Timer />
+                Track
+              </button>
+              <button
+                className="icon-button"
+                disabled={busy || topic.archived || curriculum?.archived}
+                aria-label={`Start focus for ${topic.title}`}
+                title="Start Pomodoro for this topic"
+                onClick={() => startFocus(topic)}
+              >
+                <Timer />
+              </button>
               <button
                 className="icon-button"
                 aria-label={`Edit topic ${topic.title}`}
@@ -167,7 +246,9 @@ export default function Study() {
               </button>
             </div>
           </div>
-          {level < topics.length && <ul>{renderTree(topic.id, level + 1)}</ul>}
+          {level < topics.length && (expanded.has(topic.id) || search.trim()) && (
+            <ul>{renderTree(topic.id, level + 1)}</ul>
+          )}
         </li>
       ));
   return (
@@ -176,13 +257,19 @@ export default function Study() {
         title="Study"
         description="Curricula, learning progress and scheduled reviews."
         action={
-          <button
-            className="btn-primary"
-            onClick={() => setCurriculumDraft({ title: '', description: '' })}
-          >
-            <Plus />
-            New curriculum
-          </button>
+          <div className="row-actions">
+            <button className="btn-secondary" onClick={() => setImporting(true)}>
+              <Upload />
+              Import roadmaps
+            </button>
+            <button
+              className="btn-primary"
+              onClick={() => setCurriculumDraft({ title: '', description: '' })}
+            >
+              <Plus />
+              New curriculum
+            </button>
+          </div>
         }
       />
       {(error || actionError) && (
@@ -212,7 +299,11 @@ export default function Study() {
                 <button
                   key={c.id}
                   className={`curriculum-option ${curriculum?.id === c.id ? 'selected' : ''}`}
-                  onClick={() => setSelected(c.id)}
+                  onClick={() => {
+                    setSelected(c.id);
+                    setExpanded(new Set());
+                    setSearch('');
+                  }}
                 >
                   <BookOpen />
                   <span>
@@ -282,7 +373,8 @@ export default function Study() {
                     <Progress value={progress.percent} aria-label="Curriculum progress" />
                     <span className="muted">
                       {progress.learned}/{progress.total} topics learned ·{' '}
-                      {Math.round(progress.percent)}%
+                      {Math.round(progress.percent)}%{' · '}
+                      {formatStudyTime(time.curriculumSeconds[curriculum.id] || 0)} recorded
                     </span>
                   </div>
                   <div className="study-toolbar">
@@ -303,12 +395,51 @@ export default function Study() {
                     <button
                       className="btn-secondary"
                       disabled={curriculum.archived}
-                      onClick={startFocus}
+                      onClick={() => startFocus()}
                     >
                       <Timer />
                       Study with focus
                     </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() =>
+                        navigate(
+                          `/statistics?view=time&curriculum=${encodeURIComponent(curriculum.id)}`,
+                        )
+                      }
+                    >
+                      <ChartNoAxesColumn />
+                      View study time
+                    </button>
                   </div>
+                  <div className="study-tree-toolbar">
+                    <input
+                      className="input"
+                      aria-label="Search study topics"
+                      placeholder="Find a topic or subtopic…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setExpanded(new Set(topics.map((t) => t.id)))}
+                    >
+                      Expand all
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => {
+                        setExpanded(new Set());
+                        setSearch('');
+                      }}
+                    >
+                      Collapse all
+                    </button>
+                  </div>
+                  <p className="muted small">
+                    Time includes all sessions on a topic and its subtopics. Checkmarks track
+                    learning separately; checking a topic keeps its time history.
+                  </p>
                   <ul className="study-tree">{renderTree(null)}</ul>
                   {!topics.length && (
                     <Empty
@@ -430,6 +561,15 @@ export default function Study() {
             </div>
           </form>
         </Modal>
+      )}
+      {importing && (
+        <StudyImport
+          onClose={() => setImporting(false)}
+          onImported={(id) => {
+            setSelected(id);
+            setExpanded(new Set());
+          }}
+        />
       )}
       {topicDraft && (
         <Modal

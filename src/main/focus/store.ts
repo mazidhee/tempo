@@ -1,4 +1,5 @@
 import type Database from '../database/sqlite';
+import { manualSession, type ManualSessionInput } from '../../shared/time';
 import {
   finishTimer,
   newTimer,
@@ -8,6 +9,9 @@ import {
   validProductivity,
   type Productivity,
   type Timer,
+  newStopwatch,
+  saveTrackedTime,
+  timerIsRunning,
 } from '../../shared/productivity';
 import {
   emergencyPhrase,
@@ -60,6 +64,30 @@ export class FocusStore {
   save(s: Productivity) {
     this.db.prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(s));
   }
+  saveSession(input: unknown) {
+    const state = this.productivity(),
+      draft = input as ManualSessionInput;
+    if (draft?.id === state.timer.runId) throw new Error('An active timer entry cannot be edited.');
+    const session = manualSession(draft, state.sessions, this.now());
+    const next = {
+      ...state,
+      sessions: state.sessions.some((s) => s.id === session.id)
+        ? state.sessions.map((s) => (s.id === session.id ? session : s))
+        : [...state.sessions, session],
+    };
+    if (!validProductivity(next)) throw new Error('Choose a valid session link.');
+    this.save(next);
+  }
+  deleteSession(input: unknown) {
+    const state = this.productivity();
+    if (
+      typeof input !== 'string' ||
+      !state.sessions.some((s) => s.id === input && s.phase === 'focus')
+    )
+      throw new Error('Focus session not found.');
+    if (input === state.timer.runId) throw new Error('An active timer entry cannot be removed.');
+    this.save({ ...state, sessions: state.sessions.filter((s) => s.id !== input) });
+  }
   complete(): Productivity | null {
     const s = this.productivity();
     if (s.timer.deadline === null || secondsLeft(s.timer, this.now()) > 0) return null;
@@ -73,8 +101,8 @@ export class FocusStore {
     if (!c || !['start', 'pause', 'skip', 'stop', 'configure'].includes(c.action))
       throw new Error('Unsupported focus action.');
     this.complete();
-    const s = this.productivity(),
-      t = s.timer;
+    let s = this.productivity();
+    const t = s.timer;
     if (
       this.settings().strict &&
       t.startedAt !== null &&
@@ -82,22 +110,37 @@ export class FocusStore {
     )
       throw new Error('Strict mode is active. Use Emergency exit to end this phase.');
     if (c.action === 'configure') {
+      if (c.timerMode !== undefined && !['pomodoro', 'stopwatch'].includes(c.timerMode))
+        throw new Error('Unknown timer mode.');
       const p = s.presets.find((p) => p.id === (c.presetId ?? t.presetId));
       if (!p || (c.phase !== undefined && !['focus', 'short', 'long'].includes(c.phase)))
         throw new Error('Unknown preset or phase.');
+      if (c.timerMode === 'stopwatch' && c.phase && c.phase !== 'focus')
+        throw new Error('Time tracking has no break phase.');
       const timer = newTimer(
         p,
         c.phase ?? 'focus',
         p.id === t.presetId ? t.completed : 0,
         c.link === undefined ? t.link : c.link,
       );
+      if (
+        c.timerMode === 'stopwatch' ||
+        (c.timerMode === undefined && t.stopwatch && timer.phase === 'focus')
+      )
+        Object.assign(timer, newStopwatch(p, t.completed, timer.link));
       if (!validProductivity({ ...s, timer })) throw new Error('Invalid focus link.');
+      // Every launch surface uses this transition: save tracking before replacing it.
+      if (t.stopwatch && t.startedAt !== null) s = saveTrackedTime(s, this.now());
       this.save({ ...s, timer });
     } else if (c.action === 'start') {
-      if (t.deadline !== null) return;
+      if (timerIsRunning(t)) return;
       this.save({ ...s, timer: startTimer(t, this.now()) });
     } else if (c.action === 'pause') this.save({ ...s, timer: pauseTimer(t, this.now()) });
-    else if (c.action === 'skip') this.save(finishTimer(s, this.now(), true));
+    else if (c.action === 'skip') {
+      if (t.stopwatch)
+        throw new Error('Time tracking has no phase to skip. Save and stop instead.');
+      this.save(finishTimer(s, this.now(), true));
+    } else if (t.stopwatch) this.save(saveTrackedTime(s, this.now()));
     else
       this.save({
         ...s,
@@ -124,6 +167,7 @@ export class FocusStore {
         action: 'configure',
         presetId: next.presetId,
         phase: next.phase,
+        timerMode: next.stopwatch ? 'stopwatch' : 'pomodoro',
         link: next.link,
       });
       if (next.deadline !== null) this.command({ action: 'start' });

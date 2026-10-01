@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { Search, X, Timer, EyeOff, Plus, BookOpen } from 'lucide-react';
+import { Search, X, Timer, Eye, EyeOff, Plus, BookOpen } from 'lucide-react';
 import { FocusEmergency } from './modules/focus/EmergencyExit';
 import { useFocus } from './modules/focus/useFocus';
 import type { JournalEntry } from '../shared/reflection';
@@ -22,7 +22,7 @@ import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
 import { newTimer, startTimer, localDate } from '../shared/productivity';
 import { useProductivity } from './hooks/ProductivityProvider';
 import { PrivacyContext } from './hooks/PrivacyContext';
-import { secondsLeft, type Timer as TimerState } from '../shared/productivity';
+import { secondsLeft, stopwatchSeconds, type Timer as TimerState } from '../shared/productivity';
 import { useClock, useMinuteClock } from './hooks/useClock';
 export default function App() {
   const { state, update, ready, error, dismiss } = useProductivity();
@@ -129,12 +129,12 @@ export default function App() {
                 className="icon-button"
                 aria-label="Toggle habit privacy"
                 aria-pressed={privacy}
-                title="Privacy · Ctrl+Shift+P"
+                title={`Privacy mode ${privacy ? 'on: habit names hidden' : 'off'} · Ctrl+Shift+P`}
                 onClick={() => setPrivacy((p) => !p)}
               >
-                <EyeOff />
+                {privacy ? <EyeOff /> : <Eye />}
               </button>
-              {state.timer.deadline && location.pathname !== '/focus' && (
+              {state.timer.startedAt !== null && location.pathname !== '/focus' && (
                 <TimerBadge timer={state.timer} onOpen={() => navigate('/focus')} />
               )}
               <span className="topbar-date">
@@ -224,7 +224,9 @@ export default function App() {
                         if (
                           (state.timer.deadline || state.timer.startedAt) &&
                           !window.confirm(
-                            'Replace the current focus session? Unfinished time will not be logged.',
+                            state.timer.stopwatch
+                              ? 'Save the current tracked time and start this Pomodoro?'
+                              : 'Replace the current focus session? Unfinished time will not be logged.',
                           )
                         )
                           return;
@@ -313,9 +315,15 @@ function FocusSafety() {
 }
 function TimerBadge({ timer, onOpen }: { timer: TimerState; onOpen: () => void }) {
   const now = useClock();
-  const remaining = Math.ceil(secondsLeft(timer, now));
+  const remaining = Math.floor(
+    timer.stopwatch ? stopwatchSeconds(timer, now) : Math.ceil(secondsLeft(timer, now)),
+  );
   return (
-    <button className="timer-pill" onClick={onOpen}>
+    <button
+      className="timer-pill"
+      title={timer.stopwatch ? 'Open time tracking' : 'Open focus timer'}
+      onClick={onOpen}
+    >
       <Timer />
       {String(Math.floor(remaining / 60)).padStart(2, '0')}:
       {String(remaining % 60).padStart(2, '0')}

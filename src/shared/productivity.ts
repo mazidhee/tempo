@@ -26,6 +26,7 @@ export interface Link {
   curriculumId?: string;
 }
 export interface Timer {
+  stopwatch?: { elapsed: number; runningSince: number | null };
   phase: Phase;
   presetId: string;
   duration: number;
@@ -38,6 +39,9 @@ export interface Timer {
   presetName: string;
 }
 export interface Session {
+  source?: 'tracked' | 'manual';
+  startedAt?: string;
+  note?: string;
   id: string;
   date: string;
   endedAt: string;
@@ -54,6 +58,9 @@ export interface Productivity {
   sessions: Session[];
   timer: Timer;
   settings: {
+    accent?: AccentId;
+    avatar?: string | null;
+    greetingStyle?: 'mixed' | 'simple';
     name: string;
     theme: 'system' | 'light' | 'dark';
     sound: boolean;
@@ -95,12 +102,27 @@ export function defaultProductivity(): Productivity {
     presets: presets.map((p) => ({ ...p })),
     sessions: [],
     timer: newTimer(presets[0]),
-    settings: { name: '', theme: 'system', sound: false, notifications: false, reminder: true },
+    settings: {
+      name: '',
+      theme: 'system',
+      sound: false,
+      notifications: false,
+      reminder: true,
+      accent: 'lavender',
+      avatar: null,
+      greetingStyle: 'mixed',
+    },
   };
 }
 export const secondsLeft = (timer: Timer, now: number): number =>
   timer.deadline === null ? timer.remaining : Math.max(0, (timer.deadline - now) / 1000);
 export function startTimer(timer: Timer, now: number): Timer {
+  if (timer.stopwatch)
+    return {
+      ...timer,
+      startedAt: timer.startedAt ?? now,
+      stopwatch: { ...timer.stopwatch, runningSince: timer.stopwatch.runningSince ?? now },
+    };
   return { ...timer, startedAt: timer.startedAt ?? now, deadline: now + timer.remaining * 1000 };
 }
 // Navigation preserves any in-progress phase, including a paused phase.
@@ -110,7 +132,50 @@ export function focusRequest(timer: Timer, link?: Link): 'resume' | 'replace' | 
   return 'confirm';
 }
 export function pauseTimer(timer: Timer, now: number): Timer {
+  if (timer.stopwatch)
+    return { ...timer, stopwatch: { elapsed: stopwatchSeconds(timer, now), runningSince: null } };
   return { ...timer, remaining: secondsLeft(timer, now), deadline: null };
+}
+export const timerIsRunning = (timer: Timer) =>
+  timer.stopwatch ? timer.stopwatch.runningSince !== null : timer.deadline !== null;
+export const stopwatchSeconds = (timer: Timer, now: number) =>
+  timer.stopwatch
+    ? timer.stopwatch.elapsed +
+      (timer.stopwatch.runningSince === null
+        ? 0
+        : Math.max(0, now - timer.stopwatch.runningSince) / 1000)
+    : 0;
+export const newStopwatch = (preset: Preset, completed = 0, link: Link | null = null): Timer => ({
+  ...newTimer(preset, 'focus', completed, link),
+  presetName: 'Time tracking',
+  stopwatch: { elapsed: 0, runningSince: null },
+});
+export function saveTrackedTime(state: Productivity, now: number): Productivity {
+  const duration = stopwatchSeconds(state.timer, now);
+  const session: Session = {
+    id: state.timer.runId,
+    date: localDate(new Date(now)),
+    endedAt: new Date(now).toISOString(),
+    startedAt: new Date(state.timer.startedAt ?? now - duration * 1000).toISOString(),
+    duration,
+    phase: 'focus',
+    presetId: state.timer.presetId,
+    presetName: 'Time tracking',
+    link: state.timer.link,
+    source: 'tracked',
+  };
+  return {
+    ...state,
+    sessions:
+      duration > 0 && !state.sessions.some((s) => s.id === session.id)
+        ? [...state.sessions, session]
+        : state.sessions,
+    timer: newStopwatch(
+      state.presets.find((p) => p.id === state.timer.presetId) ?? state.presets[0],
+      state.timer.completed,
+      state.timer.link,
+    ),
+  };
 }
 // Finishing a phase is deterministic and idempotent. Breaks wait for an explicit start,
 // so an unattended overnight timer never fabricates hours of focus.
@@ -129,6 +194,7 @@ export function finishTimer(state: Productivity, now: number, skipped = false): 
     id: timer.runId,
     date: localDate(ended),
     endedAt: ended.toISOString(),
+    ...(timer.startedAt !== null ? { startedAt: new Date(timer.startedAt).toISOString() } : {}),
     duration: timer.duration,
     phase: timer.phase,
     presetId: timer.presetId,
@@ -197,6 +263,10 @@ export function validProductivity(value: unknown): value is Productivity {
         text(x.date) &&
         text(x.endedAt) &&
         finite(x.duration) &&
+        (x.source === undefined || ['tracked', 'manual'].includes(x.source)) &&
+        (x.startedAt === undefined ||
+          (text(x.startedAt) && Number.isFinite(Date.parse(x.startedAt)))) &&
+        (x.note === undefined || (text(x.note) && x.note.length <= 1000)) &&
         ['focus', 'short', 'long'].includes(x.phase) &&
         text(x.presetId) &&
         text(x.presetName) &&
@@ -214,11 +284,23 @@ export function validProductivity(value: unknown): value is Productivity {
     (s.timer.deadline === null || finite(s.timer.deadline)) &&
     (s.timer.startedAt === null || finite(s.timer.startedAt)) &&
     link(s.timer.link) &&
+    (s.timer.stopwatch === undefined ||
+      (!!s.timer.stopwatch &&
+        s.timer.phase === 'focus' &&
+        s.timer.deadline === null &&
+        finite(s.timer.stopwatch.elapsed) &&
+        (s.timer.stopwatch.runningSince === null ||
+          (finite(s.timer.stopwatch.runningSince) && s.timer.startedAt !== null)))) &&
     !!s.settings &&
     text(s.settings.name) &&
+    (s.settings.accent === undefined || validAccent(s.settings.accent)) &&
+    (s.settings.avatar === undefined || validAvatar(s.settings.avatar)) &&
+    (s.settings.greetingStyle === undefined ||
+      ['mixed', 'simple'].includes(s.settings.greetingStyle)) &&
     ['system', 'light', 'dark'].includes(s.settings.theme) &&
     ['sound', 'notifications', 'reminder'].every(
       (k) => typeof s.settings[k as keyof Productivity['settings']] === 'boolean',
     )
   );
 }
+import { validAccent, validAvatar, type AccentId } from './appearance';

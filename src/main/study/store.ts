@@ -36,6 +36,9 @@ export class StudyStore {
       curricula: rows<Curriculum>('study_curricula'),
       topics: rows<StudyTopic>('study_topics').sort((a, b) => a.order - b.order),
       reviews: rows<StudyReview>('study_reviews'),
+      imports: this.db.prepare("SELECT name FROM sqlite_master WHERE name='study_imports'").get()
+        ? rows<StudyImport>('study_imports')
+        : [],
     };
   }
   saveCurriculum(input: unknown) {
@@ -58,6 +61,63 @@ export class StudyStore {
       )
       .run(curriculum.id, JSON.stringify(curriculum));
     return curriculum;
+  }
+  importOutlines(input: unknown) {
+    if (!Array.isArray(input) || !input.length || input.length > 10)
+      throw new Error('Choose between one and ten outlines.');
+    const sources = input.map((entry: StudyOutlineInput) => {
+      const data = object(entry);
+      const title = text(data.title, 'curriculum title');
+      const markdown = text(data.markdown, 'Markdown outline', 1000000);
+      const outline = parseStudyOutline(markdown, title);
+      const id = createHash('sha256')
+        .update(JSON.stringify([title, markdown]))
+        .digest('hex');
+      return { id, markdown, outline };
+    });
+    const saved: Curriculum[] = [];
+    this.db.transaction(() => {
+      for (const source of sources) {
+        const previous = this.db
+          .prepare('SELECT json FROM study_imports WHERE id=?')
+          .get(source.id) as { json: string } | undefined;
+        if (previous) {
+          const imported = JSON.parse(previous.json) as StudyImport;
+          saved.push(this.snapshot().curricula.find((c) => c.id === imported.curriculumId)!);
+          continue;
+        }
+        const curriculum = this.saveCurriculum({
+          title: source.outline.title,
+          description: 'Imported Markdown roadmap. Checked items retain their learned status.',
+        });
+        const ids = new Map(source.outline.topics.map((topic) => [topic.key, crypto.randomUUID()]));
+        const now = new Date().toISOString();
+        for (const item of source.outline.topics)
+          this.writeTopic({
+            id: ids.get(item.key)!,
+            curriculumId: curriculum.id,
+            parentId: item.parentKey === null ? null : ids.get(item.parentKey)!,
+            title: item.title,
+            order: item.key,
+            learnedAt: item.learned ? now : null,
+            reviewDue: item.learned ? shiftDay(localDate(), 1) : null,
+            interval: item.learned ? 1 : 0,
+            archived: false,
+            ...(item.details ? { details: item.details } : {}),
+          });
+        const imported: StudyImport = {
+          id: source.id,
+          curriculumId: curriculum.id,
+          title: curriculum.title,
+          markdown: source.markdown,
+        };
+        this.db
+          .prepare('INSERT INTO study_imports(id,curriculum_id,json) VALUES(?,?,?)')
+          .run(imported.id, imported.curriculumId, JSON.stringify(imported));
+        saved.push(curriculum);
+      }
+    })();
+    return saved;
   }
   saveTopic(input: unknown) {
     const data = object(input),
@@ -97,6 +157,7 @@ export class StudyStore {
     if (typeof order !== 'number' || !Number.isInteger(order) || order < 0 || order > 100000)
       throw new Error('Invalid topic order.');
     const topic: StudyTopic = {
+      ...(previous?.details ? { details: previous.details } : {}),
       id: previous?.id || crypto.randomUUID(),
       curriculumId,
       title: text(data.title, 'topic title'),
@@ -172,6 +233,25 @@ export class StudyStore {
   deleteTopic(id: unknown) {
     const topic = this.topic(id),
       snapshot = this.snapshot();
+    if (this.db.prepare("SELECT name FROM sqlite_master WHERE name='productivity_state'").get()) {
+      const state = JSON.parse(
+        (
+          this.db.prepare('SELECT json FROM productivity_state WHERE id=1').get() as {
+            json: string;
+          }
+        ).json,
+      );
+      if (
+        state.sessions.some(
+          (s: { link?: { type: string; id: string } }) =>
+            s.link?.type === 'study' && s.link.id === topic.id,
+        ) ||
+        (state.timer.startedAt !== null &&
+          state.timer.link?.type === 'study' &&
+          state.timer.link.id === topic.id)
+      )
+        throw new Error('Archive a timed topic to preserve its study history.');
+    }
     if (topic.learnedAt || snapshot.reviews.some((r) => r.topicId === topic.id))
       throw new Error('Archive a studied topic to preserve its history.');
     this.db.transaction(() => {
@@ -183,3 +263,6 @@ export class StudyStore {
     return true;
   }
 }
+import { createHash } from 'node:crypto';
+import { parseStudyOutline, type StudyOutlineInput } from '../../shared/studyImport';
+import type { StudyImport } from '../../shared/study';

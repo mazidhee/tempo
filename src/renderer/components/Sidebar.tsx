@@ -74,7 +74,11 @@ export default function Sidebar({ openCommand }: { openCommand: () => void }) {
       <SidebarFooter>
         <div className="tempo-profile">
           <div className="avatar">
-            {state.settings.name.trim().slice(0, 2).toUpperCase() || 'ME'}
+            {state.settings.avatar ? (
+              <img src={state.settings.avatar} alt="Your profile" />
+            ) : (
+              state.settings.name.trim().slice(0, 2).toUpperCase() || 'ME'
+            )}
           </div>
           <span>
             {state.settings.name || 'Your workspace'}

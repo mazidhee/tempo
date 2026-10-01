@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { defaultProductivity, type Productivity } from '../../shared/productivity';
 import '../../shared/focus';
+import { accentTokens } from '../../shared/appearance';
 type Update = (fn: (s: Productivity) => Productivity) => void;
 const Context = createContext<{
   state: Productivity;
@@ -91,11 +92,13 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
         state.settings.theme === 'dark' || (state.settings.theme === 'system' && media.matches);
       document.documentElement.classList.toggle('dark', dark);
       document.documentElement.classList.toggle('light', !dark);
+      for (const [property, value] of Object.entries(accentTokens(state.settings.accent, !dark)))
+        document.documentElement.style.setProperty(property, value);
     };
     apply();
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
-  }, [state.settings.theme]);
+  }, [state.settings.theme, state.settings.accent]);
   const dismiss = useCallback(() => setError(''), []);
   const value = useMemo(
     () => ({ state, update, ready, error, dismiss }),

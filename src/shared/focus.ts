@@ -1,5 +1,6 @@
 import { localDate, type Link, type Phase, type Productivity, type Timer } from './productivity';
 import { validDate } from './habits';
+import type { ManualSessionInput } from './time';
 export interface Blocklist {
   id: string;
   name: string;
@@ -44,6 +45,7 @@ export interface FocusSnapshot {
   emergencyReadyAt: number | null;
 }
 export interface FocusCommand {
+  timerMode?: 'pomodoro' | 'stopwatch';
   action: 'start' | 'pause' | 'skip' | 'stop' | 'configure';
   presetId?: string;
   phase?: Phase;
@@ -200,6 +202,8 @@ declare module './workspace' {
   interface WorkspaceRequests {
     'focus:snapshot': { input: undefined; output: FocusSnapshot };
     'focus:command': { input: FocusCommand; output: FocusSnapshot };
+    'focus:saveSession': { input: ManualSessionInput; output: FocusSnapshot };
+    'focus:deleteSession': { input: string; output: FocusSnapshot };
     'focus:legacyTimer': { input: { expectedRunId: string; timer: Timer }; output: FocusSnapshot };
     'focus:settings': { input: FocusSettings; output: FocusSnapshot };
     'focus:runningApps': { input: undefined; output: RunningApp[] };

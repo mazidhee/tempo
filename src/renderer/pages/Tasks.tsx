@@ -70,7 +70,13 @@ export default function Tasks() {
       return;
     }
     if (action === 'confirm') {
-      if (!window.confirm('Replace the current focus session? Unfinished time will not be logged.'))
+      if (
+        !window.confirm(
+          state.timer.stopwatch
+            ? 'Save the current tracked time and switch to this task?'
+            : 'Replace the current focus session? Unfinished time will not be logged.',
+        )
+      )
         return;
     }
     update((s) => ({

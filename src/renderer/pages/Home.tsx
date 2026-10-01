@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, CircleCheck, ListTodo, Timer, ArrowRight, Sprout } from 'lucide-react';
+import {
+  ArrowUpRight,
+  CircleCheck,
+  ListTodo,
+  Timer,
+  ArrowRight,
+  Sprout,
+  BookOpen,
+} from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { useMinuteClock } from '../hooks/useClock';
 import { useHabitData, habitDataChanged } from '../hooks/useHabitData';
@@ -16,6 +24,7 @@ import Heatmap from '../components/Heatmap';
 import { HomeWidgets, homeWidgets, type HomeSlot } from '../registry/home';
 import { PageHeader, durationLabel } from '../components/ui';
 import { useReflection } from '../modules/reflection/useReflection';
+import { greetingFor } from '../../shared/greetings';
 export default function Home({ journal: suppliedJournal }: { journal?: Record<string, string> }) {
   const { state, update } = useProductivity();
   const { snapshot } = useReflection();
@@ -30,25 +39,13 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
   const today = localDate(new Date(now));
   const details = useMemo(() => collectiveYear(allHabits, logs, today), [allHabits, logs, today]);
   const hour = new Date(now).getHours();
-  const slot =
-    hour < 5
-      ? 'night'
-      : hour < 12
-        ? 'morning'
-        : hour < 17
-          ? 'afternoon'
-          : hour < 21
-            ? 'evening'
-            : 'night';
-  const variant = useState(() => Math.random() < 0.25)[0];
-  const greeting = variant
-    ? {
-        morning: 'A fresh start',
-        afternoon: 'Make room for progress',
-        evening: 'A moment to reflect',
-        night: 'Slow down, settle in',
-      }[slot]
-    : `Good ${slot}`;
+  const greetingSeed = useState(() => Math.random())[0];
+  const greeting = greetingFor(
+    hour,
+    state.settings.name,
+    greetingSeed,
+    state.settings.greetingStyle === 'simple',
+  );
   const due = state.tasks.filter((t) => !t.completedAt && t.due && t.due <= today);
   const todaysHabits = habits.filter((h) => isDue(h, today, logs));
   const dueHabits = todaysHabits.filter((h) => logFor(logs, h, today)?.outcome !== 'freeze');
@@ -64,7 +61,11 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
     }
     if (
       action === 'confirm' &&
-      !window.confirm('Replace the current focus session? Unfinished time will not be logged.')
+      !window.confirm(
+        state.timer.stopwatch
+          ? 'Save the current tracked time and switch focus?'
+          : 'Replace the current focus session? Unfinished time will not be logged.',
+      )
     )
       return;
     update((s) => ({
@@ -81,8 +82,8 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
   return (
     <div className="page home-page">
       <PageHeader
-        title={`${greeting}${state.settings.name ? `, ${state.settings.name}` : ''}.`}
-        description="Your daily workspace."
+        title={greeting.title}
+        description={greeting.detail}
         action={
           <button className="btn-primary" onClick={() => startFocus()}>
             <Timer />
@@ -103,6 +104,10 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
         </div>
         <Heatmap details={details} end={today} journal={journal} />
       </section>
+      <Link className="home-guide-link" to="/settings?section=guide">
+        <BookOpen />
+        New here? Open the getting-started guide
+      </Link>
       <div className="home-widget-grid">
         {(['today-plan', 'goals', 'reviews-due'] as HomeSlot[]).map((slot) => (
           <div key={slot} data-home-slot={slot}>

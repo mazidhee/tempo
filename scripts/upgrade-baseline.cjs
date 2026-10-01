@@ -3,7 +3,7 @@ const fs = require('node:fs'),
   path = require('node:path');
 (async () => {
   const source = path.join(process.env.APPDATA, 'habit-tracker', 'habits.db');
-  const output = path.resolve('.install-check', 'master-upgrade-' + Date.now());
+  const output = path.resolve('.install-check', 'personal-upgrade-' + Date.now());
   fs.mkdirSync(output, { recursive: true });
   const db = new DatabaseSync(source, { readOnly: true });
   const tables = db
@@ -18,6 +18,7 @@ const fs = require('node:fs'),
     'study_curricula',
     'study_topics',
     'study_reviews',
+    'study_imports',
     'reflection_plans',
     'reflection_journal',
     'reflection_goals',
@@ -35,7 +36,18 @@ const fs = require('node:fs'),
   const destination = path.join(output, 'before.db');
   await backup(db, destination);
   db.close();
-  const result = { source, backup: destination, counts, at: new Date().toISOString() };
+  const check = new DatabaseSync(destination, { readOnly: true });
+  const guard = tables.includes('focus_settings')
+    ? JSON.parse(check.prepare('SELECT json FROM focus_settings WHERE id=1').get().json)
+    : null;
+  check.close();
+  const result = {
+    source,
+    backup: destination,
+    counts,
+    guardEnabled: guard?.enabled === true,
+    at: new Date().toISOString(),
+  };
   fs.writeFileSync(path.join(output, 'baseline.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));
 })().catch((e) => {

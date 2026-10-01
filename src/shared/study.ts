@@ -1,5 +1,6 @@
 import { localDate } from './productivity';
 import { shiftDay } from './habits';
+import type { Session } from './productivity';
 
 export interface Curriculum {
   id: string;
@@ -9,6 +10,7 @@ export interface Curriculum {
   archived: boolean;
 }
 export interface StudyTopic {
+  details?: string;
   id: string;
   curriculumId: string;
   parentId: string | null;
@@ -31,6 +33,36 @@ export interface StudySnapshot {
   curricula: Curriculum[];
   topics: StudyTopic[];
   reviews: StudyReview[];
+  imports?: StudyImport[];
+}
+export interface StudyImport {
+  id: string;
+  curriculumId: string;
+  title: string;
+  markdown: string;
+}
+/** Each session contributes once to its topic, ancestors, and curriculum. */
+export function studyTimeTotals(snapshot: StudySnapshot, sessions: Session[]) {
+  const topics = new Map(snapshot.topics.map((t) => [t.id, t]));
+  const topicSeconds: Record<string, number> = {},
+    curriculumSeconds: Record<string, number> = {};
+  const seen = new Set<string>();
+  for (const session of sessions) {
+    if (session.phase !== 'focus' || session.link?.type !== 'study' || seen.has(session.id))
+      continue;
+    seen.add(session.id);
+    const curriculum =
+      session.link.curriculumId ?? topics.get(session.link.id)?.curriculumId ?? session.link.id;
+    curriculumSeconds[curriculum] = (curriculumSeconds[curriculum] || 0) + session.duration;
+    let topic = topics.get(session.link.id);
+    const ancestors = new Set<string>();
+    while (topic && !ancestors.has(topic.id)) {
+      ancestors.add(topic.id);
+      topicSeconds[topic.id] = (topicSeconds[topic.id] || 0) + session.duration;
+      topic = topic.parentId ? topics.get(topic.parentId) : undefined;
+    }
+  }
+  return { topicSeconds, curriculumSeconds };
 }
 export const reviewGrades = ['Again', 'Hard', 'Good', 'Easy'] as const;
 /** Simple transparent calendar-day scheduling, independent of DST length. */

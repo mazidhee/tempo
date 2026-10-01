@@ -11,9 +11,12 @@ import Analytics from './Analytics';
 import { FocusBreakStatistics } from '../modules/focus/FocusBreakStatistics';
 import { useReflection } from '../modules/reflection/useReflection';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart';
+import { useSearchParams } from 'react-router-dom';
+import TimeExplorer from '../components/TimeExplorer';
 const focusChart = { focus: { label: 'Focus minutes', color: 'var(--chart-1)' } };
 const taskChart = { tasks: { label: 'Tasks completed', color: 'var(--chart-2)' } };
 export default function Statistics() {
+  const [params, setParams] = useSearchParams();
   const { state } = useProductivity();
   const { snapshot } = useReflection();
   const { active: habits, habits: allHabits, logs, today } = useHabitData();
@@ -136,6 +139,33 @@ export default function Statistics() {
       'text/csv',
     );
   };
+  const timeView = params.get('view') === 'time';
+  const viewTabs = (
+    <div className="tabs statistics-view-tabs" aria-label="Statistics views">
+      <button
+        aria-pressed={!timeView}
+        className={!timeView ? 'selected' : ''}
+        onClick={() => setParams({ view: 'overview' })}
+      >
+        Overview
+      </button>
+      <button
+        aria-pressed={timeView}
+        className={timeView ? 'selected' : ''}
+        onClick={() => setParams({ view: 'time' })}
+      >
+        Time explorer
+      </button>
+    </div>
+  );
+  if (timeView)
+    return (
+      <div className="page statistics-page">
+        <PageHeader title="Statistics" description="Focus history and your study-time map." />
+        {viewTabs}
+        <TimeExplorer initialCurriculum={params.get('curriculum') || ''} />
+      </div>
+    );
   return (
     <div className="page statistics-page">
       <PageHeader
@@ -148,6 +178,7 @@ export default function Statistics() {
           </button>
         }
       />
+      {viewTabs}
       <div className="stats-toolbar">
         <div className="tabs">
           {['Day', 'Week', 'Month', 'All time'].map((p) => (

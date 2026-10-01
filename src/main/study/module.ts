@@ -10,6 +10,7 @@ export function registerStudy(context: ModuleContext) {
     ['learn', store.learn],
     ['grade', store.grade],
     ['deleteTopic', store.deleteTopic],
+    ['importOutlines', store.importOutlines],
   ];
   for (const [channel, method] of operations)
     ipcMain.handle(`study:${channel}`, (_event, input: unknown) => {
