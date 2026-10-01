@@ -1,4 +1,5 @@
 import type { HabitAPI } from '../main/preload';
+import type { EngineHabit, EngineLog } from '../shared/habits';
 
 declare global {
   interface Window {
@@ -6,7 +7,7 @@ declare global {
   }
 }
 
-export interface Habit {
+export interface Habit extends EngineHabit {
   id: number;
   name: string;
   description: string | null;
@@ -18,7 +19,7 @@ export interface Habit {
   is_archived: number;
 }
 
-export interface HabitLog {
+export interface HabitLog extends EngineLog {
   id: number;
   habit_id: number;
   log_date: string;

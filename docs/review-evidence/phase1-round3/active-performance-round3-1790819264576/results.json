@@ -1,0 +1,144 @@
+{
+  "fixture": {
+    "habits": 20,
+    "logs": 7320
+  },
+  "warmup": "Statistics loaded once before timer; loaded grid then 2500ms warmup on active route",
+  "timings": {
+    "frameP95": 17.600000001490116,
+    "frameMax": 18.799999997019768,
+    "probeP95": 21.200000002980232,
+    "probeMax": 22.100000001490116,
+    "frames": 239,
+    "probes": 198,
+    "mainMutations": 0,
+    "badgeMutations": 4
+  },
+  "profile": {
+    "durationMs": 4364.607,
+    "total": 2438,
+    "top": [
+      {
+        "name": "(idle)",
+        "url": "",
+        "count": 2330,
+        "percent": "95.6"
+      },
+      {
+        "name": "(program)",
+        "url": "",
+        "count": 99,
+        "percent": "4.1"
+      },
+      {
+        "name": "requestAnimationFrame",
+        "url": "",
+        "count": 3,
+        "percent": "0.1"
+      },
+      {
+        "name": "(anonymous)",
+        "url": "",
+        "count": 3,
+        "percent": "0.1"
+      },
+      {
+        "name": "UtilityScript",
+        "url": "",
+        "count": 1,
+        "percent": "0.0"
+      },
+      {
+        "name": "s",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 1,
+        "percent": "0.0"
+      },
+      {
+        "name": "frame",
+        "url": "",
+        "count": 1,
+        "percent": "0.0"
+      },
+      {
+        "name": "(root)",
+        "url": "",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "(anonymous)",
+        "url": "",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "(anonymous)",
+        "url": "",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "(anonymous)",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "kf",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "Df",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "Mf",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "Fd",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "qd",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "Jd",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "ml",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "qc",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      },
+      {
+        "name": "(anonymous)",
+        "url": "file:///C:/Users/USER/Documents/Habit-Tracker/dist/assets/index-BTfMxwb8.js",
+        "count": 0,
+        "percent": "0.0"
+      }
+    ]
+  },
+  "errors": []
+}

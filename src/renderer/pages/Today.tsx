@@ -1,268 +1,235 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { format, isBefore, startOfDay, getDay } from 'date-fns';
-import { Plus, Archive, RotateCcw, Pencil, Trash2 } from 'lucide-react';
+import { usePrivacy } from '../hooks/PrivacyContext';
+import { useEffect, useState } from 'react';
+import { Plus, ChevronDown, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import { useHabitData, habitDataChanged } from '../hooks/useHabitData';
+import {
+  isDue,
+  isComplete,
+  logFor,
+  orderHabits,
+  canFreeze,
+  dayOutcome,
+  shiftDay,
+} from '../../shared/habits';
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
-import NoteModal from '../components/NoteModal';
-import { useHabits } from '../hooks/useHabits';
-import type { Habit, HabitLog } from '../types';
-
-const DAY_INDEX_TO_KEY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-
-function isHabitScheduledForDate(habit: Habit, date: Date): boolean {
-  const dayKey = DAY_INDEX_TO_KEY[getDay(date)];
-  const days = (habit.days_of_week || 'mon,tue,wed,thu,fri,sat,sun').split(',');
-  return days.includes(dayKey);
-}
-
+import HabitAction from '../components/HabitAction';
+import { PageHeader } from '../components/ui';
+import type { Habit } from '../types';
 export default function Today() {
-  const { habits, archivedHabits, addHabit, editHabit, archiveHabit, restoreHabit, deleteHabit, fetchHabits } = useHabits();
-  const [logs, setLogs] = useState<HabitLog[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-  const [noteModal, setNoteModal] = useState<{ habitId: number; habitName: string; completing: boolean } | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
-
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const isLocked = isBefore(startOfDay(new Date(today)), startOfDay(new Date()));
-
-  const fetchLogs = useCallback(async () => {
-    try {
-      const data = await window.habitAPI.getLogsByDate(today);
-      setLogs(data);
-    } catch (err) {
-      console.error('Failed to fetch today logs:', err);
-    }
-  }, [today]);
-
-  useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
-
-  const dailyHabits = habits.filter(
-    (h) => h.frequency === 'daily' && isHabitScheduledForDate(h, new Date())
+  const privacy = usePrivacy();
+  const { active, archived, habits, logs, today, now, mutate, error } = useHabitData();
+  const hour = new Date(now).getHours(),
+    period = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'anytime';
+  const [expanded, setExpanded] = useState<string[]>([period, 'anytime']);
+  useEffect(() => setExpanded((x) => [...new Set([...x, period])]), [period]);
+  const [showAll, setAll] = useState(false),
+    [showArchived, setArchived] = useState(false),
+    [showForm, setForm] = useState(false),
+    [editing, setEditing] = useState<Habit | null>(null),
+    [actionError, setActionError] = useState('');
+  const due = active.filter((h) => isDue(h, today, logs)),
+    pinned = due.filter((h) => h.non_negotiable && logFor(logs, h, today)?.outcome !== 'freeze');
+  const done = pinned.filter((h) => isComplete(h, logFor(logs, h, today))).length;
+  const displayed = showAll ? active : due;
+  const recovery = active.flatMap((h) =>
+    [1, 2, 3]
+      .map((n) => shiftDay(today, -n))
+      .filter(
+        (date) =>
+          dayOutcome(h, logs, date, today) === 'missed' && canFreeze(h, logs, date, new Date(now)),
+      )
+      .map((date) => ({ habit: h, date })),
   );
-  const completedCount = dailyHabits.filter((h) =>
-    logs.find((l) => l.habit_id === h.id && l.is_completed === 1)
-  ).length;
-  const totalCount = dailyHabits.length;
-  const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-  const handleToggle = async (habitId: number, isCompleted: boolean) => {
-    if (isCompleted) {
-      const habit = habits.find((h) => h.id === habitId);
-      setNoteModal({ habitId, habitName: habit?.name || '', completing: true });
-    } else {
-      await window.habitAPI.toggleLog({ habitId, logDate: today, isCompleted: false });
-      await fetchLogs();
+  const act = async (work: () => Promise<unknown>) => {
+    setActionError('');
+    try {
+      await mutate(work);
+    } catch (e) {
+      setActionError((e as Error).message);
     }
   };
-
-  const handleNoteSave = async (note: string) => {
-    if (noteModal) {
-      if (noteModal.completing) {
-        await window.habitAPI.toggleLog({
-          habitId: noteModal.habitId,
-          logDate: today,
-          isCompleted: true,
-          note: note || undefined,
-        });
-      } else {
-        await window.habitAPI.addNote({
-          habitId: noteModal.habitId,
-          logDate: today,
-          note,
-        });
-      }
-      await fetchLogs();
-    }
-    setNoteModal(null);
-  };
-
-  const handleNoteSkip = async () => {
-    if (noteModal?.completing) {
-      await window.habitAPI.toggleLog({
-        habitId: noteModal.habitId,
-        logDate: today,
-        isCompleted: true,
-      });
-      await fetchLogs();
-    }
-    setNoteModal(null);
-  };
-
-  const handleOpenNote = (habitId: number) => {
-    const habit = habits.find((h) => h.id === habitId);
-    setNoteModal({ habitId, habitName: habit?.name || '', completing: false });
-  };
-
-  const handleSaveForm = async (data: any) => {
-    if (data.id) {
-      await editHabit(data);
-    } else {
-      await addHabit(data);
-    }
-    setShowForm(false);
-    setEditingHabit(null);
-    await fetchLogs();
-  };
-
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Today</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {format(new Date(), 'EEEE, MMMM d, yyyy')}
-              </p>
-            </div>
-            <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              New Habit
-            </button>
-          </div>
-
-          {totalCount > 0 && (
-            <div className="mt-5">
-              <div className="flex items-center justify-between text-xs font-medium mb-2">
-                <span className="text-gray-500 dark:text-gray-400">
-                  {completedCount} of {totalCount} completed
-                </span>
-                <span className={`${pct === 100 ? 'text-brand-600 dark:text-brand-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {pct}%
-                </span>
-              </div>
-              <div className="h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    pct === 100
-                      ? 'bg-brand-500'
-                      : pct >= 50
-                      ? 'bg-brand-400'
-                      : 'bg-brand-300'
-                  }`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-          )}
+    <div className="page habit-checkin">
+      <PageHeader
+        eyebrow="YOUR DAILY RHYTHM"
+        title="Small commitments, kept."
+        description={new Date(now).toLocaleDateString(undefined, { dateStyle: 'full' })}
+        action={
+          <button
+            className="btn-primary"
+            onClick={() => {
+              setEditing(null);
+              setForm(true);
+            }}
+          >
+            <Plus />
+            New Habit
+          </button>
+        }
+      />
+      {(error || actionError) && (
+        <p className="inline-error" role="alert">
+          {error || actionError}
+        </p>
+      )}
+      <section className="panel non-negotiable-summary">
+        <div className="section-heading">
+          <h2>
+            Non-negotiables {done}/{pinned.length}
+          </h2>
+          <span className="muted small">
+            {due.filter((h) => isComplete(h, logFor(logs, h, today))).length}/
+            {due.filter((h) => logFor(logs, h, today)?.outcome !== 'freeze').length} due habits done
+          </span>
         </div>
-
-        {dailyHabits.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
-              <Plus className="w-7 h-7 text-gray-400 dark:text-slate-600" />
+        <div
+          className="progress-track"
+          role="progressbar"
+          aria-label="Non-negotiables"
+          aria-valuenow={done}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(1, pinned.length)}
+        >
+          <i style={{ width: `${pinned.length ? (done / pinned.length) * 100 : 0}%` }} />
+        </div>
+      </section>
+      {!!recovery.length && (
+        <section className="panel recovery-panel">
+          <h2>A little room for recovery</h2>
+          <p className="muted">
+            These missed occurrences are within 48 hours of their day ending. A freeze protects the
+            streak, without counting as done.
+          </p>
+          {recovery.map(({ habit, date }) => (
+            <div className="recovery-row" key={habit.id + date}>
+              <span>
+                <strong className="habit-name">{habit.name}</strong>
+                <small className="muted">
+                  {date} · budget charged to {date.slice(0, 7)}
+                </small>
+              </span>
+              <HabitAction
+                compact
+                habit={habit}
+                date={date}
+                today={today}
+                logs={logs}
+                onChange={habitDataChanged}
+              />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">No habits yet</p>
-            <button onClick={() => setShowForm(true)} className="btn-primary">
-              Create your first habit
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {dailyHabits.map((habit) => {
-              const log = logs.find((l) => l.habit_id === habit.id);
-              return (
-                <div key={habit.id} className="group relative">
-                  <HabitCard
-                    habit={habit}
-                    log={log}
-                    isLocked={isLocked}
-                    onToggle={handleToggle}
-                    onNote={handleOpenNote}
-                  />
-                  <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1">
-                    <button
-                      onClick={() => {
-                        setEditingHabit(habit);
-                        setShowForm(true);
-                      }}
-                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
-                      title="Edit"
-                    >
-                      <Pencil className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
-                    <button
-                      onClick={() => archiveHabit(habit.id)}
-                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
-                      title="Archive"
-                    >
-                      <Archive className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {archivedHabits.length > 0 && (
-          <div className="mt-8 border-t border-gray-200 dark:border-slate-800 pt-6">
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className="btn-ghost text-gray-500 dark:text-gray-400 flex items-center gap-2"
-            >
-              <Archive className="w-4 h-4" />
-              {showArchived ? 'Hide' : 'Show'} Archived ({archivedHabits.length})
-            </button>
-            {showArchived && (
-              <div className="mt-3 space-y-2">
-                {archivedHabits.map((habit) => (
-                  <div
-                    key={habit.id}
-                    className="card flex items-center justify-between px-4 py-3 opacity-60"
-                  >
-                    <div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{habit.name}</span>
-                      <span className="ml-2 text-xs text-gray-400 dark:text-gray-600">({habit.frequency})</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => restoreHabit(habit.id)}
-                        className="btn-ghost flex items-center gap-1 text-brand-600 dark:text-brand-400"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Restore
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Permanently delete "${habit.name}" and all its history? This cannot be undone.`)) {
-                            deleteHabit(habit.id);
-                          }
-                        }}
-                        className="btn-ghost flex items-center gap-1 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          ))}
+        </section>
+      )}
+      <div className="tabs">
+        <button className={!showAll ? 'selected' : ''} onClick={() => setAll(false)}>
+          Scheduled today
+        </button>
+        <button className={showAll ? 'selected' : ''} onClick={() => setAll(true)}>
+          All habits
+        </button>
       </div>
-
+      {!active.length && (
+        <div className="gentle-empty">
+          <h2>A rhythm starts with one habit.</h2>
+          <p className="muted">Create a check, quantity, or avoid habit.</p>
+          <button className="btn-primary" onClick={() => setForm(true)}>
+            Create your first habit
+          </button>
+        </div>
+      )}
+      {['morning', 'afternoon', 'evening', 'anytime'].map((section) => {
+        const items = orderHabits(displayed.filter((h) => h.time_of_day === section));
+        const open = expanded.includes(section);
+        return (
+          <section className="habit-section" key={section}>
+            <button
+              className="habit-section-toggle"
+              aria-expanded={open}
+              aria-controls={`section-${section}`}
+              onClick={() =>
+                setExpanded((x) => (open ? x.filter((s) => s !== section) : [...x, section]))
+              }
+            >
+              <span>
+                {section[0].toUpperCase() + section.slice(1)}
+                <small>{items.length} habits</small>
+              </span>
+              <ChevronDown className={open ? 'rotated' : ''} />
+            </button>
+            <div id={`section-${section}`} hidden={!open}>
+              {items.length ? (
+                items.map((h) => (
+                  <HabitCard
+                    key={h.id}
+                    habit={h}
+                    logs={logs}
+                    today={today}
+                    onChange={habitDataChanged}
+                    onEdit={() => {
+                      setEditing(h);
+                      setForm(true);
+                    }}
+                    onArchive={() => act(() => window.habitAPI.archiveHabit(h.id))}
+                  />
+                ))
+              ) : (
+                <p className="muted section-empty">
+                  Nothing scheduled here. A little breathing room.
+                </p>
+              )}
+            </div>
+          </section>
+        );
+      })}
+      {!!archived.length && (
+        <section className="archived-section">
+          <button className="btn-ghost" onClick={() => setArchived((x) => !x)}>
+            <Archive />
+            {showArchived ? 'Hide' : 'Show'} Archived ({archived.length})
+          </button>
+          {showArchived &&
+            archived.map((h) => (
+              <div className="compact-row" key={h.id}>
+                <strong className="habit-name row-title">{h.name}</strong>
+                <button
+                  className="btn-secondary"
+                  onClick={() => act(() => window.habitAPI.restoreHabit(h.id))}
+                >
+                  <RotateCcw />
+                  Restore
+                </button>
+                <button
+                  className="btn-ghost"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Permanently delete "${privacy ? 'Private habit' : h.name}" and all its history? This cannot be undone.`,
+                      )
+                    )
+                      void act(() => window.habitAPI.deleteHabit(h.id));
+                  }}
+                >
+                  <Trash2 />
+                  Delete
+                </button>
+              </div>
+            ))}
+        </section>
+      )}
       {showForm && (
         <HabitForm
-          habit={editingHabit}
-          onSave={handleSaveForm}
-          onClose={() => {
-            setShowForm(false);
-            setEditingHabit(null);
+          habit={editing}
+          habits={habits}
+          onClose={() => setForm(false)}
+          onSave={async (data) => {
+            await mutate(() =>
+              data.id
+                ? window.habitAPI.editHabit({ ...data, id: data.id })
+                : window.habitAPI.addHabit(data),
+            );
+            setForm(false);
           }}
-        />
-      )}
-
-      {noteModal && (
-        <NoteModal
-          habitName={noteModal.habitName}
-          onSave={handleNoteSave}
-          onSkip={handleNoteSkip}
-          onClose={() => setNoteModal(null)}
         />
       )}
     </div>

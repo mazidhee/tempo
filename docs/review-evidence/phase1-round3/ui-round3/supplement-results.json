@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "name": "Detail awaiting loaded route:365 cells, pause add/remove and schedule editor",
+      "pass": true
+    },
+    {
+      "name": "Quantity correction changes completion consistently and persists after reload",
+      "pass": true
+    },
+    {
+      "name": "Same-occurrence-month cap rejected; different month allowed; cap0 strict; refund and pause guards",
+      "pass": true
+    },
+    {
+      "name": "Weekly partial quantity cell, detail personal shade and historical partial golden case",
+      "pass": true
+    },
+    {
+      "name": "Anchor same-section order, cycle rejection, archive/restore and deletion detach",
+      "pass": true
+    },
+    {
+      "name": "Privacy native Focus labels safe, Statistics and expanded legacy cards blurred",
+      "pass": true
+    },
+    {
+      "name": "Privacy notes modal and keyboard trap/restoration",
+      "pass": true
+    },
+    {
+      "name": "360px expanded habit controls, selected weekly cell and detail without document overflow",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

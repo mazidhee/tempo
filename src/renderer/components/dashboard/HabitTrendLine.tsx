@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { usePrivacy } from '../../hooks/PrivacyContext';
+import { useEffect, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -18,6 +19,7 @@ interface HabitTrendLineProps {
 }
 
 export default function HabitTrendLine({ habits }: HabitTrendLineProps) {
+  const privacy = usePrivacy();
   const [selectedHabit, setSelectedHabit] = useState<number | null>(null);
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,11 +56,11 @@ export default function HabitTrendLine({ habits }: HabitTrendLineProps) {
         <select
           value={selectedHabit || ''}
           onChange={(e) => setSelectedHabit(Number(e.target.value))}
-          className="select max-w-[180px] text-xs"
+          className="select habit-name max-w-[180px] text-xs"
         >
           {habits.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.name}
+              {privacy ? `Private habit ${h.id}` : h.name}
             </option>
           ))}
         </select>
@@ -76,7 +78,11 @@ export default function HabitTrendLine({ habits }: HabitTrendLineProps) {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-100 dark:text-slate-800" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="currentColor"
+                className="text-gray-100 dark:text-slate-800"
+              />
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 9, fill: 'currentColor' }}

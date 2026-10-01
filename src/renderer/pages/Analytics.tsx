@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, RefreshCw, BarChart3 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useAnalytics } from '../hooks/useAnalytics';
-import { useHabits } from '../hooks/useHabits';
+import { useHabitData } from '../hooks/useHabitData';
 import StreakCard from '../components/dashboard/StreakCard';
 import CompletionRateCard from '../components/dashboard/CompletionRateCard';
 import HeatmapCalendar from '../components/dashboard/HeatmapCalendar';
@@ -11,31 +10,13 @@ import BestWorstDay from '../components/dashboard/BestWorstDay';
 import HabitTrendLine from '../components/dashboard/HabitTrendLine';
 
 export default function Analytics() {
-  const { habits } = useHabits();
+  const { active: habits, logs: allLogs } = useHabitData();
   const { streaks, completionRates, heatmapData, bestWorstDay, loading, fetchAll } = useAnalytics();
-  const [weeklyLogs, setWeeklyLogs] = useState<any[]>([]);
   const [exporting, setExporting] = useState(false);
 
-  const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-
-  const fetchWeeklyLogs = useCallback(async () => {
-    try {
-      const data = await window.habitAPI.getWeeklyData({
-        startDate: format(weekStart, 'yyyy-MM-dd'),
-        endDate: format(weekEnd, 'yyyy-MM-dd'),
-      });
-      setWeeklyLogs(data);
-    } catch (err) {
-      console.error('Failed to fetch weekly logs:', err);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchAll();
-    fetchWeeklyLogs();
-  }, [fetchAll, fetchWeeklyLogs]);
+    void fetchAll();
+  }, [fetchAll]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -48,7 +29,7 @@ export default function Analytics() {
     }
   };
 
-  const activeHabits = habits.filter((h) => h.frequency === 'daily');
+  const activeHabits = habits;
 
   return (
     <div className="flex-1 overflow-auto">
@@ -62,7 +43,9 @@ export default function Analytics() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => { fetchAll(); fetchWeeklyLogs(); }}
+              onClick={() => {
+                fetchAll();
+              }}
               className="btn-secondary flex items-center gap-2"
               disabled={loading}
             >
@@ -97,10 +80,7 @@ export default function Analytics() {
             {heatmapData && <HeatmapCalendar data={heatmapData} />}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <WeeklyBarChart
-                habits={activeHabits.map((h) => ({ id: h.id, name: h.name }))}
-                logs={weeklyLogs}
-              />
+              <WeeklyBarChart habits={activeHabits} logs={allLogs} />
               {bestWorstDay && <BestWorstDay data={bestWorstDay} />}
             </div>
 

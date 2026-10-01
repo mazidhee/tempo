@@ -1,5 +1,6 @@
 import { ipcMain, dialog } from 'electron';
 import { writeFileSync } from 'fs';
+import { localDate } from '../../shared/productivity';
 import {
   getAllHabits,
   addHabit,
@@ -20,15 +21,20 @@ import {
   getWeeklyData,
   getHistoryData,
   exportCSV,
+  recordHabit,
+  addPause,
+  removePause,
+  habitSnapshot,
+  type HabitRecord,
 } from '../database/db';
 
 function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return localDate();
 }
 
 function isDateLocked(logDate: string): boolean {
   const today = getTodayStr();
-  return logDate < today;
+  return logDate !== today;
 }
 
 export function registerIpcHandlers(): void {
@@ -36,26 +42,22 @@ export function registerIpcHandlers(): void {
     return getAllHabits(includeArchived);
   });
 
-  ipcMain.handle('habits:add', (_event, data: { name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) => {
-    if (!data.name || !data.name.trim()) {
-      throw new Error('Habit name is required');
-    }
-    if (!['daily', 'weekly'].includes(data.frequency)) {
-      throw new Error('Invalid frequency');
-    }
-    if (!['morning', 'afternoon', 'evening', 'anytime'].includes(data.time_of_day)) {
-      throw new Error('Invalid time_of_day');
-    }
-    return addHabit(data);
-  });
-
-  ipcMain.handle('habits:edit', (_event, data: { id: number; name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) => {
-    if (!data.id) throw new Error('Habit ID is required');
-    if (!data.name || !data.name.trim()) throw new Error('Habit name is required');
-    if (!['daily', 'weekly'].includes(data.frequency)) throw new Error('Invalid frequency');
-    if (!['morning', 'afternoon', 'evening', 'anytime'].includes(data.time_of_day)) throw new Error('Invalid time_of_day');
-    return editHabit(data);
-  });
+  ipcMain.handle('habits:add', (_event, data: import('../../shared/habitValidation').HabitInput) =>
+    addHabit(data),
+  );
+  ipcMain.handle(
+    'habits:edit',
+    (_event, data: import('../../shared/habitValidation').HabitInput & { id: number }) =>
+      editHabit(data),
+  );
+  ipcMain.handle('habits:snapshot', () => habitSnapshot());
+  ipcMain.handle('logs:record', (_event, data: HabitRecord) => recordHabit(data));
+  ipcMain.handle(
+    'pauses:add',
+    (_event, data: { habitId: number; start_date: string; end_date: string; reason: string }) =>
+      addPause(data),
+  );
+  ipcMain.handle('pauses:remove', (_event, id: number) => removePause(id));
 
   ipcMain.handle('habits:archive', (_event, id: number) => {
     if (!id) throw new Error('Habit ID is required');
@@ -82,36 +84,47 @@ export function registerIpcHandlers(): void {
     return getLogsByHabit(habitId);
   });
 
-  ipcMain.handle('logs:toggle', (_event, data: { habitId: number; logDate: string; isCompleted: boolean; note?: string }) => {
-    if (!data.habitId) throw new Error('Habit ID is required');
-    if (!data.logDate) throw new Error('Log date is required');
+  ipcMain.handle(
+    'logs:toggle',
+    (_event, data: { habitId: number; logDate: string; isCompleted: boolean; note?: string }) => {
+      if (!data.habitId) throw new Error('Habit ID is required');
+      if (!data.logDate) throw new Error('Log date is required');
 
-    // past days should not be editable
-    if (isDateLocked(data.logDate)) {
-      throw new Error('Cannot modify a locked day. Only missed reasons can be added to past days.');
-    }
+      // past days should not be editable
+      if (isDateLocked(data.logDate)) {
+        throw new Error(
+          'Cannot modify a locked day. Only missed reasons can be added to past days.',
+        );
+      }
 
-    return toggleLog(data.habitId, data.logDate, data.isCompleted, data.note);
-  });
+      return toggleLog(data.habitId, data.logDate, data.isCompleted, data.note);
+    },
+  );
 
-  ipcMain.handle('logs:addNote', (_event, data: { habitId: number; logDate: string; note: string }) => {
-    if (!data.habitId) throw new Error('Habit ID is required');
-    if (!data.logDate) throw new Error('Log date is required');
+  ipcMain.handle(
+    'logs:addNote',
+    (_event, data: { habitId: number; logDate: string; note: string }) => {
+      if (!data.habitId) throw new Error('Habit ID is required');
+      if (!data.logDate) throw new Error('Log date is required');
 
-    if (isDateLocked(data.logDate)) {
-      throw new Error('Cannot add notes to a locked day.');
-    }
+      if (isDateLocked(data.logDate)) {
+        throw new Error('Cannot add notes to a locked day.');
+      }
 
-    return addNote(data.habitId, data.logDate, data.note);
-  });
+      return addNote(data.habitId, data.logDate, data.note);
+    },
+  );
 
-  ipcMain.handle('logs:addMissedReason', (_event, data: { habitId: number; logDate: string; reason: string }) => {
-    if (!data.habitId) throw new Error('Habit ID is required');
-    if (!data.logDate) throw new Error('Log date is required');
-    if (!data.reason || !data.reason.trim()) throw new Error('Reason is required');
-    // only missed reason is allowed for past days
-    return addMissedReason(data.habitId, data.logDate, data.reason);
-  });
+  ipcMain.handle(
+    'logs:addMissedReason',
+    (_event, data: { habitId: number; logDate: string; reason: string }) => {
+      if (!data.habitId) throw new Error('Habit ID is required');
+      if (!data.logDate) throw new Error('Log date is required');
+      if (!data.reason || !data.reason.trim()) throw new Error('Reason is required');
+      // only missed reason is allowed for past days
+      return addMissedReason(data.habitId, data.logDate, data.reason);
+    },
+  );
 
   ipcMain.handle('logs:getWeekly', (_event, data: { startDate: string; endDate: string }) => {
     if (!data.startDate || !data.endDate) throw new Error('Start and end dates are required');
@@ -143,7 +156,6 @@ export function registerIpcHandlers(): void {
     return getHabitTrend(habitId);
   });
 
-  // TODO: add json export also later
   ipcMain.handle('export:csv', async (event) => {
     const csvContent = exportCSV();
     const win = require('electron').BrowserWindow.fromWebContents(event.sender);

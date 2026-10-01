@@ -1,70 +1,106 @@
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import {
-  CalendarCheck,
-  LayoutGrid,
-  Clock,
-  BarChart3,
-  Archive,
-  Sun,
-  Moon,
+  House,
+  CircleCheck,
+  ListTodo,
+  Timer,
+  ChartNoAxesColumnIncreasing,
+  Settings2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Command,
+  AudioLines,
 } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
-
-const navItems = [
-  { to: '/', icon: CalendarCheck, label: 'Today' },
-  { to: '/weekly', icon: LayoutGrid, label: 'Weekly' },
-  { to: '/history', icon: Clock, label: 'History' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+import { useProductivity } from '../hooks/ProductivityProvider';
+export const navigation = [
+  { to: '/', label: 'Home', icon: House },
+  { to: '/habits', label: 'Habits', icon: CircleCheck },
+  { to: '/tasks', label: 'Tasks', icon: ListTodo },
+  { to: '/focus', label: 'Focus', icon: Timer },
+  { to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },
+  { to: '/settings', label: 'Settings', icon: Settings2 },
 ];
-
-export default function Sidebar() {
-  const { isDark, toggle } = useTheme();
-  const location = useLocation();
-
+export default function Sidebar({ openCommand }: { openCommand: () => void }) {
+  const { state } = useProductivity();
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('tempo-sidebar') === 'collapsed',
+  );
   return (
-    <aside className="w-[220px] h-screen flex flex-col bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-slate-800 select-none">
-      <div className="drag-region h-14 flex items-center px-5 border-b border-gray-100 dark:border-slate-800/50">
-        <div className="no-drag flex items-center gap-2.5 mt-1">
-          <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center">
-            <CalendarCheck className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-sm tracking-tight text-gray-900 dark:text-white">
-            Habit Tracker
-          </span>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`} aria-label="App sidebar">
+      <div className="sidebar-brand">
+        <div className="brand-mark">
+          <AudioLines />
         </div>
+        <span className="sidebar-label brand-name">
+          tempo<span>PERSONAL WORKSPACE</span>
+        </span>
       </div>
-
-      <nav className="flex-1 p-3 space-y-0.5">
-        {navItems.map(({ to, icon: Icon, label }) => {
-          const isActive = location.pathname === to;
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors
-                ${
-                  isActive
-                    ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/60 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-brand-600 dark:text-brand-400' : ''}`} />
-              {label}
-            </NavLink>
-          );
-        })}
+      <button
+        className="command-trigger"
+        onClick={openCommand}
+        title="Search commands (Ctrl+K)"
+        aria-label="Search commands"
+      >
+        <Command />
+        <span className="sidebar-label">Quick navigation</span>
+        <kbd className="sidebar-label">Ctrl K</kbd>
+      </button>
+      <div className="sidebar-caption sidebar-label">WORKSPACE</div>
+      <nav
+        aria-label="Main navigation"
+        onKeyDown={(e) => {
+          if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+          const links = Array.from(e.currentTarget.querySelectorAll<HTMLAnchorElement>('a'));
+          const index = links.indexOf(document.activeElement as HTMLAnchorElement);
+          const next =
+            e.key === 'Home'
+              ? 0
+              : e.key === 'End'
+                ? links.length - 1
+                : (index + (e.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length;
+          e.preventDefault();
+          links[next].focus();
+        }}
+      >
+        {navigation.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            title={collapsed ? label : undefined}
+            aria-label={label}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Icon />
+            <span className="sidebar-label">{label}</span>
+          </NavLink>
+        ))}
       </nav>
-
-      <div className="p-3 border-t border-gray-100 dark:border-slate-800/50 space-y-0.5">
+      <div className="sidebar-bottom">
+        <div className="local-status sidebar-label">
+          <i />
+          All yours. All local.
+        </div>
+        <div className="sidebar-profile">
+          <div className="avatar">
+            {state.settings.name.trim().slice(0, 2).toUpperCase() || 'ME'}
+          </div>
+          <div className="sidebar-label">
+            <strong>{state.settings.name || 'Your workspace'}</strong>
+            <span>A little better, every day.</span>
+          </div>
+        </div>
         <button
-          onClick={toggle}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/60 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+          className="collapse-button"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          onClick={() => {
+            localStorage.setItem('tempo-sidebar', collapsed ? 'expanded' : 'collapsed');
+            setCollapsed(!collapsed);
+          }}
         >
-          {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
-          {isDark ? 'Light Mode' : 'Dark Mode'}
+          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          <span className="sidebar-label">Collapse sidebar</span>
         </button>
       </div>
     </aside>

@@ -1,50 +1,50 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron';
-import renderer from 'vite-plugin-electron-renderer';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 export default defineConfig({
-  root: path.resolve(__dirname, 'src/renderer'),
+  root: path.resolve(import.meta.dirname, 'src/renderer'),
   base: './',
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
+    outDir: path.resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,
   },
   plugins: [
     react(),
+    tailwindcss(),
     electron([
       {
-        entry: path.resolve(__dirname, 'src/main/index.ts'),
+        entry: path.resolve(import.meta.dirname, 'src/main/index.ts'),
         vite: {
           build: {
-            outDir: path.resolve(__dirname, 'dist-electron/main'),
+            outDir: path.resolve(import.meta.dirname, 'dist-electron/main'),
             rollupOptions: {
-              external: ['better-sqlite3'],
+              external: ['node:sqlite'],
             },
           },
         },
       },
       {
-        entry: path.resolve(__dirname, 'src/main/preload.ts'),
+        entry: path.resolve(import.meta.dirname, 'src/main/preload.ts'),
         onstart(options) {
           options.reload();
         },
         vite: {
           build: {
-            outDir: path.resolve(__dirname, 'dist-electron/preload'),
+            outDir: path.resolve(import.meta.dirname, 'dist-electron/preload'),
             rollupOptions: {
-              external: ['better-sqlite3'],
+              external: ['node:sqlite'],
             },
           },
         },
       },
     ]),
-    renderer(),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src/renderer'),
+      '@': path.resolve(import.meta.dirname, 'src/renderer'),
     },
   },
 });

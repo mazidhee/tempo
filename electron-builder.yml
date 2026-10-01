@@ -11,5 +11,13 @@ mac:
   target: dmg
 win:
   target: nsis
+  icon: build/icon.png
+nsis:
+  shortcutName: Tempo
+  uninstallDisplayName: Tempo
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: false
 linux:
   target: AppImage

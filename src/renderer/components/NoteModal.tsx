@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { Modal } from './ui';
+import { useState } from 'react';
 
 interface NoteModalProps {
   habitName: string;
@@ -12,25 +12,15 @@ export default function NoteModal({ habitName, onSave, onSkip, onClose }: NoteMo
   const [note, setNote] = useState('');
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content animate-fade-in" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            Add a Note
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
+    <Modal title={'Add a Note'} onClose={onClose}>
+      <div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          Optional note for <span className="font-medium text-gray-700 dark:text-gray-300">{habitName}</span>
+          Optional note for{' '}
+          <span className="font-medium text-gray-700 dark:text-gray-300">{habitName}</span>
         </p>
 
         <textarea
+          aria-label="Habit note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="How did it go? Any thoughts..."
@@ -42,14 +32,11 @@ export default function NoteModal({ habitName, onSave, onSkip, onClose }: NoteMo
           <button onClick={onSkip} className="btn-secondary">
             Skip
           </button>
-          <button
-            onClick={() => onSave(note)}
-            className="btn-primary"
-          >
+          <button onClick={() => onSave(note)} className="btn-primary">
             Save Note
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

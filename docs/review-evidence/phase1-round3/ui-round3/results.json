@@ -1,0 +1,62 @@
+{
+  "checks": [
+    {
+      "name": "Create Check, pinned Quantity threshold and Avoid habits through forms",
+      "pass": true
+    },
+    {
+      "name": "Quantity quick add, custom, threshold, ring and persistence",
+      "pass": true
+    },
+    {
+      "name": "Adding a note to an incomplete Check must not complete it",
+      "pass": true
+    },
+    {
+      "name": "Check complete/uncheck retains note",
+      "pass": true
+    },
+    {
+      "name": "Avoid explicit clean confirmation, slip reason, locked outcome",
+      "pass": true
+    },
+    {
+      "name": "Today freeze reason, budget display, undo refund and note preservation",
+      "pass": true
+    },
+    {
+      "name": "Create N per week and interval schedules; causal quota disables later days",
+      "pass": true
+    },
+    {
+      "name": "Home collective heatmap counts the same eligible weekly habit as Today",
+      "pass": true
+    },
+    {
+      "name": "Detail year heatmap, schedule editor and prospective pause guards",
+      "pass": true
+    },
+    {
+      "name": "Weekly cells show done, slip, neutral and accessible dates; cell controls open",
+      "pass": true
+    },
+    {
+      "name": "Privacy blurs Statistics and Focus linked habit names",
+      "pass": false,
+      "error": "Unblurred name in Statistics"
+    },
+    {
+      "name": "Core task quick add, linked focus custom preset, timestamp refresh and logging",
+      "pass": true
+    },
+    {
+      "name": "Backup format2 UI merge preserves all engine fields and pause/log counts",
+      "pass": true
+    },
+    {
+      "name": "Desktop light/dark and 360px views without document overflow",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

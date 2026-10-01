@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Target } from 'lucide-react';
 import type { CompletionRateData } from '../../types';
 
@@ -54,22 +54,31 @@ export default function CompletionRateCard({ data }: CompletionRateCardProps) {
           return (
             <div key={h.habitId}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-600 dark:text-gray-400 truncate mr-2">
+                <span className="habit-name text-xs text-gray-600 dark:text-gray-400 truncate mr-2">
                   {h.habitName}
                 </span>
-                <span className={`text-xs font-bold ${
-                  rate >= 80 ? 'text-brand-600 dark:text-brand-400' :
-                  rate >= 50 ? 'text-amber-600' : 'text-red-500'
-                }`}>
+                <span
+                  className={`text-xs font-bold ${
+                    rate >= 80
+                      ? 'text-brand-600 dark:text-brand-400'
+                      : rate >= 50
+                        ? 'text-amber-600'
+                        : 'text-red-500'
+                  }`}
+                >
                   {rate}%
                 </span>
               </div>
               <div className="h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    rate >= 80 ? 'bg-brand-500' :
-                    rate >= 50 ? 'bg-amber-400' :
-                    rate > 0 ? 'bg-red-400' : 'bg-gray-200 dark:bg-slate-700'
+                    rate >= 80
+                      ? 'bg-brand-500'
+                      : rate >= 50
+                        ? 'bg-amber-400'
+                        : rate > 0
+                          ? 'bg-red-400'
+                          : 'bg-gray-200 dark:bg-slate-700'
                   }`}
                   style={{ width: `${rate}%` }}
                 />

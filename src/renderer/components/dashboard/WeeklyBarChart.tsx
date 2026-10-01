@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,63 +9,31 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import {
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  format,
-  isBefore,
-  startOfDay,
-  isAfter,
-} from 'date-fns';
+import { format } from 'date-fns';
 import { BarChart3 } from 'lucide-react';
-
+import { dateRange, weekStart, shiftDay, dayOutcome } from '../../../shared/habits';
+import { localDate } from '../../../shared/productivity';
+import type { Habit, HabitLog } from '../../types';
 interface WeeklyBarChartProps {
-  habits: { id: number; name: string }[];
-  logs: any[];
+  habits: Habit[];
+  logs: HabitLog[];
 }
 
 export default function WeeklyBarChart({ habits, logs }: WeeklyBarChartProps) {
-  const today = startOfDay(new Date());
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-  const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
-
-  const logMap = useMemo(() => {
-    const map = new Map<string, any>();
-    logs.forEach((l: any) => {
-      map.set(`${l.habit_id}_${l.log_date}`, l);
-    });
-    return map;
-  }, [logs]);
-
-  const chartData = useMemo(() => {
-    return days.map((day) => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      const isFuture = isAfter(startOfDay(day), today);
-      let completed = 0;
-      let missed = 0;
-
-      if (!isFuture) {
-        habits.forEach((h) => {
-          const key = `${h.id}_${dateStr}`;
-          const log = logMap.get(key);
-          if (log?.is_completed === 1) {
-            completed++;
-          } else if (isBefore(startOfDay(day), today)) {
-            missed++;
-          }
-        });
-      }
-
-      return {
-        day: format(day, 'EEE'),
-        date: format(day, 'MMM d'),
-        Completed: completed,
-        Missed: missed,
-      };
-    });
-  }, [days, habits, logMap]);
+  const today = localDate();
+  const chartData = useMemo(
+    () =>
+      dateRange(weekStart(today), shiftDay(weekStart(today), 6)).map((date) => {
+        const statuses = date <= today ? habits.map((h) => dayOutcome(h, logs, date, today)) : [];
+        return {
+          day: format(new Date(date + 'T12:00:00'), 'EEE'),
+          date,
+          Completed: statuses.filter((s) => s === 'done').length,
+          Missed: statuses.filter((s) => s === 'missed' || s === 'slip').length,
+        };
+      }),
+    [habits, logs, today],
+  );
 
   return (
     <div className="card p-5">
@@ -77,7 +45,11 @@ export default function WeeklyBarChart({ habits, logs }: WeeklyBarChartProps) {
       <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barGap={2} barCategoryGap="20%">
-            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-100 dark:text-slate-800" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="currentColor"
+              className="text-gray-100 dark:text-slate-800"
+            />
             <XAxis
               dataKey="day"
               tick={{ fontSize: 11, fill: 'currentColor' }}
@@ -100,13 +72,9 @@ export default function WeeklyBarChart({ habits, logs }: WeeklyBarChartProps) {
                 fontSize: '12px',
               }}
             />
-            <Legend
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ fontSize: '11px' }}
-            />
-            <Bar dataKey="Completed" fill="#22c55e" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Missed" fill="#f87171" radius={[4, 4, 0, 0]} />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px' }} />
+            <Bar dataKey="Completed" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Missed" fill="var(--muted)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

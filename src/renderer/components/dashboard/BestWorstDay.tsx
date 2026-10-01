@@ -1,4 +1,3 @@
-import React from 'react';
 import { ThumbsUp, ThumbsDown, CalendarDays } from 'lucide-react';
 import type { BestWorstDayData } from '../../types';
 
@@ -73,8 +72,8 @@ export default function BestWorstDay({ data }: BestWorstDayProps) {
                     Math.round(d.avg_rate * 100) >= 80
                       ? 'bg-brand-500'
                       : Math.round(d.avg_rate * 100) >= 50
-                      ? 'bg-amber-400'
-                      : 'bg-red-400'
+                        ? 'bg-amber-400'
+                        : 'bg-red-400'
                   }`}
                   style={{ width: `${Math.round(d.avg_rate * 100)}%` }}
                 />

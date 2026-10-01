@@ -1,5 +1,11 @@
 import { useState, useCallback } from 'react';
-import type { StreakData, CompletionRateData, HeatmapData, BestWorstDayData, TrendPoint } from '../types';
+import type {
+  StreakData,
+  CompletionRateData,
+  HeatmapData,
+  BestWorstDayData,
+  TrendPoint,
+} from '../types';
 
 export function useAnalytics() {
   const [streaks, setStreaks] = useState<StreakData | null>(null);
@@ -38,5 +44,14 @@ export function useAnalytics() {
     }
   }, []);
 
-  return { streaks, completionRates, heatmapData, bestWorstDay, habitTrends, loading, fetchAll, fetchHabitTrend };
+  return {
+    streaks,
+    completionRates,
+    heatmapData,
+    bestWorstDay,
+    habitTrends,
+    loading,
+    fetchAll,
+    fetchHabitTrend,
+  };
 }

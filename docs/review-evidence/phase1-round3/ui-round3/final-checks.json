@@ -1,0 +1,22 @@
+{
+  "weeklyPartial": true,
+  "personalShade": true,
+  "historicalPartial": true,
+  "mobileExpandedControls": true,
+  "mobileWeeklyControls": true,
+  "samples": [
+    {
+      "route": "Home",
+      "p95": 21,
+      "max": 21.30000000447035,
+      "samples": 148
+    },
+    {
+      "route": "Statistics",
+      "p95": 21,
+      "max": 21.5,
+      "samples": 148
+    }
+  ],
+  "errors": []
+}

@@ -1,115 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config '../../../tailwind.config.mjs';
+@import './tokens.css';
+@import './app.css';
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  :root {
-    --app-drag-height: 38px;
-  }
-
-  html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  body {
-    @apply min-h-screen;
-    overflow: hidden;
-  }
-
-  /* scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-slate-700 rounded-full;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-slate-600;
-  }
-
-  /* for dragging the title bar */
-  .drag-region {
-    -webkit-app-region: drag;
-  }
-  .no-drag {
-    -webkit-app-region: no-drag;
-  }
+  body { overflow: hidden; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+  .drag-region { -webkit-app-region: drag; }
+  .no-drag { -webkit-app-region: no-drag; }
 }
-
 @layer components {
-  .card {
-    @apply bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl;
-  }
-
-  .card-hover {
-    @apply card hover:border-gray-300 dark:hover:border-slate-700 transition-colors;
-  }
-
-  .btn-primary {
-    @apply px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium text-sm transition-colors;
-  }
-
-  .btn-secondary {
-    @apply px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm transition-colors;
-  }
-
-  .btn-ghost {
-    @apply px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg text-sm transition-colors;
-  }
-
-  .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
-  }
-
-  .badge-morning {
-    @apply badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400;
-  }
-
-  .badge-afternoon {
-    @apply badge bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400;
-  }
-
-  .badge-evening {
-    @apply badge bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400;
-  }
-
-  .badge-anytime {
-    @apply badge bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400;
-  }
-
-  .input {
-    @apply w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-shadow;
-  }
-
-  .select {
-    @apply input appearance-none cursor-pointer;
-  }
-
-  .modal-backdrop {
-    @apply fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4;
-  }
-
-  .modal-content {
-    @apply bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6;
-  }
-
-  .spreadsheet-cell {
-    @apply border border-gray-200 dark:border-slate-800 px-3 py-2.5 text-center text-sm transition-colors;
-  }
-
-  .spreadsheet-cell-header {
-    @apply spreadsheet-cell bg-gray-50 dark:bg-slate-900/80 font-semibold text-gray-600 dark:text-gray-400;
-  }
-
-  .spreadsheet-cell-today {
-    @apply spreadsheet-cell bg-brand-50/50 dark:bg-brand-900/10;
-  }
-
-  .spreadsheet-cell-locked {
-    @apply spreadsheet-cell bg-gray-50/50 dark:bg-slate-900/30 text-gray-400 dark:text-slate-600;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .card-hover { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; transition: border-color .15s; }
+  .card-hover:hover { border-color: var(--accent); }
+  .btn-ghost { padding: 6px 12px; border-radius: 8px; font-size: 12px; transition: background .15s; }
+  .btn-ghost:hover { background: var(--bg); }
+  .badge, .badge-morning, .badge-afternoon, .badge-evening, .badge-anytime { display: inline-flex; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 500; color: var(--muted); background: var(--bg); }
+  .input, .select { width: 100%; padding: 9px 12px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+  .select { cursor: pointer; }
+  .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-content { width: 100%; max-width: 440px; box-shadow: 0 20px 80px #00000025; }
+  .spreadsheet-cell, .spreadsheet-cell-header, .spreadsheet-cell-today, .spreadsheet-cell-locked { border: 1px solid var(--border); padding: 10px 12px; text-align: center; font-size: 12px; transition: background .15s; }
+  .spreadsheet-cell-header { background: var(--bg); color: var(--muted); font-weight: 600; }
+  .spreadsheet-cell-today { background: var(--accent-soft); }
+  .spreadsheet-cell-locked { background: var(--bg); color: var(--muted); }
 }

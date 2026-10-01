@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flame, Trophy, Zap } from 'lucide-react';
 import type { StreakData } from '../../types';
 
@@ -40,7 +39,7 @@ export default function StreakCard({ data }: StreakCardProps) {
         <div className="space-y-3">
           {topStreaks.map((s) => (
             <div key={s.habitId} className="flex items-center justify-between">
-              <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 mr-3">
+              <span className="habit-name text-sm text-gray-700 dark:text-gray-300 truncate flex-1 mr-3">
                 {s.habitName}
               </span>
               <div className="flex items-center gap-4 flex-shrink-0">

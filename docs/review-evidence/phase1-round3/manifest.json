@@ -1,0 +1,214 @@
+{
+  "paused": true,
+  "finalScore": null,
+  "files": [
+    {
+      "source": ".review/phase1/ui-round3/results.json",
+      "archived": "ui-round3/results.json",
+      "bytes": 1687,
+      "sha256": "66dfef06c36678048f9d5f3042234e35b2894ca95680c316b4c8e45030d4402f",
+      "sourceSha256": "66dfef06c36678048f9d5f3042234e35b2894ca95680c316b4c8e45030d4402f",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/ui-round3/supplement-results.json",
+      "archived": "ui-round3/supplement-results.json",
+      "bytes": 1066,
+      "sha256": "4472bb38db084aa31544f8173b9a75606cdb8b63009c4f77a7b6b23272431f55",
+      "sourceSha256": "4472bb38db084aa31544f8173b9a75606cdb8b63009c4f77a7b6b23272431f55",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/ui-round3/final-checks.json",
+      "archived": "ui-round3/final-checks.json",
+      "bytes": 387,
+      "sha256": "4345fdce5929deecce7f1987c1e45d2bba19b1896d723cb7c2fc601b9411fe55",
+      "sourceSha256": "4345fdce5929deecce7f1987c1e45d2bba19b1896d723cb7c2fc601b9411fe55",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/round3-legacy-oldest/migration-results.json",
+      "archived": "round3-legacy-oldest/migration-results.json",
+      "bytes": 114,
+      "sha256": "704a52632827a72167c6529b00214fa9a4f77271fd3656a9fd6b0b2d07076080",
+      "sourceSha256": "704a52632827a72167c6529b00214fa9a4f77271fd3656a9fd6b0b2d07076080",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/round3-legacy-v2/migration-results.json",
+      "archived": "round3-legacy-v2/migration-results.json",
+      "bytes": 113,
+      "sha256": "9e1876b3b6d312ce0ad72c81e1be1a91109df07f16818fd174e34c25407577e0",
+      "sourceSha256": "9e1876b3b6d312ce0ad72c81e1be1a91109df07f16818fd174e34c25407577e0",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/packaged-round3/results.json",
+      "archived": "packaged-round3/results.json",
+      "bytes": 1639,
+      "sha256": "f066fe20513e452ad71b2ca29d84ff13f12902dab612b7f329a31ce3f73c1e5f",
+      "sourceSha256": "f066fe20513e452ad71b2ca29d84ff13f12902dab612b7f329a31ce3f73c1e5f",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/performance-round3/results.json",
+      "archived": "performance-round3/results.json",
+      "bytes": 469,
+      "sha256": "8ea2f4e8bd344f61c5dbbac46536ce625f4ebbde80b0554517a995fef13d4e71",
+      "sourceSha256": "8ea2f4e8bd344f61c5dbbac46536ce625f4ebbde80b0554517a995fef13d4e71",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/active-performance-round3-1790819264576/results.json",
+      "archived": "active-performance-round3-1790819264576/results.json",
+      "bytes": 3489,
+      "sha256": "0c6ceedcb7ccd8ad9088490e10438d061100a7eabb41d48d9c1983a9e5fd055a",
+      "sourceSha256": "0c6ceedcb7ccd8ad9088490e10438d061100a7eabb41d48d9c1983a9e5fd055a",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/active-performance-round3-1790819264576/statistics-active-timer.png",
+      "archived": "active-performance-round3-1790819264576/statistics-active-timer.png",
+      "bytes": 78072,
+      "sha256": "9b7c59cc323489fc14778d6b6a6b2378ee7265e00eda9d23fc6945eff77eea83",
+      "sourceSha256": "9b7c59cc323489fc14778d6b6a6b2378ee7265e00eda9d23fc6945eff77eea83",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/running-clock-round3-1790819286900/running-clock-results.json",
+      "archived": "running-clock-round3-1790819286900/running-clock-results.json",
+      "bytes": 541,
+      "sha256": "b60ddfaac15394baa8743f389259234dfe0ad745ededfbf4cf89fa197daa8425",
+      "sourceSha256": "b60ddfaac15394baa8743f389259234dfe0ad745ededfbf4cf89fa197daa8425",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/running-clock-round3-1790819286900/midnight-home.png",
+      "archived": "running-clock-round3-1790819286900/midnight-home.png",
+      "bytes": 84626,
+      "sha256": "98405e7b85b5819752d251a765c7853dc239b1cc73ece31cde010443a82be3a6",
+      "sourceSha256": "98405e7b85b5819752d251a765c7853dc239b1cc73ece31cde010443a82be3a6",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/ui-round3/habits-light.png",
+      "archived": "ui-round3/habits-light.png",
+      "bytes": 75489,
+      "sha256": "ca1ea2e571841aae69cdf14eb5179cf86e0ea81fe70bf2d95a1b913962e0086e",
+      "sourceSha256": "ca1ea2e571841aae69cdf14eb5179cf86e0ea81fe70bf2d95a1b913962e0086e",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/ui-round3/habits-dark.png",
+      "archived": "ui-round3/habits-dark.png",
+      "bytes": 75667,
+      "sha256": "0f4ede744db5d25145ec0ba78b2ae99b6e87dd8850289485889faceb1d0ce736",
+      "sourceSha256": "0f4ede744db5d25145ec0ba78b2ae99b6e87dd8850289485889faceb1d0ce736",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/ui-round3/mobile-expanded-controls.png",
+      "archived": "ui-round3/mobile-expanded-controls.png",
+      "bytes": 38167,
+      "sha256": "de011963650358a2dd741e1aefac42bba9fba62941f90b9fb0b54b265334a172",
+      "sourceSha256": "de011963650358a2dd741e1aefac42bba9fba62941f90b9fb0b54b265334a172",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/packaged-round3/home-light.png",
+      "archived": "packaged-round3/home-light.png",
+      "bytes": 86239,
+      "sha256": "3876aa864a49165580d410a3b09b706e74297e938b2247543e5d99ab999e6671",
+      "sourceSha256": "3876aa864a49165580d410a3b09b706e74297e938b2247543e5d99ab999e6671",
+      "normalization": "None"
+    },
+    {
+      "source": ".review/phase1/runtime.cjs",
+      "archived": "harness/runtime.cjs",
+      "bytes": 2423,
+      "sha256": "842adf9d6780006b2851a58c0d334614947de527fd8ab7031e9ff53b8fef472b",
+      "sourceSha256": "842adf9d6780006b2851a58c0d334614947de527fd8ab7031e9ff53b8fef472b",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/running-clock-round3.cjs",
+      "archived": "harness/running-clock-round3.cjs",
+      "bytes": 5561,
+      "sha256": "93b3fb3d6db7a70aabd74fb6f4f9e0743f30bd4bc726366475e9ff7ad578d224",
+      "sourceSha256": "23fb62a30a8c0c32cbf175e90a8a388d6319fb59edac508aa751028f413c8cfc",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/active-performance-round3.cjs",
+      "archived": "harness/active-performance-round3.cjs",
+      "bytes": 3198,
+      "sha256": "20fc91771fdf624465a721eebfa2f02c71deb415fc951b9d60130bef21b79125",
+      "sourceSha256": "20fc91771fdf624465a721eebfa2f02c71deb415fc951b9d60130bef21b79125",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/performance-round3.cjs",
+      "archived": "harness/performance-round3.cjs",
+      "bytes": 1795,
+      "sha256": "09cf4b093e62d5ebe8c7f4ffc65d59a10eaa05e7b0e8f3cf3e7fdeeba2ec216c",
+      "sourceSha256": "09cf4b093e62d5ebe8c7f4ffc65d59a10eaa05e7b0e8f3cf3e7fdeeba2ec216c",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/migration-round3.cjs",
+      "archived": "harness/migration-round3.cjs",
+      "bytes": 1785,
+      "sha256": "b22d2407dcef38be7e61d8f32d615bf0d4704c4b250c0f3969de8ee7b41f296d",
+      "sourceSha256": "b22d2407dcef38be7e61d8f32d615bf0d4704c4b250c0f3969de8ee7b41f296d",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/round3-ui.cjs",
+      "archived": "harness/round3-ui.cjs",
+      "bytes": 12048,
+      "sha256": "2876192d8cb3026732fd7a9b4c414234739a906bc39a3f3119f46b5e336306b0",
+      "sourceSha256": "2876192d8cb3026732fd7a9b4c414234739a906bc39a3f3119f46b5e336306b0",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/round3-supplement.cjs",
+      "archived": "harness/round3-supplement.cjs",
+      "bytes": 9646,
+      "sha256": "793cb1a8c74a96a0781e2fbbd6f91e9e1c178de4847a46b852c45683291b469b",
+      "sourceSha256": "793cb1a8c74a96a0781e2fbbd6f91e9e1c178de4847a46b852c45683291b469b",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/round3-final-checks.cjs",
+      "archived": "harness/round3-final-checks.cjs",
+      "bytes": 2720,
+      "sha256": "7af6bf00d3c67361a036b6757933ced86033f78b8a2553681b6070197bf8b3c3",
+      "sourceSha256": "7af6bf00d3c67361a036b6757933ced86033f78b8a2553681b6070197bf8b3c3",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/package-round3.cjs",
+      "archived": "harness/package-round3.cjs",
+      "bytes": 12148,
+      "sha256": "66090a0081d1a5c0d85b4c5bcca0e90ddffc9189ecb5bb5dfdc01b1977c661c8",
+      "sourceSha256": "66090a0081d1a5c0d85b4c5bcca0e90ddffc9189ecb5bb5dfdc01b1977c661c8",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/seed-round3.py",
+      "archived": "harness/seed-round3.py",
+      "bytes": 3472,
+      "sha256": "7182f43e9c65904f1ab747a4e54f6169f955b79cd1ce3c556c028a02e7091f8c",
+      "sourceSha256": "7182f43e9c65904f1ab747a4e54f6169f955b79cd1ce3c556c028a02e7091f8c",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    },
+    {
+      "source": ".review/phase1/seed-performance-round3.py",
+      "archived": "harness/seed-performance-round3.py",
+      "bytes": 1066,
+      "sha256": "6a8dea0229764d3db9b064b0a84a37c12504b4c42b191fdfb6e6d3b38eda1648",
+      "sourceSha256": "6a8dea0229764d3db9b064b0a84a37c12504b4c42b191fdfb6e6d3b38eda1648",
+      "normalization": "Final trailing blank lines removed; code unchanged"
+    }
+  ]
+}

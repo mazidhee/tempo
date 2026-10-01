@@ -23,12 +23,13 @@ export function useHabits() {
     fetchHabits();
   }, [fetchHabits]);
 
-  const addHabit = async (data: { name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) => {
+  const addHabit = async (data: import('../../shared/habitValidation').HabitInput) => {
     await window.habitAPI.addHabit(data);
     await fetchHabits();
   };
-
-  const editHabit = async (data: { id: number; name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) => {
+  const editHabit = async (
+    data: import('../../shared/habitValidation').HabitInput & { id: number },
+  ) => {
     await window.habitAPI.editHabit(data);
     await fetchHabits();
   };
@@ -48,7 +49,17 @@ export function useHabits() {
     await fetchHabits();
   };
 
-  return { habits, archivedHabits, loading, fetchHabits, addHabit, editHabit, archiveHabit, restoreHabit, deleteHabit };
+  return {
+    habits,
+    archivedHabits,
+    loading,
+    fetchHabits,
+    addHabit,
+    editHabit,
+    archiveHabit,
+    restoreHabit,
+    deleteHabit,
+  };
 }
 
 export function useTodayLogs() {

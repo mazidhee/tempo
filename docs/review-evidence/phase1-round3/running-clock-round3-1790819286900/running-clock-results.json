@@ -1,0 +1,24 @@
+{
+  "timings": [
+    {
+      "route": "Statistics",
+      "p95": 20.900000005960464,
+      "max": 21.899999998509884,
+      "samples": 147
+    },
+    {
+      "route": "Home",
+      "p95": 20.899999998509884,
+      "max": 21.299999997019768,
+      "samples": 148
+    }
+  ],
+  "deadline": 1790819308916,
+  "sessionDuration": 15,
+  "completedSessions": 1,
+  "notificationInvocations": 1,
+  "notificationDelivery": "Not asserted: desktop delivery follows OS settings",
+  "statsRefresh": true,
+  "rendererMidnightRollover": true,
+  "errors": []
+}

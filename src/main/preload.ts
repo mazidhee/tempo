@@ -1,11 +1,23 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 const api = {
+  getProductivity: () => ipcRenderer.invoke('productivity:get'),
+  saveProductivity: (state: import('../shared/productivity').Productivity) =>
+    ipcRenderer.invoke('productivity:save', state),
+  notify: (body: string) => ipcRenderer.invoke('productivity:notify', body),
+  exportBackup: () => ipcRenderer.invoke('backup:export'),
+  importBackup: (data: unknown) => ipcRenderer.invoke('backup:import', data),
   getHabits: (includeArchived?: boolean) => ipcRenderer.invoke('habits:getAll', includeArchived),
-  addHabit: (data: { name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) =>
+  addHabit: (data: import('../shared/habitValidation').HabitInput) =>
     ipcRenderer.invoke('habits:add', data),
-  editHabit: (data: { id: number; name: string; description?: string; frequency: string; time_of_day: string; days_of_week?: string; scheduled_time?: string }) =>
+  editHabit: (data: import('../shared/habitValidation').HabitInput & { id: number }) =>
     ipcRenderer.invoke('habits:edit', data),
+  getHabitSnapshot: () => ipcRenderer.invoke('habits:snapshot'),
+  recordHabit: (data: import('./database/db').HabitRecord) =>
+    ipcRenderer.invoke('logs:record', data),
+  addPause: (data: { habitId: number; start_date: string; end_date: string; reason: string }) =>
+    ipcRenderer.invoke('pauses:add', data),
+  removePause: (id: number) => ipcRenderer.invoke('pauses:remove', id),
   archiveHabit: (id: number) => ipcRenderer.invoke('habits:archive', id),
   restoreHabit: (id: number) => ipcRenderer.invoke('habits:restore', id),
   deleteHabit: (id: number) => ipcRenderer.invoke('habits:delete', id),
