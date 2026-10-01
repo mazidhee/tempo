@@ -23,12 +23,12 @@ export const focusBackup = {
   },
   // A clean restore recovers configuration, but activation remains device opt-in.
   // Existing configured devices keep their own settings.
-  merge(db: Database, input: unknown) {
+  merge(db: Database, input: unknown, links?: { activeTimer?: boolean }) {
     const v = input as { settings: unknown; events: FocusBreak[] };
     const current = JSON.parse(
       (db.prepare('SELECT json FROM focus_settings WHERE id=1').get() as { json: string }).json,
     );
-    if (JSON.stringify(current) === JSON.stringify(defaultFocusSettings()))
+    if (!links?.activeTimer && JSON.stringify(current) === JSON.stringify(defaultFocusSettings()))
       db.prepare('UPDATE focus_settings SET json=? WHERE id=1').run(
         JSON.stringify({ ...validateFocusSettings(v.settings), enabled: false }),
       );

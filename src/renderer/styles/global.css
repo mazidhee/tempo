@@ -179,7 +179,7 @@
     display: inline-flex;
     padding: 2px 8px;
     border-radius: 5px;
-    font-size: 10px;
+    font-size: var(--type-caption);
     font-weight: 500;
     color: var(--muted);
     background: var(--bg);

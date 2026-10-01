@@ -17,7 +17,11 @@ function fixture() {
   runModuleMigrations(db, false);
   return { db, store: new StudyStore(db) };
 }
-const links = (): BackupLinks => ({ habits: new Map(), studyTopics: new Map(), studyCurricula: new Map() });
+const links = (): BackupLinks => ({
+  habits: new Map(),
+  studyTopics: new Map(),
+  studyCurricula: new Map(),
+});
 test('module backup restores Study history and repeats without duplicates', () => {
   const source = fixture(),
     target = fixture();
@@ -68,6 +72,7 @@ test('Study import remaps colliding curriculum and topic identities together', (
       .run(t.id, c.id, JSON.stringify({ ...t, title: 'Existing topic' }));
     const mapping = links();
     target.db.transaction(() => mergeModuleData(target.db, validateModuleData(data), mapping))();
+    target.db.transaction(() => mergeModuleData(target.db, validateModuleData(data), links()))();
     assert.equal(target.store.snapshot().curricula.length, 2);
     assert.equal(target.store.snapshot().topics.length, 2);
     assert.notEqual(mapping.studyCurricula.get(c.id), c.id);

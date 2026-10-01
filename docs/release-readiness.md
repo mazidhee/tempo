@@ -7,11 +7,7 @@ met belong to a later release; they do not keep this build open indefinitely.
 
 ## Current checkpoint
 
-Phase 1 is independently accepted at 9.2/10. Foundation is implemented,
-tested (40 tests at the checkpoint), built and exercised in real Electron with
-isolated SQLite, then committed/tagged at 33f3c19. Focus, Reflection and Restyle
-are now building in isolated branches from that tag. Integration and the whole
-app review remain pending. The installed desktop app is still the prior release.
+Phase1 is independently accepted at9.2/10. Foundation was committed/tagged at33f3c19. Focus, Reflection and Restyle are integrated in the required order. The full82-test suite and production build pass; full backups and shared flows are verified in real Electron. The independent master review is exercising the final packaged candidate. The desktop installation remains1.0.0 until review acceptance and the upgrade checks below.
 
 ## Remaining long-running milestones
 

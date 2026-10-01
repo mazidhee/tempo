@@ -8,11 +8,14 @@ import { habitStats, dateRange, shiftDay, collectiveYear } from '../../shared/ha
 import Heatmap from '../components/Heatmap';
 import { PageHeader, download, durationLabel } from '../components/ui';
 import Analytics from './Analytics';
+import { FocusBreakStatistics } from '../modules/focus/FocusBreakStatistics';
+import { useReflection } from '../modules/reflection/useReflection';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart';
 const focusChart = { focus: { label: 'Focus minutes', color: 'var(--chart-1)' } };
 const taskChart = { tasks: { label: 'Tasks completed', color: 'var(--chart-2)' } };
 export default function Statistics() {
   const { state } = useProductivity();
+  const { snapshot } = useReflection();
   const { active: habits, habits: allHabits, logs, today } = useHabitData();
   const [period, setPeriod] = useState('Week');
   const [start, setStart] = useState(shiftDay(today, -6));
@@ -94,7 +97,9 @@ export default function Statistics() {
       const name =
         group === 'Curriculum'
           ? s.link?.curriculumId
-            ? s.link.name
+            ? snapshot?.source.study.curricula.find((c) => c.id === s.link?.curriculumId)?.title ||
+              s.link.project ||
+              'Archived curriculum'
             : 'Unlinked'
           : group === 'Preset'
             ? s.presetName
@@ -108,7 +113,7 @@ export default function Statistics() {
       trend: [...buckets.values()],
       groups: Object.entries(totals).sort((a, b) => b[1] - a[1]),
     };
-  }, [logs, state.sessions, start, end, group, state.tasks]);
+  }, [logs, state.sessions, start, end, group, state.tasks, snapshot?.source.study.curricula]);
   const exportSessions = () => {
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
     download(
@@ -423,7 +428,9 @@ export default function Statistics() {
         </div>
         <Heatmap values={focusValues} unit="focus minutes" end={end} label="Focus activity" />
       </section>
-      <div data-focus-break-slot />
+      <div data-focus-break-slot>
+        <FocusBreakStatistics start={start} end={end} />
+      </div>
       <details
         className="legacy-analytics"
         open={advanced}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, Search } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
 import type { JournalEntry } from '../../../shared/reflection';
@@ -8,15 +9,20 @@ import { Input } from '../../components/ui/input';
 import { useReflection } from './useReflection';
 import { ActionError, Field, LoadState, Panel, ReflectionNav, useAction } from './ui';
 export default function Journal() {
+  const [params] = useSearchParams();
   const { snapshot } = useReflection(),
     action = useAction(),
-    [date, setDate] = useState(localDate()),
+    [date, setDate] = useState(params.get('date') || localDate()),
     [draft, setDraft] = useState(''),
-    [query, setQuery] = useState(''),
+    [query, setQuery] = useState(params.get('query') || ''),
     [start, setStart] = useState(''),
     [end, setEnd] = useState(''),
     [results, setResults] = useState<JournalEntry[] | null>(null),
     [searchError, setSearchError] = useState('');
+  useEffect(() => {
+    if (params.has('date')) setDate(params.get('date')!);
+    if (params.has('query')) setQuery(params.get('query')!);
+  }, [params]);
   const entry = snapshot?.journal.find((j) => j.date === date);
   useEffect(() => setDraft(entry?.text || ''), [date, entry?.updatedAt]);
   useEffect(() => {

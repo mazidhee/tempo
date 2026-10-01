@@ -6,13 +6,13 @@ import {
 } from '../../shared/focus';
 import type { Timer } from '../../shared/productivity';
 import type { HostsAdapter } from './hosts';
-import type { ProcessAdapter } from './processes';
+import { safeUserApp, type ProcessAdapter } from './processes';
 export class FocusGuard {
   active = false;
   error = '';
   repairedAt: string | null = null;
   private domains = '';
-  private seen = new Set<string>();
+  private seen = new Map<string, Set<number>>();
   private failedDomains: string | null = null;
   private cleanupFailed = false;
   private suspendedRunId: string | null = null;
@@ -63,22 +63,33 @@ export class FocusGuard {
         this.seen.clear();
         return;
       }
-      const apps = (await this.processes.list()).filter((a) => matchesApp(a.name, targets.apps));
-      const current = new Set(apps.map((a) => a.executable.toLowerCase()));
+      const apps = (await this.processes.list()).filter(
+        (a) => safeUserApp(a) && matchesApp(a.name, targets.apps),
+      );
+      const groups = new Map<string, typeof apps>();
       for (const app of apps) {
         const key = app.executable.toLowerCase();
-        if (!this.seen.has(key)) {
-          this.seen.add(key);
-          this.record(app.name);
+        groups.set(key, [...(groups.get(key) || []), app]);
+      }
+      const current = new Map<string, Set<number>>();
+      for (const [key, group] of groups) {
+        const pids = new Set(group.map((app) => app.pid)),
+          prior = this.seen.get(key);
+        current.set(key, pids);
+        this.seen.set(key, pids);
+        // Additional subprocesses are one continuing app presence. A wholly
+        // new set of PIDs is a reopening, even without an empty poll between.
+        if (!prior || ![...pids].some((pid) => prior.has(pid))) {
+          this.record(group[0].name);
           this.notify(
             settings.mode === 'gentle'
-              ? `${app.name} is on your Focus Guard list.`
-              : `Focus Guard is closing ${app.name}.`,
+              ? `${group[0].name} is on your Focus Guard list.`
+              : `Focus Guard is closing ${group[0].name}.`,
           );
         }
-        if (settings.mode === 'close') await this.processes.close(app);
+        if (settings.mode === 'close') for (const app of group) await this.processes.close(app);
       }
-      this.seen = new Set([...this.seen].filter((k) => current.has(k)));
+      this.seen = current;
     } catch (e) {
       this.error = `Focus Guard: ${(e as Error).message}`;
       throw e;

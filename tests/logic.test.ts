@@ -171,3 +171,7 @@ test('invalid durations and incomplete imported state are rejected', () => {
   assert.equal(validProductivity(s), false);
   assert.equal(validProductivity({ version: 1 }), false);
 });
+
+import './focus.test';
+import './reflection.test';
+import './backup.test';

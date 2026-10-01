@@ -1,4 +1,5 @@
-import type { Link, Phase, Productivity, Timer } from './productivity';
+import { localDate, type Link, type Phase, type Productivity, type Timer } from './productivity';
+import { validDate } from './habits';
 export interface Blocklist {
   id: string;
   name: string;
@@ -20,6 +21,14 @@ export interface FocusBreak {
   at: string;
   kind: 'attempt' | 'emergency';
   target: string;
+}
+export function focusEventsInRange(events: FocusBreak[], start = localDate(), end = start) {
+  if (!validDate(start) || !validDate(end) || end < start)
+    throw new Error('Choose a valid Focus history date range.');
+  return events.filter((event) => {
+    const day = localDate(new Date(event.at));
+    return day >= start && day <= end;
+  });
 }
 export interface RunningApp {
   pid: number;

@@ -8,7 +8,7 @@ import { useClock } from '../../hooks/useClock';
 import { useFocus } from './useFocus';
 import './focus.css';
 /** Integrator mounts this in app chrome, keeping exit reachable on every page. */
-export function FocusEmergency() {
+export function FocusEmergency({ compact = false }: { compact?: boolean }) {
   const { snapshot, error, run } = useFocus(),
     [open, setOpen] = useState(false),
     [phrase, setPhrase] = useState('');
@@ -26,14 +26,17 @@ export function FocusEmergency() {
       )}
       <Button
         variant="outline"
-        size="sm"
+        size={compact ? 'icon' : 'sm'}
+        aria-label="Emergency exit"
+        title="Emergency exit"
         onClick={() => {
+          setPhrase('');
           setOpen(true);
           void run(window.workspaceAPI.invoke('focus:emergencyBegin'));
         }}
       >
         <ShieldOff />
-        Emergency exit
+        {!compact && 'Emergency exit'}
       </Button>
       {open && (
         <Modal title="End focus and release Guard" onClose={() => setOpen(false)}>

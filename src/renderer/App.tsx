@@ -1,6 +1,9 @@
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { Search, X, Timer, EyeOff, Plus } from 'lucide-react';
+import { Search, X, Timer, EyeOff, Plus, BookOpen } from 'lucide-react';
+import { FocusEmergency } from './modules/focus/EmergencyExit';
+import { useFocus } from './modules/focus/useFocus';
+import type { JournalEntry } from '../shared/reflection';
 import Sidebar, { navigation } from './components/Sidebar';
 import RecoveryNotice from './components/RecoveryNotice';
 import { routeRegistry } from './registry/routes';
@@ -28,6 +31,28 @@ export default function App() {
   const navigate = useNavigate();
   const [command, setCommand] = useState(false);
   const [search, setSearch] = useState('');
+  const [journalResults, setJournalResults] = useState<JournalEntry[]>([]);
+  useEffect(() => {
+    if (!command || !search.trim()) {
+      setJournalResults([]);
+      return;
+    }
+    let alive = true;
+    const timeout = setTimeout(() => {
+      void window.workspaceAPI
+        .invoke('journal:search', { query: search })
+        .then((rows) => {
+          if (alive) setJournalResults(rows.slice(0, 5));
+        })
+        .catch(() => {
+          if (alive) setJournalResults([]);
+        });
+    }, 180);
+    return () => {
+      alive = false;
+      clearTimeout(timeout);
+    };
+  }, [command, search]);
   const [sidebarOpen, setSidebarOpen] = useState(
     () => localStorage.getItem('tempo-sidebar') !== 'collapsed',
   );
@@ -61,7 +86,17 @@ export default function App() {
     navigate(to);
     setCommand(false);
   };
-  const label = navigation.find((n) => n.to === location.pathname)?.label || 'Habits';
+  const secondaryLabels: Record<string, string> = {
+    '/journal': 'Journal',
+    '/history': 'History',
+    '/weekly': 'Weekly habits',
+    '/habits/today': 'Today’s habits',
+    '/analytics': 'Statistics',
+  };
+  const label =
+    navigation.find((n) => n.to === location.pathname)?.label ||
+    secondaryLabels[location.pathname] ||
+    (location.pathname.startsWith('/habits/') ? 'Habit details' : 'Workspace');
   return (
     <PrivacyContext.Provider value={privacy}>
       <SidebarProvider
@@ -122,6 +157,7 @@ export default function App() {
               <WindowControls />
             </div>
           </div>
+          <FocusSafety />
           {error && (
             <div className="error-banner" role="alert">
               {error}
@@ -204,6 +240,24 @@ export default function App() {
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                {journalResults.length > 0 && (
+                  <CommandGroup heading="Journal">
+                    {journalResults.map((entry) => (
+                      <CommandItem
+                        key={entry.date}
+                        value={`Journal ${search} ${entry.date}`}
+                        onSelect={() =>
+                          select(`/journal?date=${entry.date}&query=${encodeURIComponent(search)}`)
+                        }
+                      >
+                        <BookOpen />
+                        <span className="reflection-journal-line">
+                          {entry.date} - {entry.text.slice(0, 90)}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
                 <CommandGroup heading="Tasks">
                   <CommandItem
                     value={`Add task ${search}`}
@@ -245,6 +299,16 @@ export default function App() {
         <Toaster />
       </SidebarProvider>
     </PrivacyContext.Provider>
+  );
+}
+function FocusSafety() {
+  const { snapshot } = useFocus();
+  if (!snapshot || (snapshot.productivity.timer.startedAt === null && !snapshot.guard.error))
+    return null;
+  return (
+    <div className="focus-safety no-drag">
+      <FocusEmergency compact />
+    </div>
   );
 }
 function TimerBadge({ timer, onOpen }: { timer: TimerState; onOpen: () => void }) {

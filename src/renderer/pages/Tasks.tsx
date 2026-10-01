@@ -21,6 +21,7 @@ export default function Tasks() {
   const [view, setView] = useState('Today');
   const [quick, setQuick] = useState('');
   const [query, setQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [editing, setEditing] = useState<Task | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<Task | null>(null);
   const today = localDate();
@@ -37,7 +38,7 @@ export default function Tasks() {
     id: crypto.randomUUID(),
     title: title.trim(),
     due: view === 'Today' ? today : '',
-    priority: 'medium',
+    priority: priorityFilter === 'all' ? 'medium' : (priorityFilter as Task['priority']),
     project: '',
     tags: [],
     subtasks: [],
@@ -52,6 +53,7 @@ export default function Tasks() {
         (view === 'Completed' ? !!t.completedAt : !t.completedAt) &&
         (view !== 'Today' || (!!t.due && t.due <= today)) &&
         (view !== 'Upcoming' || t.due > today) &&
+        (priorityFilter === 'all' || t.priority === priorityFilter) &&
         `${t.title} ${t.project} ${t.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()),
     )
     .sort(
@@ -223,6 +225,17 @@ export default function Tasks() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
+        <select
+          className="input task-priority-filter"
+          aria-label="Filter task priority"
+          value={priorityFilter}
+          onChange={(event) => setPriorityFilter(event.target.value)}
+        >
+          <option value="all">All priorities</option>
+          <option value="high">High priority</option>
+          <option value="medium">Medium priority</option>
+          <option value="low">Low priority</option>
+        </select>
       </div>
       <form
         className="quick-add"

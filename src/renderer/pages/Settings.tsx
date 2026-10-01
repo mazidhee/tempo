@@ -188,8 +188,9 @@ function GeneralSettings() {
           </button>
         </div>
         <p className="muted small">
-          Import merges missing records. Existing records, current settings and your running timer
-          are kept. A safety copy of the database is saved before each import.
+          Import merges habits, tasks, focus history, Study and Reflection records. Existing records
+          and running timers are kept. An empty workspace also restores preferences and presets;
+          its timer stays idle and Focus Guard stays off. A safety copy is saved before import.
         </p>
         <input
           ref={input}
@@ -262,8 +263,8 @@ function GeneralSettings() {
         >
           <p className="muted">
             Missing habits, logs, tasks, presets and focus sessions will be added. Existing records
-            take precedence, and settings and the current timer are retained. We’ll save a database
-            safety copy first.
+            take precedence and running timers are retained. Empty workspaces recover preferences
+            and presets with an idle timer and Guard off. We’ll save a database safety copy first.
           </p>
           <div className="modal-actions">
             <button className="btn-secondary" disabled={busy} onClick={() => setPending(null)}>

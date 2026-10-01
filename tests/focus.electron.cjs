@@ -58,6 +58,18 @@ let savedDeadline, hostsFile;
       .getByRole('button', { name: 'Emergency exit', exact: true })
       .click();
     await page.getByLabel('Exit phrase').fill('I choose to end this focus');
+    await page.getByRole('button', { name: 'Keep focusing', exact: true }).click();
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await page
+      .locator('.focus-page')
+      .getByRole('button', { name: 'Emergency exit', exact: true })
+      .click();
+    assert.equal(await page.getByLabel('Exit phrase').inputValue(), '');
+    assert.equal(
+      await page.getByRole('button', { name: 'End focus', exact: true }).isDisabled(),
+      true,
+    );
+    await page.getByLabel('Exit phrase').fill('I choose to end this focus');
     await page.getByRole('button', { name: 'End focus', exact: true }).click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     assert.doesNotMatch(await fs.readFile(hostsFile, 'utf8'), /BEGIN TEMPO/);

@@ -17,7 +17,7 @@ import {
   windowsHostsRewrite,
 } from '../src/main/focus/hosts';
 import { FocusGuard } from '../src/main/focus/guard';
-import { safeUserApp } from '../src/main/focus/processes';
+import { safeUserApp, windowsProcessIdentity } from '../src/main/focus/processes';
 import { focusBackup } from '../src/main/focus/backup';
 import {
   defaultFocusSettings,
@@ -27,6 +27,7 @@ import {
   validateFocusSettings,
   reservedFocusShortcut,
   shortcutIdentity,
+  focusEventsInRange,
 } from '../src/shared/focus';
 import { defaultProductivity, newTimer, startTimer } from '../src/shared/productivity';
 function fixture(clock = () => 1000) {
@@ -426,6 +427,107 @@ test('Focus backup validation is strict and merges history without enabling Guar
   assert.throws(() => focusBackup.validate({ ...backup, events: [{}] }));
   db.close();
 });
+test('Focus event ranges include canonical local boundary days and reject impossible or reversed dates', () => {
+  const event = (id: string, at: string) => ({
+    id,
+    at,
+    runId: 'run',
+    kind: 'attempt' as const,
+    target: 'WhatsApp.exe',
+  });
+  const events = [
+    event('before', new Date(2026, 8, 30, 23, 59).toISOString()),
+    event('first', new Date(2026, 9, 1, 0, 0).toISOString()),
+    event('last', new Date(2026, 9, 2, 23, 59).toISOString()),
+    event('after', new Date(2026, 9, 3, 0, 0).toISOString()),
+  ];
+  assert.deepEqual(
+    focusEventsInRange(events, '2026-10-01', '2026-10-02').map((e) => e.id),
+    ['first', 'last'],
+  );
+  assert.throws(() => focusEventsInRange(events, '2026-02-30', '2026-03-01'));
+  assert.throws(() => focusEventsInRange(events, '2026-10-02', '2026-10-01'));
+});
+test('Guard counts each app presence once, detects rapid reopenings, and excludes Tempo and its own PID', async () => {
+  let listed = [
+    { pid: 7, name: 'WhatsApp.exe', executable: 'C:\\Apps\\WhatsApp.exe' },
+    { pid: 8, name: 'WhatsApp.exe', executable: 'C:\\Apps\\WhatsApp.exe' },
+  ];
+  const counts: string[] = [],
+    closed: number[] = [];
+  const guard = new FocusGuard(
+    {
+      async read() {
+        return '';
+      },
+      async replace() {},
+    },
+    {
+      async list() {
+        return listed;
+      },
+      async close(app) {
+        closed.push(app.pid);
+      },
+    },
+    (name) => counts.push(name),
+    () => {},
+  );
+  const settings = { ...defaultFocusSettings(), enabled: true, mode: 'close' as const },
+    timer = startTimer(defaultProductivity().timer, 1000);
+  await guard.sync(settings, timer);
+  assert.equal(counts.length, 1);
+  await guard.sync(settings, timer);
+  assert.equal(counts.length, 1);
+  listed.push({ ...listed[0], pid: 9 });
+  await guard.sync(settings, timer);
+  assert.equal(counts.length, 1);
+  listed = [
+    { ...listed[0], pid: 10 },
+    { ...listed[0], pid: 11 },
+  ];
+  await guard.sync(settings, timer);
+  assert.equal(counts.length, 2);
+  listed = [
+    { ...listed[0], pid: process.pid },
+    { ...listed[0], pid: 12, executable: 'C:\\Apps\\Tempo\\Tempo.exe' },
+  ];
+  await guard.sync(settings, timer);
+  assert.equal(counts.length, 2);
+  assert.ok(!closed.includes(process.pid));
+  assert.ok(!closed.includes(12));
+  assert.equal(
+    safeUserApp({ pid: process.pid, name: 'Editor.exe', executable: 'C:\\Apps\\Editor.exe' }),
+    false,
+  );
+});
+test('failed chosen-app close does not inflate attempts on subsequent polls', async () => {
+  let count = 0;
+  const app = { pid: 7, name: 'WhatsApp.exe', executable: 'C:\\Apps\\WhatsApp.exe' };
+  const guard = new FocusGuard(
+    {
+      async read() {
+        return '';
+      },
+      async replace() {},
+    },
+    {
+      async list() {
+        return [app];
+      },
+      async close() {
+        throw Error('Close denied');
+      },
+    },
+    () => count++,
+    () => {},
+  );
+  const settings = { ...defaultFocusSettings(), enabled: true, mode: 'close' as const },
+    timer = startTimer(defaultProductivity().timer, 1000);
+  await assert.rejects(() => guard.sync(settings, timer));
+  await assert.rejects(() => guard.sync(settings, timer));
+  assert.equal(count, 1);
+});
 test('fresh Focus restore recovers custom lists and shortcuts with Guard disabled, and configured devices keep their settings', () => {
   const { db, store } = fixture();
   const saved = {
@@ -447,3 +549,29 @@ test('fresh Focus restore recovers custom lists and shortcuts with Guard disable
   assert.deepEqual(store.settings().blocklists, saved.blocklists);
   db.close();
 });
+
+test(
+  'actual Windows identity guard allows only Tempo session and current executable',
+  { skip: process.platform !== 'win32' },
+  async () => {
+    const chosen = { pid: 700, name: 'Chosen.exe', executable: 'C:/UserApps/Chosen.exe' };
+    for (const [session, pathMatches, allowed] of [
+      [5, true, true],
+      [9, true, false],
+      [5, false, false],
+      [0, true, false],
+    ] as const) {
+      const mock = `function Get-CimInstance { param($ClassName,$Filter) if($Filter -eq 'ProcessId=900'){[pscustomobject]@{SessionId=5}}else{[pscustomobject]@{SessionId=${session};ExecutablePath='${pathMatches ? 'C:/UserApps/Chosen.exe' : 'C:/UserApps/Unrelated.exe'}'}} };`;
+      const script = mock + windowsProcessIdentity(chosen, 900) + "Write-Output 'allowed'";
+      const stdout = await new Promise<string>((resolve, reject) =>
+        execFile(
+          'powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-Command', script],
+          { windowsHide: true },
+          (err, out) => (err ? reject(err) : resolve(out.trim())),
+        ),
+      );
+      assert.equal(stdout, allowed ? 'allowed' : '');
+    }
+  },
+);

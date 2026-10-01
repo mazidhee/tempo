@@ -15,8 +15,15 @@ import { isDue, isComplete, logFor, collectiveYear } from '../../shared/habits';
 import Heatmap from '../components/Heatmap';
 import { HomeWidgets, homeWidgets, type HomeSlot } from '../registry/home';
 import { PageHeader, durationLabel } from '../components/ui';
-export default function Home({ journal = {} }: { journal?: Record<string, string> }) {
+import { useReflection } from '../modules/reflection/useReflection';
+export default function Home({ journal: suppliedJournal }: { journal?: Record<string, string> }) {
   const { state, update } = useProductivity();
+  const { snapshot } = useReflection();
+  const journal = useMemo(
+    () =>
+      suppliedJournal ?? Object.fromEntries((snapshot?.journal ?? []).map((j) => [j.date, j.text])),
+    [snapshot?.journal, suppliedJournal],
+  );
   const now = useMinuteClock();
   const { active: habits, habits: allHabits, logs } = useHabitData();
   const navigate = useNavigate();

@@ -1,6 +1,9 @@
 import type Database from './sqlite';
 import { studyBackup } from '../study/backup';
+import { focusBackup } from '../focus/backup';
+import { reflectionBackup } from '../reflection/backup';
 export interface BackupLinks {
+  activeTimer?: boolean;
   habits: Map<number, number>;
   studyTopics: Map<string, string>;
   studyCurricula: Map<string, string>;
@@ -12,7 +15,11 @@ export interface ModuleBackupAdapter {
   /** Called inside the backup import's single transaction; never begin another. */
   merge: (db: Database, value: unknown, links: BackupLinks) => void;
 }
-export const moduleBackupAdapters: ModuleBackupAdapter[] = [studyBackup];
+export const moduleBackupAdapters: ModuleBackupAdapter[] = [
+  studyBackup,
+  focusBackup,
+  reflectionBackup,
+];
 export function exportModuleData(db: Database) {
   return Object.fromEntries(
     moduleBackupAdapters.map((adapter) => [adapter.key, adapter.export(db)]),

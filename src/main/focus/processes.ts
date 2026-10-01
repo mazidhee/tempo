@@ -13,6 +13,11 @@ export class NoProcessAdapter implements ProcessAdapter {
   }
   async close() {}
 }
+/** Both graceful and force-close commands recheck Tempo's current Windows session. */
+export function windowsProcessIdentity(app: RunningApp, ownerPid = process.pid) {
+  const encodedPath = Buffer.from(app.executable, 'utf8').toString('base64');
+  return `$ErrorActionPreference='Stop'; $owner=Get-CimInstance Win32_Process -Filter 'ProcessId=${ownerPid}'; $p=Get-CimInstance Win32_Process -Filter 'ProcessId=${app.pid}'; $expected=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedPath}')); if(!$owner -or $owner.SessionId -le 0 -or !$p -or $p.SessionId -ne $owner.SessionId -or $p.ExecutablePath -ne $expected){exit 0};`;
+}
 /** Only user-session, non-system executable identities are offered or closed. */
 export class SystemProcessAdapter implements ProcessAdapter {
   async list(): Promise<RunningApp[]> {
@@ -23,7 +28,7 @@ export class SystemProcessAdapter implements ProcessAdapter {
           '-NoProfile',
           '-NonInteractive',
           '-Command',
-          'Get-CimInstance Win32_Process | Where-Object { $_.SessionId -gt 0 -and $_.ExecutablePath } | Select-Object ProcessId,Name,ExecutablePath | ConvertTo-Json -Compress',
+          `$ErrorActionPreference='Stop'; $owner=Get-CimInstance Win32_Process -Filter 'ProcessId=${process.pid}'; if(!$owner -or $owner.SessionId -le 0){exit 0}; Get-CimInstance Win32_Process | Where-Object { $_.SessionId -eq $owner.SessionId -and $_.ExecutablePath } | Select-Object ProcessId,Name,ExecutablePath | ConvertTo-Json -Compress`,
         ],
         { windowsHide: true, maxBuffer: 4 * 1024 * 1024 },
       );
@@ -59,8 +64,7 @@ export class SystemProcessAdapter implements ProcessAdapter {
     if (!(await exists())) return;
     if (process.platform === 'win32') {
       // The identity is rechecked before each close/kill, avoiding PID reuse.
-      const encodedPath = Buffer.from(app.executable, 'utf8').toString('base64');
-      const identity = `$p=Get-CimInstance Win32_Process -Filter 'ProcessId=${app.pid}'; $expected=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedPath}')); if(!$p -or $p.ExecutablePath -ne $expected){exit 0};`;
+      const identity = windowsProcessIdentity(app);
       await exec(
         'powershell.exe',
         [

@@ -1,4 +1,5 @@
 import type Database from '../database/sqlite';
+import { createHash } from 'node:crypto';
 import type { BackupLinks, ModuleBackupAdapter } from '../database/moduleBackup';
 import type { StudySnapshot } from '../../shared/study';
 import { validDate } from '../../shared/habits';
@@ -81,14 +82,20 @@ export function validateStudySnapshot(value: unknown): asserts value is StudySna
     )
       fail();
 }
+// Stable remapping makes repeated imports safe even when original IDs collide.
+const importedId = (...parts: string[]) =>
+  'import-' + createHash('sha256').update(JSON.stringify(parts)).digest('hex');
 function mergeStudy(db: Database, value: unknown, links: BackupLinks) {
   validateStudySnapshot(value);
   const old = new StudyStore(db).snapshot();
   for (const c of value.curricula) {
     const existing = old.curricula.find((item) => item.id === c.id);
-    const mapped = existing && existing.createdAt !== c.createdAt ? crypto.randomUUID() : c.id;
+    const mapped =
+      existing && existing.createdAt !== c.createdAt
+        ? importedId('curriculum', c.id, c.createdAt)
+        : c.id;
     links.studyCurricula.set(c.id, mapped);
-    if (!existing || mapped !== c.id)
+    if (!old.curricula.some((item) => item.id === mapped))
       db.prepare('INSERT INTO study_curricula(id,json) VALUES(?,?)').run(
         mapped,
         JSON.stringify({ ...c, id: mapped }),
@@ -99,7 +106,7 @@ function mergeStudy(db: Database, value: unknown, links: BackupLinks) {
     links.studyTopics.set(
       t.id,
       existing && existing.curriculumId !== links.studyCurricula.get(t.curriculumId)
-        ? crypto.randomUUID()
+        ? importedId('topic', t.id, links.studyCurricula.get(t.curriculumId)!)
         : t.id,
     );
   }
@@ -122,7 +129,12 @@ function mergeStudy(db: Database, value: unknown, links: BackupLinks) {
     const existing = old.reviews.find((item) => item.id === r.id);
     const topicId = links.studyTopics.get(r.topicId)!;
     if (existing && existing.topicId === topicId && existing.reviewedAt === r.reviewedAt) continue;
-    const review = { ...r, id: existing ? crypto.randomUUID() : r.id, topicId };
+    const review = {
+      ...r,
+      id: existing ? importedId('review', r.id, topicId, r.reviewedAt) : r.id,
+      topicId,
+    };
+    if (old.reviews.some((item) => item.id === review.id)) continue;
     db.prepare('INSERT INTO study_reviews(id,topic_id,reviewed_at,json) VALUES(?,?,?,?)').run(
       review.id,
       review.topicId,
