@@ -151,3 +151,6 @@ dist-electron
 .install-check/
 .package-stage/
 release/
+
+# Impeccable downloads its verified platform engine locally.
+.agents/skills/impeccable/scripts/bin/

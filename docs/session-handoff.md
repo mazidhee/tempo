@@ -8,6 +8,10 @@ Git so no context or version history is lost. **Do not resume development until
 the user asks.** The reviewer was stopped, recorded its progress and cleaned up
 its isolated Electron test processes. No background build/review work remains.
 
+Design tooling was subsequently installed while the app stayed paused. See
+[installed-skills.md](installed-skills.md) for the global skills, project
+Impeccable hooks, and the LobeHub credential-registration decision still pending.
+
 ## Start the next session here
 
 1. Read this file, [build-status.md](build-status.md),
