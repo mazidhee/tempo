@@ -1,5 +1,9 @@
 import type Database from '../database/sqlite';
-import type { ReflectionData, WeeklyReview } from '../../shared/reflection';
+import {
+  defaultReflectionSettings,
+  type ReflectionData,
+  type WeeklyReview,
+} from '../../shared/reflection';
 import { ReflectionStore } from './store';
 import {
   day,
@@ -185,9 +189,26 @@ export const reflectionBackup = {
         JSON.stringify(next),
       );
     }
-    db.prepare('INSERT OR IGNORE INTO reflection_settings(id,json) VALUES(1,?)').run(
-      JSON.stringify(value.settings),
-    );
+    const settingsRow = db.prepare('SELECT json FROM reflection_settings WHERE id=1').get() as
+      { json: string } | undefined;
+    const current = settingsRow ? validateSettings(JSON.parse(settingsRow.json)) : null;
+    const defaults = defaultReflectionSettings();
+    // An initialized default row is still an unconfigured device. Compare fields
+    // rather than JSON order, and preserve any device with custom times or flags.
+    const unconfigured =
+      !current ||
+      (Object.keys(current).length === 3 &&
+        (['morning', 'evening', 'weekly'] as const).every(
+          (kind) =>
+            Object.keys(current[kind]).length === (kind === 'weekly' ? 3 : 2) &&
+            current[kind].enabled === defaults[kind].enabled &&
+            current[kind].time === defaults[kind].time,
+        ) &&
+        current.weekly.day === defaults.weekly.day);
+    if (unconfigured)
+      db.prepare(
+        'INSERT INTO reflection_settings(id,json) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json',
+      ).run(JSON.stringify(value.settings));
     for (const d of value.deliveries)
       db.prepare(
         'INSERT OR IGNORE INTO reflection_reminder_deliveries(key,delivered_at) VALUES(?,?)',

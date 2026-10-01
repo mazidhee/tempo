@@ -49,9 +49,15 @@ Migration 200 runs within the Foundation ordered transactional migration runner.
 Its snapshot is ReflectionData plus deliveries `{key,deliveredAt}[]`. Validation checks
 all persisted record shapes, numeric/date/time bounds, review summary fields and
 duplicate primary keys before writing. Merge runs inside the caller's transaction,
-preserves local primary-key collisions/settings with INSERT OR IGNORE, reconstructs
+preserves local primary-key collisions with INSERT OR IGNORE, reconstructs
 FTS through triggers and remaps habit, studyTopics and studyCurricula identifiers via
 the integrator's maps. No owner data was used in validation.
+
+Reminder settings restore into missing rows or configurations that are exactly the
+default values, including persisted default rows with a different JSON key order.
+Imported opt-in flags remain data. A configured device retains its own times and
+enabled flags. A targeted backup regression verifies both initialization cases and
+preservation of custom disabled times.
 
 ## Behavior decisions
 

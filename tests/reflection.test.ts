@@ -446,3 +446,46 @@ test('backup validates before writes, preserves local collisions, rebuilds FTS a
   first.db.close();
   second.db.close();
 });
+test('backup restores opted-in reminder settings into missing or default rows and preserves configured devices', () => {
+  const original = fixture(),
+    settings = original.store.data().settings;
+  settings.morning = { enabled: true, time: '07:15' };
+  settings.weekly = { enabled: true, time: '19:30', day: 6 };
+  original.store.saveSettings(settings);
+  const backup = reflectionBackup.export(original.db);
+  for (const initialized of [false, true]) {
+    const restored = fixture();
+    if (initialized) {
+      const defaults = restored.store.data().settings;
+      // Persist defaults in a different property order, as an initialized UI may do.
+      restored.db
+        .prepare('INSERT INTO reflection_settings(id,json) VALUES(1,?)')
+        .run(
+          JSON.stringify({
+            weekly: {
+              day: defaults.weekly.day,
+              time: defaults.weekly.time,
+              enabled: defaults.weekly.enabled,
+            },
+            evening: defaults.evening,
+            morning: defaults.morning,
+          }),
+        );
+    }
+    restored.db.transaction(() =>
+      reflectionBackup.merge(restored.db, backup, { habits: new Map() }),
+    )();
+    assert.deepEqual(restored.store.data().settings, settings);
+    // A custom, disabled time also means the device has been configured.
+    const local = restored.store.data().settings;
+    local.morning = { enabled: false, time: '06:45' };
+    local.weekly = { enabled: false, time: '18:00', day: 0 };
+    restored.store.saveSettings(local);
+    restored.db.transaction(() =>
+      reflectionBackup.merge(restored.db, backup, { habits: new Map() }),
+    )();
+    assert.deepEqual(restored.store.data().settings, local);
+    restored.db.close();
+  }
+  original.db.close();
+});
