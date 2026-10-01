@@ -9,6 +9,10 @@ import Focus from '../pages/Focus';
 import Settings from '../pages/Settings';
 import HabitDetail from '../pages/HabitDetail';
 const Statistics = lazy(() => import('../pages/Statistics'));
+const Plan = lazy(() => import('../modules/reflection/Plan'));
+const Journal = lazy(() => import('../modules/reflection/Journal'));
+const Goals = lazy(() => import('../modules/reflection/Goals'));
+const Review = lazy(() => import('../modules/reflection/Review'));
 export interface RouteContext {
   zen: boolean;
   setZen: (value: boolean) => void;
@@ -19,6 +23,10 @@ export interface WorkspaceRoute {
 }
 export const routeRegistry: WorkspaceRoute[] = [
   { path: '/', render: () => <Home /> },
+  { path: '/plan', render: () => <Plan /> },
+  { path: '/journal', render: () => <Journal /> },
+  { path: '/goals', render: () => <Goals /> },
+  { path: '/review', render: () => <Review /> },
   {
     path: '/habits',
     render: () => (

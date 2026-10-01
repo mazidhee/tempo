@@ -1,12 +1,13 @@
 import type Database from './sqlite';
 import { studyMigration } from '../study/migration';
 import { focusMigration } from '../focus/migration';
+import { reflectionMigration } from '../reflection/migration';
 export interface Migration {
   version: number;
   name: string;
   apply: (db: Database) => void;
 }
-export const migrations: Migration[] = [studyMigration, focusMigration];
+export const migrations: Migration[] = [studyMigration, focusMigration, reflectionMigration];
 /** A batch gets one consistent safety snapshot; every migration is atomic. */
 export function runModuleMigrations(db: Database, backup = true) {
   if (
