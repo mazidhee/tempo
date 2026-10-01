@@ -7,12 +7,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  defaultProductivity,
-  finishTimer,
-  secondsLeft,
-  type Productivity,
-} from '../../shared/productivity';
+import { defaultProductivity, type Productivity } from '../../shared/productivity';
+import '../../shared/focus';
 type Update = (fn: (s: Productivity) => Productivity) => void;
 const Context = createContext<{
   state: Productivity;
@@ -30,19 +26,35 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
   const update: Update = useCallback(
     (fn) => {
       if (!ready) return;
-      const next = fn(ref.current);
+      const previous = ref.current;
+      const next = fn(previous);
       ref.current = next;
       setState(next);
       // Serialize disk writes: a pause can never be overwritten by an earlier tick.
       queue.current = queue.current
         .then(async () => {
           await window.habitAPI.saveProductivity(next);
+          const snapshot =
+            JSON.stringify(next.timer) !== JSON.stringify(previous.timer)
+              ? await window.workspaceAPI.invoke('focus:legacyTimer', {
+                  expectedRunId: previous.timer.runId,
+                  timer: next.timer,
+                })
+              : await window.workspaceAPI.invoke('focus:snapshot');
+          ref.current = snapshot.productivity;
+          setState(snapshot.productivity);
+          window.dispatchEvent(new Event('workspace-data-changed'));
         })
-        .catch((e) =>
+        .catch(async (e) => {
+          const actual = await window.workspaceAPI.invoke('focus:snapshot').catch(() => null);
+          if (actual) {
+            ref.current = actual.productivity;
+            setState(actual.productivity);
+          }
           setError(
             `Could not save your changes: ${e.message}. Keep the app open and export a backup.`,
-          ),
-        );
+          );
+        });
     },
     [ready],
   );
@@ -50,6 +62,7 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
     let alive = true;
     window.habitAPI
       .getProductivity()
+      .then(async () => (await window.workspaceAPI.invoke('focus:snapshot')).productivity)
       .then((s) => {
         if (alive) {
           ref.current = s;
@@ -65,47 +78,12 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
     };
   }, []);
   useEffect(() => {
-    if (!ready) return;
-    const tick = () => {
-      const time = Date.now();
-      const s = ref.current;
-      if (s.timer.deadline !== null && secondsLeft(s.timer, time) <= 0) {
-        update((current) => finishTimer(current, time));
-        const message = `${s.timer.phase === 'focus' ? 'Focus session' : 'Break'} complete. ${s.timer.phase === 'focus' ? 'Time to recharge.' : 'Ready when you are.'}`;
-        if (s.settings.notifications)
-          window.habitAPI
-            .notify(message)
-            .catch(() => setError('Notifications are unavailable on this device.'));
-        if (s.settings.sound) {
-          try {
-            const audio = new AudioContext();
-            const oscillator = audio.createOscillator();
-            const gain = audio.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 660;
-            gain.gain.setValueAtTime(0.12, audio.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.7);
-            oscillator.connect(gain);
-            gain.connect(audio.destination);
-            oscillator.start();
-            oscillator.stop(audio.currentTime + 0.7);
-            oscillator.onended = () => void audio.close();
-          } catch {
-            /* Audio is optional. */
-          }
-        }
-      }
-    };
-    tick();
-    const id = window.setInterval(tick, 250);
-    window.addEventListener('focus', tick);
-    document.addEventListener('visibilitychange', tick);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('focus', tick);
-      document.removeEventListener('visibilitychange', tick);
-    };
-  }, [ready, update]);
+    return window.workspaceAPI.on('focus:changed', (snapshot) => {
+      ref.current = snapshot.productivity;
+      setState(snapshot.productivity);
+      window.dispatchEvent(new Event('workspace-data-changed'));
+    });
+  }, []);
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {

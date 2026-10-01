@@ -4,6 +4,7 @@ import { getDb } from '../database/db';
 import { validProductivity, localDate, type Productivity } from '../../shared/productivity';
 import { normalizeHabit, engineFields } from '../../shared/habitValidation';
 import { validDate } from '../../shared/habits';
+import { preserveMainFocus } from '../focus/store';
 export function registerProductivityHandlers() {
   ipcMain.handle('productivity:get', () =>
     JSON.parse(
@@ -14,7 +15,8 @@ export function registerProductivityHandlers() {
   ipcMain.handle('productivity:save', (_e, state: unknown) => {
     if (!validProductivity(state))
       throw new Error('Invalid productivity data. Nothing was changed.');
-    getDb().prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(state));
+    const next = preserveMainFocus(getDb(), state);
+    getDb().prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(next));
     return true;
   });
   ipcMain.handle('productivity:notify', (_e, body: string) => {
