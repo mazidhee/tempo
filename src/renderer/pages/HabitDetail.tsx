@@ -17,9 +17,16 @@ import Heatmap from '../components/Heatmap';
 import HabitAction from '../components/HabitAction';
 import HabitForm from '../components/HabitForm';
 import { PageHeader } from '../components/ui';
-export default function HabitDetail() {
-  const { id } = useParams(),
-    { habits, logs, today, mutate, loading, error } = useHabitData();
+export default function HabitDetail({
+  habitId,
+  embedded = false,
+}: {
+  habitId?: number;
+  embedded?: boolean;
+}) {
+  const { id: routeId } = useParams();
+  const id = habitId ?? routeId;
+  const { habits, logs, today, mutate, loading, error } = useHabitData();
   const habit = habits.find((h) => h.id === Number(id));
   const [editing, setEditing] = useState(false),
     [pauseStart, setPauseStart] = useState(today),
@@ -64,12 +71,13 @@ export default function HabitDetail() {
   };
   return (
     <div className="page habit-detail">
-      <Link className="text-link" to="/habits">
-        <ArrowLeft />
-        All habits
-      </Link>
+      {!embedded && (
+        <Link className="text-link" to="/habits">
+          <ArrowLeft />
+          All habits
+        </Link>
+      )}
       <PageHeader
-        eyebrow="ONE HABIT, OVER TIME"
         title={habit.name}
         description={habit.description || 'A little progress, one due occurrence at a time.'}
         action={

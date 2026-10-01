@@ -16,7 +16,6 @@ export default function History() {
   return (
     <div className="page habit-history">
       <PageHeader
-        eyebrow="THE DAYS BEHIND YOU"
         title="Habit history."
         description="Notes, slips, freezes and missed reasons stay with their original dates."
       />

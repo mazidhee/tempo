@@ -52,7 +52,6 @@ export default function Today() {
   return (
     <div className="page habit-checkin">
       <PageHeader
-        eyebrow="YOUR DAILY RHYTHM"
         title="Small commitments, kept."
         description={new Date(now).toLocaleDateString(undefined, { dateStyle: 'full' })}
         action={

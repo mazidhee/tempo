@@ -1,7 +1,9 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { heatmapDays, parseDay, shiftDay } from '../../shared/analytics';
 import { localDate } from '../../shared/productivity';
+import { usePrivacy } from '../hooks/PrivacyContext';
 import type { HabitDay } from '../../shared/habits';
+const heatmapMetrics = { tooltipWidth: 320, viewportInset: 8, tooltipOffset: 36 };
 const emptyValues: Record<string, number> = {};
 export default function Heatmap({
   values = emptyValues,
@@ -9,13 +11,20 @@ export default function Heatmap({
   unit = 'completions',
   end = localDate(),
   label = 'Habit activity',
+  journal = {},
 }: {
   values?: Record<string, number>;
   details?: Record<string, HabitDay>;
   unit?: string;
   end?: string;
   label?: string;
+  journal?: Record<string, string>;
 }) {
+  const privacy = usePrivacy();
+  const scroll = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scroll.current) scroll.current.scrollLeft = scroll.current.scrollWidth;
+  }, [end]);
   const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
   const [activeDate, setActiveDate] = useState(end);
   const helpId = useId();
@@ -56,7 +65,7 @@ export default function Heatmap({
         Use up and down arrows for adjacent days, left and right for weeks, Home for the first day
         and End for the last. Tab leaves the calendar.
       </p>
-      <div className="heatmap-scroll">
+      <div className="heatmap-scroll" ref={scroll}>
         <div
           className="heatmap-months"
           style={{ gridTemplateColumns: `26px repeat(${weeks.length}, 1fr)` }}
@@ -116,22 +125,36 @@ export default function Heatmap({
                       : 0;
                   const text = d
                     ? info
-                      ? `${parseDay(d.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}: ${info.done}/${info.due} done${info.neutral ? ' · not due' : ` · ${info.percent}%`}\n${info.missed.length ? 'Missed: ' + info.missed.join(', ') : 'No missed habits'}${info.freezes.length ? '\nFreezes: ' + info.freezes.join(', ') : ''}`
+                      ? `${parseDay(d.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}: ${info.done}/${info.due} done${info.neutral ? ' · not due' : ` · ${info.percent}%`}\n${info.missed.length ? 'Missed: ' + (privacy ? info.missed.length + ' habits' : info.missed.join(', ')) : 'No missed habits'}${info.freezes.length ? '\nFreezes: ' + (privacy ? info.freezes.length + ' habits' : info.freezes.join(', ')) : ''}`
                       : `${parseDay(d.date).toLocaleDateString(undefined, { dateStyle: 'medium' })}: ${Number(d.value.toFixed(1))} ${unit}`
                     : '';
+                  const tooltip =
+                    text +
+                    (d && !privacy && journal[d.date] ? '\nJournal: ' + journal[d.date] : '');
                   return d ? (
                     <button
                       key={d.date}
                       data-date={d.date}
                       tabIndex={d.date === activeDate ? 0 : -1}
                       className={`heat-cell level-${level} ${info?.neutral ? 'neutral' : ''} ${info?.freezes.length ? 'hatched' : ''}`}
-                      aria-label={text}
+                      aria-label={tooltip}
                       onMouseEnter={(e) => {
                         const r = e.currentTarget.getBoundingClientRect();
                         setTip({
-                          text,
-                          x: Math.min(r.left, window.innerWidth - 245),
-                          y: r.top - 36,
+                          text: tooltip,
+                          x: Math.max(
+                            heatmapMetrics.viewportInset,
+                            Math.min(
+                              r.left,
+                              window.innerWidth -
+                                heatmapMetrics.tooltipWidth -
+                                heatmapMetrics.viewportInset,
+                            ),
+                          ),
+                          y: Math.max(
+                            heatmapMetrics.viewportInset,
+                            r.top - heatmapMetrics.tooltipOffset,
+                          ),
                         });
                       }}
                       onMouseLeave={() => setTip(null)}
@@ -139,9 +162,20 @@ export default function Heatmap({
                         setActiveDate(d.date);
                         const r = e.currentTarget.getBoundingClientRect();
                         setTip({
-                          text,
-                          x: Math.min(r.left, window.innerWidth - 245),
-                          y: r.top - 36,
+                          text: tooltip,
+                          x: Math.max(
+                            heatmapMetrics.viewportInset,
+                            Math.min(
+                              r.left,
+                              window.innerWidth -
+                                heatmapMetrics.tooltipWidth -
+                                heatmapMetrics.viewportInset,
+                            ),
+                          ),
+                          y: Math.max(
+                            heatmapMetrics.viewportInset,
+                            r.top - heatmapMetrics.tooltipOffset,
+                          ),
                         });
                       }}
                       onBlur={() => setTip(null)}

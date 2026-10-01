@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, Timer, Pencil, Trash2, ListTodo, CalendarDays, Search } from 'lucide-react';
+import { Plus, Check, Timer, Pencil, Trash2, ListTodo, Search } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { localDate, newTimer, focusRequest, type Task } from '../../shared/productivity';
 import { PageHeader, Empty, Modal } from '../components/ui';
+import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../components/ui/table';
+const taskFeatures = tableFeatures({});
+const taskColumns = createColumnHelper<typeof taskFeatures, Task>();
 export default function Tasks() {
   const { state, update } = useProductivity();
   const navigate = useNavigate();
@@ -71,12 +82,118 @@ export default function Tasks() {
     }));
     navigate('/focus');
   };
+  const columns = useMemo(
+    () =>
+      taskColumns.columns([
+        taskColumns.display({
+          id: 'task',
+          header: 'Task',
+          cell: ({ row }) => {
+            const task = row.original;
+            return (
+              <div className="task-table-title">
+                <button
+                  className={`check-button ${task.completedAt ? 'checked' : ''}`}
+                  aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
+                  aria-pressed={!!task.completedAt}
+                  onClick={() => toggle(task)}
+                >
+                  {task.completedAt && <Check />}
+                </button>
+                <div>
+                  <strong className={task.completedAt ? 'done-text' : ''}>{task.title}</strong>
+                  <div className="task-meta">
+                    {task.tags.map((tag) => (
+                      <span className="tag" key={tag}>
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  {task.subtasks.length > 0 && (
+                    <div className="subtasks">
+                      {task.subtasks.map((sub) => (
+                        <label key={sub.id}>
+                          <input
+                            type="checkbox"
+                            checked={sub.done}
+                            onChange={() =>
+                              save({
+                                ...task,
+                                subtasks: task.subtasks.map((x) =>
+                                  x.id === sub.id ? { ...x, done: !x.done } : x,
+                                ),
+                              })
+                            }
+                          />
+                          <span className={sub.done ? 'done-text' : ''}>{sub.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          },
+        }),
+        taskColumns.accessor('due', {
+          header: 'Due',
+          cell: ({ row }) => (
+            <span
+              className={
+                row.original.due < today && !row.original.completedAt && row.original.due
+                  ? 'overdue'
+                  : ''
+              }
+            >
+              {row.original.due === today ? 'Today' : row.original.due || 'No date'}
+            </span>
+          ),
+        }),
+        taskColumns.accessor('priority', { header: 'Priority' }),
+        taskColumns.accessor('project', {
+          header: 'Project',
+          cell: ({ row }) => row.original.project || '—',
+        }),
+        taskColumns.display({
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => (
+            <div className="row-actions">
+              {!row.original.completedAt && (
+                <button
+                  className="icon-button"
+                  aria-label={`Start focus session for ${row.original.title}`}
+                  onClick={() => focus(row.original)}
+                >
+                  <Timer />
+                </button>
+              )}
+              <button
+                className="icon-button"
+                aria-label={`Edit ${row.original.title}`}
+                onClick={() => setEditing(row.original)}
+              >
+                <Pencil />
+              </button>
+              <button
+                className="icon-button"
+                aria-label={`Delete ${row.original.title}`}
+                onClick={() => setDeleting(row.original)}
+              >
+                <Trash2 />
+              </button>
+            </div>
+          ),
+        }),
+      ]),
+    [state.tasks, state.timer, state.presets, view],
+  );
+  const table = useTable({ features: taskFeatures, columns, data: tasks });
   return (
     <div className="page">
       <PageHeader
-        eyebrow="MAKE SPACE FOR WHAT MATTERS"
         title="Tasks"
-        description="A clear mind starts with a clear list."
+        description="Plan, complete and focus on your work."
         action={
           <button className="btn-primary" onClick={() => setEditing(null)}>
             <Plus />
@@ -134,9 +251,9 @@ export default function Tasks() {
             {view === 'Today'
               ? 'Today’s priorities'
               : view === 'Completed'
-                ? 'Done & dusted'
+                ? 'Completed tasks'
                 : view === 'Upcoming'
-                  ? 'On the horizon'
+                  ? 'Upcoming tasks'
                   : 'Your open tasks'}
           </h2>
           <span className="count-badge">{tasks.length}</span>
@@ -162,94 +279,30 @@ export default function Tasks() {
             }
           />
         ) : (
-          tasks.map((task) => (
-            <article className={`task-row ${task.completedAt ? 'is-completed' : ''}`} key={task.id}>
-              <div className="task-row-main">
-                <button
-                  className={`check-button ${task.completedAt ? 'checked' : ''}`}
-                  aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
-                  aria-pressed={!!task.completedAt}
-                  onClick={() => toggle(task)}
-                >
-                  {task.completedAt && <Check />}
-                </button>
-                <div className="task-details">
-                  <strong>{task.title}</strong>
-                  <div className="task-meta">
-                    {task.due && (
-                      <span className={task.due < today && !task.completedAt ? 'overdue' : ''}>
-                        <CalendarDays />
-                        {task.due === today ? 'Today' : task.due}
-                        {task.due < today && !task.completedAt ? ' · overdue' : ''}
-                      </span>
-                    )}
-                    <span className={`priority ${task.priority}`}>
-                      <i />
-                      {task.priority}
-                    </span>
-                    {task.project && <span>{task.project}</span>}
-                    {task.tags.map((tag) => (
-                      <span className="tag" key={tag}>
-                        #{tag}
-                      </span>
-                    ))}
-                    {task.subtasks.length > 0 && (
-                      <span>
-                        {task.subtasks.filter((x) => x.done).length}/{task.subtasks.length} subtasks
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="row-actions">
-                  {!task.completedAt && (
-                    <button
-                      className="icon-button"
-                      aria-label={`Start focus session for ${task.title}`}
-                      title="Start focus session"
-                      onClick={() => focus(task)}
-                    >
-                      <Timer />
-                    </button>
-                  )}
-                  <button
-                    className="icon-button"
-                    aria-label={`Edit ${task.title}`}
-                    onClick={() => setEditing(task)}
-                  >
-                    <Pencil />
-                  </button>
-                  <button
-                    className="icon-button"
-                    aria-label={`Delete ${task.title}`}
-                    onClick={() => setDeleting(task)}
-                  >
-                    <Trash2 />
-                  </button>
-                </div>
-              </div>
-              {task.subtasks.length > 0 && (
-                <div className="subtasks">
-                  {task.subtasks.map((sub) => (
-                    <label key={sub.id}>
-                      <input
-                        type="checkbox"
-                        checked={sub.done}
-                        onChange={() =>
-                          save({
-                            ...task,
-                            subtasks: task.subtasks.map((x) =>
-                              x.id === sub.id ? { ...x, done: !x.done } : x,
-                            ),
-                          })
-                        }
-                      />
-                      <span className={sub.done ? 'done-text' : ''}>{sub.title}</span>
-                    </label>
+          <Table className="tasks-data-table">
+            <TableHeader>
+              {table.getHeaderGroups().map((group) => (
+                <TableRow key={group.id}>
+                  {group.headers.map((header) => (
+                    <TableHead key={header.id} scope="col">
+                      <table.FlexRender header={header} />
+                    </TableHead>
                   ))}
-                </div>
-              )}
-            </article>
-          ))
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getAllCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      <table.FlexRender cell={cell} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
       <p className="muted page-footnote">

@@ -1,16 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Timer, CircleCheck, ListTodo, TrendingUp, Download } from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { useHabitData } from '../hooks/useHabitData';
 import { localDate } from '../../shared/productivity';
@@ -18,6 +8,9 @@ import { habitStats, dateRange, shiftDay, collectiveYear } from '../../shared/ha
 import Heatmap from '../components/Heatmap';
 import { PageHeader, download, durationLabel } from '../components/ui';
 import Analytics from './Analytics';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart';
+const focusChart = { focus: { label: 'Focus minutes', color: 'var(--chart-1)' } };
+const taskChart = { tasks: { label: 'Tasks completed', color: 'var(--chart-2)' } };
 export default function Statistics() {
   const { state } = useProductivity();
   const { active: habits, habits: allHabits, logs, today } = useHabitData();
@@ -99,11 +92,15 @@ export default function Statistics() {
     const totals: Record<string, number> = {};
     sessions.forEach((s) => {
       const name =
-        group === 'Preset'
-          ? s.presetName
-          : group === 'Task / habit'
-            ? s.link?.name || 'Unlinked'
-            : s.link?.project || 'Personal';
+        group === 'Curriculum'
+          ? s.link?.curriculumId
+            ? s.link.name
+            : 'Unlinked'
+          : group === 'Preset'
+            ? s.presetName
+            : group === 'Task / habit'
+              ? s.link?.name || 'Unlinked'
+              : s.link?.project || 'Personal';
       totals[name] = (totals[name] || 0) + s.duration;
     });
     return {
@@ -137,9 +134,8 @@ export default function Statistics() {
   return (
     <div className="page statistics-page">
       <PageHeader
-        eyebrow="NOTICE YOUR PROGRESS"
-        title="Small steps add up."
-        description="A thoughtful look at your habits, attention and accomplishments."
+        title="Statistics"
+        description="Habit consistency, completed tasks and focus time."
         action={
           <button className="btn-secondary" onClick={exportSessions}>
             <Download />
@@ -246,14 +242,8 @@ export default function Statistics() {
             role="img"
             aria-label={`Focus trend, ${Number((total / 60).toFixed(1))} minutes across ${trend.length} periods`}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={focusChart} className="chart-frame">
               <AreaChart data={trend}>
-                <defs>
-                  <linearGradient id="focus-gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 6" />
                 <XAxis
                   dataKey="date"
@@ -271,25 +261,18 @@ export default function Statistics() {
                   axisLine={false}
                   width={35}
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    color: 'var(--text)',
-                  }}
-                  formatter={(n) => [`${Number(Number(n ?? 0).toFixed(1))} min`, 'Focus']}
-                />
+                <ChartTooltip content={<ChartTooltipContent />} />
                 <Area
                   type="monotone"
                   dataKey="focus"
-                  stroke="var(--accent)"
-                  fill="url(#focus-gradient)"
+                  stroke="var(--color-focus)"
+                  fill="var(--color-focus)"
+                  fillOpacity={0.08}
                   strokeWidth={2}
                   isAnimationActive={false}
                 />
               </AreaChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </section>
         <section className="panel">
@@ -305,7 +288,7 @@ export default function Statistics() {
             role="img"
             aria-label={`${tasks.length} tasks completed across ${trend.length} periods`}
           >
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={taskChart} className="chart-frame">
               <BarChart data={trend}>
                 <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 6" />
                 <XAxis
@@ -325,24 +308,17 @@ export default function Statistics() {
                   tickLine={false}
                   axisLine={false}
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    color: 'var(--text)',
-                  }}
-                />
+                <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
                   dataKey="tasks"
                   name="Tasks completed"
-                  fill="var(--accent)"
+                  fill="var(--color-tasks)"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={24}
                   isAnimationActive={false}
                 />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </section>
       </div>
@@ -358,7 +334,7 @@ export default function Statistics() {
             value={group}
             onChange={(e) => setGroup(e.target.value)}
           >
-            {['Project', 'Task / habit', 'Preset'].map((g) => (
+            {['Project', 'Curriculum', 'Task / habit', 'Preset'].map((g) => (
               <option key={g}>{g}</option>
             ))}
           </select>
@@ -447,6 +423,7 @@ export default function Statistics() {
         </div>
         <Heatmap values={focusValues} unit="focus minutes" end={end} label="Focus activity" />
       </section>
+      <div data-focus-break-slot />
       <details
         className="legacy-analytics"
         open={advanced}

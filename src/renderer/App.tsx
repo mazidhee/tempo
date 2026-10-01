@@ -1,27 +1,41 @@
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowUpRight, Timer, EyeOff } from 'lucide-react';
+import { Search, X, Timer, EyeOff, Plus } from 'lucide-react';
 import Sidebar, { navigation } from './components/Sidebar';
 import RecoveryNotice from './components/RecoveryNotice';
 import { routeRegistry } from './registry/routes';
 import { WindowControls } from './components/WindowControls';
 import { Modal } from './components/ui';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from './components/ui/command';
+import { Toaster } from './components/ui/sonner';
+import { SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
+import { newTimer, startTimer, localDate } from '../shared/productivity';
 import { useProductivity } from './hooks/ProductivityProvider';
 import { PrivacyContext } from './hooks/PrivacyContext';
 import { secondsLeft, type Timer as TimerState } from '../shared/productivity';
 import { useClock, useMinuteClock } from './hooks/useClock';
 export default function App() {
-  const { state, ready, error, dismiss } = useProductivity();
+  const { state, update, ready, error, dismiss } = useProductivity();
   const now = useMinuteClock();
   const location = useLocation();
   const navigate = useNavigate();
   const [command, setCommand] = useState(false);
   const [search, setSearch] = useState('');
-  const [index, setIndex] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => localStorage.getItem('tempo-sidebar') !== 'collapsed',
+  );
   const [zen, setZen] = useState(false);
   const [privacy, setPrivacy] = useState(localStorage.getItem('tempo-privacy') === 'true');
   useEffect(() => {
     localStorage.setItem('tempo-privacy', String(privacy));
+    document.documentElement.classList.toggle('privacy', privacy);
   }, [privacy]);
   const main = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
@@ -33,7 +47,6 @@ export default function App() {
         e.preventDefault();
         setCommand((c) => !c);
         setSearch('');
-        setIndex(0);
       }
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
@@ -44,11 +57,6 @@ export default function App() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
-  const commands = [
-    ...navigation,
-    { to: '/weekly', label: 'Weekly habit view', icon: Timer },
-    { to: '/history', label: 'Habit history', icon: Timer },
-  ].filter((n) => n.label.toLowerCase().includes(search.toLowerCase()));
   const select = (to: string) => {
     navigate(to);
     setCommand(false);
@@ -56,7 +64,12 @@ export default function App() {
   const label = navigation.find((n) => n.to === location.pathname)?.label || 'Habits';
   return (
     <PrivacyContext.Provider value={privacy}>
-      <div
+      <SidebarProvider
+        open={sidebarOpen}
+        onOpenChange={(open) => {
+          setSidebarOpen(open);
+          localStorage.setItem('tempo-sidebar', open ? 'expanded' : 'collapsed');
+        }}
         className={`app-shell ${zen && location.pathname === '/focus' ? 'zen' : ''} ${privacy ? 'privacy' : ''}`}
       >
         <a className="skip-link" href="#main-content">
@@ -66,13 +79,14 @@ export default function App() {
           openCommand={() => {
             setCommand(true);
             setSearch('');
-            setIndex(0);
           }}
         />
         <div className="main-shell">
           <div className="topbar drag-region">
             <div className="breadcrumb">
-              Workspace<span>/</span>
+              <SidebarTrigger className="no-drag" />
+              <span className="breadcrumb-workspace">Workspace</span>
+              <span>/</span>
               <strong>{label}</strong>
             </div>
             <div className="topbar-actions no-drag">
@@ -101,7 +115,6 @@ export default function App() {
                 onClick={() => {
                   setCommand(true);
                   setSearch('');
-                  setIndex(0);
                 }}
               >
                 <Search />
@@ -143,50 +156,94 @@ export default function App() {
           </main>
         </div>
         {command && (
-          <Modal title="Go somewhere" onClose={() => setCommand(false)}>
-            <input
-              className="input command-input"
-              aria-label="Search commands"
-              placeholder="Search your workspace…"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setIndex(0);
-              }}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  setIndex((i) => (i + 1) % Math.max(1, commands.length));
-                }
-                if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setIndex((i) => (i - 1 + commands.length) % Math.max(1, commands.length));
-                }
-                if (e.key === 'Enter' && commands[index]) {
-                  e.preventDefault();
-                  select(commands[index].to);
-                }
-              }}
-            />
-            <div className="command-list">
-              {commands.map(({ to, label, icon: Icon }, i) => (
-                <button
-                  className={`command-option ${i === index ? 'selected' : ''}`}
-                  key={to}
-                  onClick={() => select(to)}
-                >
-                  <Icon />
-                  <span>{label}</span>
-                  <ArrowUpRight />
-                </button>
-              ))}
-              {!commands.length && <p className="muted">No matching commands.</p>}
-            </div>
+          <Modal title="Search workspace" onClose={() => setCommand(false)}>
+            <Command>
+              <CommandInput
+                aria-label="Search commands"
+                placeholder="Navigate, focus, or add a task…"
+                value={search}
+                onValueChange={setSearch}
+              />
+              <CommandList>
+                <CommandEmpty>No matching commands.</CommandEmpty>
+                <CommandGroup heading="Navigate">
+                  {[
+                    ...navigation,
+                    { to: '/weekly', label: 'Weekly habit view', icon: Timer },
+                    { to: '/habits/today', label: 'Today and manage habits', icon: Timer },
+                    { to: '/history', label: 'Habit history', icon: Timer },
+                  ].map(({ to, label, icon: Icon }) => (
+                    <CommandItem key={to} value={label} onSelect={() => select(to)}>
+                      <Icon />
+                      <span>{label}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <CommandGroup heading="Focus presets">
+                  {state.presets.map((preset) => (
+                    <CommandItem
+                      key={preset.id}
+                      value={`Start focus ${preset.name}`}
+                      onSelect={() => {
+                        if (
+                          (state.timer.deadline || state.timer.startedAt) &&
+                          !window.confirm(
+                            'Replace the current focus session? Unfinished time will not be logged.',
+                          )
+                        )
+                          return;
+                        update((s) => ({
+                          ...s,
+                          timer: startTimer(newTimer(preset, 'focus', 0), Date.now()),
+                        }));
+                        select('/focus');
+                      }}
+                    >
+                      <Timer />
+                      <span>Start {preset.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <CommandGroup heading="Tasks">
+                  <CommandItem
+                    value={`Add task ${search}`}
+                    onSelect={() => {
+                      const title = search.trim().replace(/^add task\s*/i, '');
+                      if (!title) {
+                        select('/tasks');
+                        return;
+                      }
+                      update((s) => ({
+                        ...s,
+                        tasks: [
+                          ...s.tasks,
+                          {
+                            id: crypto.randomUUID(),
+                            title,
+                            due: localDate(),
+                            priority: 'medium',
+                            project: '',
+                            tags: [],
+                            subtasks: [],
+                            createdAt: new Date().toISOString(),
+                            completedAt: null,
+                          },
+                        ],
+                      }));
+                      select('/tasks');
+                    }}
+                  >
+                    <Plus />
+                    <span>{search.trim() ? `Add task “${search.trim()}”` : 'Add a task'}</span>
+                  </CommandItem>
+                </CommandGroup>
+              </CommandList>
+            </Command>
             <p className="command-hint muted">↑ ↓ to navigate · Enter to open · Esc to close</p>
           </Modal>
         )}
-      </div>
+        <Toaster />
+      </SidebarProvider>
     </PrivacyContext.Provider>
   );
 }

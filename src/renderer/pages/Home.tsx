@@ -13,8 +13,9 @@ import {
 } from '../../shared/productivity';
 import { isDue, isComplete, logFor, collectiveYear } from '../../shared/habits';
 import Heatmap from '../components/Heatmap';
+import { HomeWidgets, homeWidgets, type HomeSlot } from '../registry/home';
 import { PageHeader, durationLabel } from '../components/ui';
-export default function Home() {
+export default function Home({ journal = {} }: { journal?: Record<string, string> }) {
   const { state, update } = useProductivity();
   const now = useMinuteClock();
   const { active: habits, habits: allHabits, logs } = useHabitData();
@@ -73,9 +74,8 @@ export default function Home() {
   return (
     <div className="page home-page">
       <PageHeader
-        eyebrow="A LITTLE BETTER, EVERY DAY"
         title={`${greeting}${state.settings.name ? `, ${state.settings.name}` : ''}.`}
-        description="Small steps. Clear intentions. A space to make them happen."
+        description="Your daily workspace."
         action={
           <button className="btn-primary" onClick={() => startFocus()}>
             <Timer />
@@ -86,16 +86,44 @@ export default function Home() {
       <section className="panel activity-panel">
         <div className="section-heading">
           <div>
-            <h2>Your year, one day at a time</h2>
-            <p className="muted">Every square is a small step forward.</p>
+            <h2>Your year</h2>
+            <p className="muted">Due habits, completions and protected days.</p>
           </div>
           <Link className="text-link" to="/statistics">
             View insights
             <ArrowUpRight />
           </Link>
         </div>
-        <Heatmap details={details} end={today} />
+        <Heatmap details={details} end={today} journal={journal} />
       </section>
+      <div className="home-widget-grid">
+        {(['today-plan', 'goals', 'reviews-due'] as HomeSlot[]).map((slot) => (
+          <div key={slot} data-home-slot={slot}>
+            {homeWidgets.some((widget) => widget.slot === slot) ? (
+              <HomeWidgets slot={slot} />
+            ) : (
+              <section className="panel widget-placeholder">
+                <h2>
+                  {
+                    { 'today-plan': 'Today’s plan', goals: 'Goals', 'reviews-due': 'Reviews due' }[
+                      slot
+                    ]
+                  }
+                </h2>
+                <p className="muted">
+                  {
+                    {
+                      'today-plan': 'Choose up to three priorities for today.',
+                      goals: 'Track a goal alongside your daily work.',
+                      'reviews-due': 'Your study reviews and weekly reflection appear here.',
+                    }[slot]
+                  }
+                </p>
+              </section>
+            )}
+          </div>
+        ))}
+      </div>
       <div className="section-heading today-heading">
         <h2>Today at a glance</h2>
         <span className="muted">
@@ -214,28 +242,19 @@ export default function Home() {
             </div>
           )}
         </section>
-        <section className="panel focus-invitation">
-          <div className="focus-symbol">
+        <section className="panel">
+          <div className="section-heading">
+            <h2>Focus</h2>
             <Timer />
           </div>
-          <span className="eyebrow">A MOMENT OF CLARITY</span>
-          <h2>
-            One thing.
-            <br />
-            Your full attention.
-          </h2>
           <p className="muted">
-            Choose a task, put distractions aside,
-            <br className="desktop-only" /> and let the next few minutes be yours.
+            {state.presets.find((p) => p.id === state.timer.presetId)?.name} ·{' '}
+            {durationLabel(state.presets.find((p) => p.id === state.timer.presetId)!.focus)}
           </p>
           <button className="btn-secondary" onClick={() => startFocus()}>
             Begin a focus session
             <ArrowRight />
           </button>
-          <span className="muted small">
-            {state.presets.find((p) => p.id === state.timer.presetId)?.name} ·{' '}
-            {durationLabel(state.presets.find((p) => p.id === state.timer.presetId)!.focus)}
-          </span>
         </section>
       </div>
     </div>

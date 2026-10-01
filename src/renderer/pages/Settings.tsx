@@ -4,7 +4,42 @@ import { useProductivity } from '../hooks/ProductivityProvider';
 import { PageHeader, download, Modal } from '../components/ui';
 import { localDate } from '../../shared/productivity';
 import { navigation } from '../components/Sidebar';
+import { settingsSections } from '../registry/settings';
 export default function Settings() {
+  const [section, setSection] = useState('general');
+  const contribution = settingsSections.find((item) => item.id === section);
+  const Section = contribution?.component;
+  return (
+    <div className="page settings-shell">
+      <PageHeader title="Settings" description="Workspace preferences and local data." />
+      <div className="settings-layout">
+        <nav aria-label="Settings sections">
+          <button
+            className={section === 'general' ? 'selected' : ''}
+            aria-current={section === 'general' ? 'page' : undefined}
+            onClick={() => setSection('general')}
+          >
+            General
+          </button>
+          {[...settingsSections]
+            .sort((a, b) => a.order - b.order)
+            .map((item) => (
+              <button
+                key={item.id}
+                className={section === item.id ? 'selected' : ''}
+                aria-current={section === item.id ? 'page' : undefined}
+                onClick={() => setSection(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+        </nav>
+        <div>{Section ? <Section /> : <GeneralSettings />}</div>
+      </div>
+    </div>
+  );
+}
+function GeneralSettings() {
   const { state, update } = useProductivity();
   const settings = state.settings;
   const [message, setMessage] = useState('');
@@ -37,15 +72,10 @@ export default function Settings() {
     }
   };
   return (
-    <div className="page settings-page">
-      <PageHeader
-        eyebrow="MAKE YOURSELF AT HOME"
-        title="Your workspace."
-        description="A few small choices to make this space feel like yours."
-      />
+    <div className="settings-page">
       <section className="panel">
         <div className="section-heading">
-          <h2>A personal touch</h2>
+          <h2>Profile and appearance</h2>
         </div>
         <label className="setting-name">
           What should we call you?
@@ -85,7 +115,7 @@ export default function Settings() {
       </section>
       <section className="panel">
         <div className="section-heading">
-          <h2>Gentle nudges</h2>
+          <h2>Notifications and sound</h2>
         </div>
         {[
           {
@@ -188,7 +218,7 @@ export default function Settings() {
       </section>
       <section className="panel">
         <div className="section-heading">
-          <h2>A few useful shortcuts</h2>
+          <h2>Keyboard shortcuts</h2>
           <Keyboard />
         </div>
         <div className="shortcut-row">
@@ -206,7 +236,7 @@ export default function Settings() {
       </section>
       <section className="panel">
         <div className="section-heading">
-          <h2>Quietly consistent</h2>
+          <h2>Workspace icons</h2>
         </div>
         <p className="muted">
           Lucide icons · 18 px · 1.75 stroke. One family across the workspace.

@@ -1,17 +1,28 @@
+import { usePrivacy } from '../hooks/PrivacyContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Plus, Minus, Snowflake } from 'lucide-react';
 import { useHabitData, habitDataChanged } from '../hooks/useHabitData';
 import { weekStart, shiftDay, dateRange, dayOutcome, habitStats } from '../../shared/habits';
 import { PageHeader } from '../components/ui';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '../components/ui/sheet';
+import HabitDetail from './HabitDetail';
 import HabitAction from '../components/HabitAction';
 import HabitForm from '../components/HabitForm';
 import type { Habit } from '../types';
 export default function Weekly() {
+  const privacy = usePrivacy();
   const { habits, active, logs, today, mutate, error } = useHabitData();
   const [start, setStart] = useState(() => weekStart(today)),
     [form, setForm] = useState(false),
     [selected, setSelected] = useState<{ habit: Habit; date: string } | null>(null);
+  const [detail, setDetail] = useState<number | null>(null);
   const days = dateRange(start, shiftDay(start, 6));
   const labels = {
     done: 'Done',
@@ -26,8 +37,7 @@ export default function Weekly() {
   return (
     <div className="page weekly-habits">
       <PageHeader
-        eyebrow="A WEEK AT A GLANCE"
-        title="Your weekly rhythm."
+        title="Habits"
         description="Neutral days never count as misses. Flexible weekly quotas count completed weeks."
         action={
           <button className="btn-primary" onClick={() => setForm(true)}>
@@ -95,9 +105,12 @@ export default function Weekly() {
               return (
                 <tr key={h.id}>
                   <th scope="row">
-                    <Link className="habit-name" to={`/habits/${h.id}`}>
+                    <button
+                      className="btn-ghost habit-name habit-detail-trigger"
+                      onClick={() => setDetail(h.id)}
+                    >
                       {h.name}
-                    </Link>
+                    </button>
                     <small>
                       {h.schedule_type === 'weekly_target'
                         ? `${h.weekly_target} / week`
@@ -111,7 +124,7 @@ export default function Weekly() {
                         <button
                           className="week-cell"
                           data-status={status}
-                          aria-label={`${h.name}, ${date}: ${labels[status]}`}
+                          aria-label={`${privacy ? 'Habit' : h.name}, ${date}: ${labels[status]}`}
                           onClick={() => setSelected({ habit: h, date })}
                         >
                           {status === 'not_due' || status === 'paused' ? (
@@ -189,6 +202,20 @@ export default function Weekly() {
         <Snowflake /> Freeze-covered occurrences protect streaks and are excluded from rates.
         Weekly-target unused opportunities are neutral; only an unmet week ending is a miss.
       </p>
+      <Sheet
+        open={detail !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetail(null);
+        }}
+      >
+        <SheetContent className="habit-drawer" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle>Habit details</SheetTitle>
+            <SheetDescription>Schedule, check-ins and protection</SheetDescription>
+          </SheetHeader>
+          {detail !== null && <HabitDetail key={detail} habitId={detail} embedded />}
+        </SheetContent>
+      </Sheet>
       {form && (
         <HabitForm
           habits={habits}

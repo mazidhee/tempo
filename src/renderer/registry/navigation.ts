@@ -25,7 +25,7 @@ export const navigationRegistry: NavigationEntry[] = [
   { id: 'habits', to: '/habits', label: 'Habits', icon: CircleCheck },
   { id: 'tasks', to: '/tasks', label: 'Tasks', icon: ListTodo },
   { id: 'focus', to: '/focus', label: 'Focus', icon: Timer },
-  { id: 'study', to: '/study', label: 'Study', icon: BookOpen, enabled: false },
+  { id: 'study', to: '/study', label: 'Study', icon: BookOpen },
   { id: 'statistics', to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },
   { id: 'goals', to: '/goals', label: 'Goals', icon: Target, enabled: true },
   { id: 'review', to: '/review', label: 'Review', icon: NotebookPen, enabled: true },

@@ -8,6 +8,7 @@ import Tasks from '../pages/Tasks';
 import Focus from '../pages/Focus';
 import Settings from '../pages/Settings';
 import HabitDetail from '../pages/HabitDetail';
+import Study from '../pages/Study';
 const Statistics = lazy(() => import('../pages/Statistics'));
 const Plan = lazy(() => import('../modules/reflection/Plan'));
 const Journal = lazy(() => import('../modules/reflection/Journal'));
@@ -31,7 +32,7 @@ export const routeRegistry: WorkspaceRoute[] = [
     path: '/habits',
     render: () => (
       <HabitsLayout>
-        <Today />
+        <Weekly />
       </HabitsLayout>
     ),
   },
@@ -51,6 +52,15 @@ export const routeRegistry: WorkspaceRoute[] = [
       </HabitsLayout>
     ),
   },
+  {
+    path: '/habits/today',
+    render: () => (
+      <HabitsLayout>
+        <Today />
+      </HabitsLayout>
+    ),
+  },
+  { path: '/study', render: () => <Study /> },
   { path: '/habits/:id', render: () => <HabitDetail /> },
   { path: '/tasks', render: () => <Tasks /> },
   { path: '/focus', render: (context) => <Focus {...context} /> },
@@ -64,11 +74,12 @@ function HabitsLayout({ children }: { children: ReactNode }) {
     <div className="legacy-page">
       <div className="tabs habit-tabs">
         {[
-          ['/habits', 'Today & manage'],
+          ['/habits', 'Weekly grid'],
+          ['/habits/today', 'Today & manage'],
           ['/weekly', 'Weekly view'],
           ['/history', 'History'],
         ].map(([to, label]) => (
-          <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'selected' : '')}>
+          <NavLink key={to} to={to} end className={({ isActive }) => (isActive ? 'selected' : '')}>
             {label}
           </NavLink>
         ))}
