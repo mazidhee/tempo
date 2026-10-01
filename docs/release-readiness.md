@@ -1,75 +1,121 @@
-# Tempo: remaining milestones and release acceptance
+# Tempo release acceptance
 
-The scope is the user-supplied [master brief](master-build-brief.md), with the
-checkout-specific decisions in [the implementation plan](master-build-plan.md).
-This document defines a finite release. New ideas after these requirements are
-met belong to a later release; they do not keep this build open indefinitely.
+The finite scope is the user-supplied [master brief](master-build-brief.md), with
+checkout decisions in [the implementation plan](master-build-plan.md).
+Implementation evidence is in [master integration](master-integration.md), and
+actual use is described in [the user guide](user-guide.md).
 
 ## Current checkpoint
 
-Phase1 is independently accepted at9.2/10. Foundation was committed/tagged at33f3c19. Focus, Reflection and Restyle are integrated in the required order. The full82-test suite and production build pass; full backups and shared flows are verified in real Electron. The independent master review is exercising the final packaged candidate. The desktop installation remains1.0.0 until review acceptance and the upgrade checks below.
+Phase 1 was independently accepted at 9.2/10. Foundation was committed at
+`33f3c19` and tagged before Focus, Reflection and Restyle integrated in the
+required order. Type checking, the full 82-test suite and production build pass.
+Full backups and shared flows have real-Electron evidence with isolated data.
 
-## Remaining long-running milestones
+The frozen 1.2.0 production candidate is `1433cb46`; the Windows installer is
+built. Independent packaged round 1 scored 8.88/10 and required three layout
+fixes. Independent round 2 verified all three fixes and accepted the frozen
+package at **9.18/10**. The authorized Windows upgrade to 1.2.0 also passed
+installed acceptance. The original user-data path, preferences and three presets
+were retained; offline launch, persistence and relaunch checks passed. Live native
+Guard operations and physical notification/sound delivery remain unverified.
 
-| Milestone | Required outcome | Completion evidence |
+## Milestones and evidence
+
+| Milestone | Required outcome | Current evidence |
 | --- | --- | --- |
-| 1. Close Phase 1 | Preserve advanced habits, notes, schedules, freezes, pauses, privacy, tasks and focus; finish the performance fix review | Independent real-Electron report, test/build results, migration preservation, packaged smoke; remaining limitations stated |
-| 2. Foundation | Linear tokens, local Inter/JetBrains Mono, shared UI families, typed navigation/routes/settings/Home/IPC registries, minimal Study contracts | Token/component documentation, licences, build, isolated migration tests, foundation commit and tag before Stage 1 |
-| 3A. Desktop Focus | Main-process timestamp timer; restart recovery; tray, close-to-tray, configurable conflict-aware shortcuts and phase notifications; optional Focus Guard | Timer and tray flows in Electron; exactly-once sessions; process/hosts matching, crash recovery, cleanup and emergency-exit checks using isolated fixtures |
-| 3B. Reflection | Up to three daily priorities; evening review, journal with FTS search, saved weekly reviews, linked goals and configurable reminders | Persistence, date boundaries, journal search, review aggregation and goal progress checks; Home widgets integrated |
-| 3C. Restyle and Study | Consistent restyle of all screens; curriculum/topic progress and graded spaced reviews; command palette actions | Existing behaviour retained; accessible light/dark screens at desktop and narrow sizes; study/review persistence and keyboard workflows |
-| 4. Integration | Merge Focus, Reflection, then Restyle; wire shared widgets, settings and statistics; make complete backups compatible | Full suite/build; old and new backup/import checks; original identifiers/history preserved; no competing timer ownership |
-| 5. Release | Review the complete app, package it, upgrade the desktop installation and verify the installed release | Independent release review plus installed-app smoke and data-preservation evidence, release commit/tag, licence list and concise user guide |
+| Phase 1 | Preserve habits, notes, schedules, freezes, pauses, tasks, Focus and privacy | Independent Phase 1 acceptance and retained regression coverage |
+| Foundation | Linear tokens, offline fonts, shared kit, typed registries and Study contracts | Tested commit/tag, component sources/licences and migration 4 checks |
+| Focus | Main timer, recovery, tray, shortcuts, optional Guard and emergency exit | Suite and real-Electron flows; Windows script fixtures and own-session enumeration; live native limits below |
+| Reflection | Daily priorities, journal/FTS, saved reviews, goals and reminders | Persistence, aggregation, search and Home integration checks |
+| Restyle and Study | Existing behavior retained, both themes, narrow layouts and minimal Study | Electron capture matrices, Study tests and independent confirmation of all three final layout changes |
+| Integration | A/B/C merge order, shared widgets, complete compatible backups | 82 tests/build; format 3, legacy import, collision and timer ownership checks |
+| Windows release | Review the frozen package, upgrade installed app and verify retained workspace | Installer built; independent acceptance at 9.18/10; actual installed 1.2.0 acceptance passed |
 
-The Study implementation is the minimal curriculum/topic/progress/review system
-needed by the master brief. The brief assumes a Phase 2 Study system already
-exists, but no separate Phase 2 specification or implementation was found.
+Installed evidence is `.install-check/master-upgrade-1790863834869/acceptance.json`,
+with `installed-home.png` and a consistent pre-upgrade `before.db` in that
+directory. Installed ASAR SHA256 matches the independently reviewed candidate:
+`F349E4FF2CCCA0A85BEA23D1764D22252102E986F436D05E24BBE5B8ED75A369`.
+The installed app uses `C:\Users\USER\AppData\Roaming\habit-tracker`.
 
-## The final task: verify the installed Windows release
+Installer: `release/desktop/Habit Tracker Setup 1.2.0.exe`, SHA256
+`7B6EF8ED160B0959119A4A1AE3BAD04AB2FA12250EE89F0FDD54869199D45E5E`.
+Release tag: `tempo-master-1.2.0-2026-10-01`. The tag includes the reviewed
+production candidate plus documentation and verification scripts; those later
+changes do not alter the installed ASAR. The verified desktop shortcut reopened
+the visible, responding Tempo window after acceptance.
 
-After integration and the independent review loop, build the installer from the
-same reviewed revision, upgrade the existing desktop app, and test that installed
-application. Record the installer version/hash and source revision. The release
-is ready for full use when all of the following have evidence:
+The actual owner's database had zero habits, logs, tasks and sessions before the
+upgrade. Acceptance verifies that those counts, preferences and three presets
+were retained; populated legacy-data preservation comes from separate fixtures.
+A temporary task survived refresh and a full quit/relaunch, then was removed.
+Close-to-tray, second-instance show/minimized restore, the exact Tempo desktop
+shortcut launch, all core pages offline, zero renderer errors, SQLite integrity
+and markers 2/3/4/100/200 passed.
 
-- Every required screen and core workflow is available: Home, Plan, Habits,
-  Tasks, Focus, Study, Statistics, Goals, Review, Settings and journal browsing/
-  search. Existing weekly/history/detail/notes/archive/export flows still work.
-- Real legacy fixtures upgrade without losing original habit/log fields or
-  productivity history. All migrations are versioned and transactional, with
-  pre-upgrade safety copies. The installed upgrade retains the real workspace.
-- All current modules are included in backup export. Legacy backups remain
-  importable, complete backups can restore into a clean isolated workspace,
-  and invalid input is rejected without partial writes.
-- Timer state survives window close and application restart, completed sessions
-  are logged once, breaks cannot fabricate focus time, and Home/Statistics update
-  after genuine data changes without continuous expensive idle rendering.
-- Local date rollover and due schedules work across midnight, week/month/year
-  boundaries and DST. Restart and sleep/wake reconciliation are checked.
-- Focus Guard is opt-in and its emergency exit is always available. Blocking is
-  removed on stop, end, quit and startup recovery; unrelated hosts entries are
-  preserved. Automated destructive-path tests use dedicated harmless processes
-  and isolated hosts files. Windows elevation/repair behaviour is exercised.
-- Every screen is reviewed in light and dark at two window sizes, with keyboard
-  navigation, focus restoration, privacy coverage and reduced-motion handling.
-- The full test suite, type check and production build pass. The independent
-  reviewer actually launches and clicks the app and the packaged build, reports
-  the weighted rubric, and provides screenshots and reproducible findings.
-- The installed app opens from its desktop shortcut, loads the retained data,
-  works offline, persists new changes, and relaunches correctly. Tray/shortcuts,
-  native notification/sound delivery and OS-specific limitations are recorded.
-- No known issue blocks daily use or risks data loss. Lesser limitations are
-  disclosed with their scope. A release commit/tag, component licence notices,
-  backup instructions and recovery instructions accompany the installer.
+Study is the minimal curriculum/topic/progress/graded-review implementation
+required by the brief. The brief assumed a prior Phase 2 system, but no separate
+Phase 2 specification or implementation was found.
 
-## Review stopping rule and readiness
+## Installed Windows acceptance
 
-The user's review loop stops at a score of at least 9/10, after five rounds, or
-after two consecutive rounds without meaningful gain. The scoring weights are
-feature completeness 20%, correctness 25%, design fidelity 25%, code quality 15%,
-and UX/accessibility/responsiveness 15%.
+The installer must match the independently reviewed candidate, with version,
+SHA256, source revision and package identity recorded. Before an upgrade,
+retain a consistent safety copy. The acceptance contract is below; completed
+checks are supported by the evidence above and in master integration, while
+physical native/overnight checks retain their explicit limits.
 
-A round limit ends the review loop; it does not turn a broken workflow into a
-passing acceptance check. Any unresolved release blocker must remain explicit.
-Likewise, a score alone cannot establish installed-app readiness. The practical
-finish line is the reviewed, installed Windows release passing the checks above.
+- Every screen and core workflow is available: Home, Plan, Habits, Tasks, Focus,
+  Study, Statistics, Goals, Review, Settings and Journal. Existing detail,
+  weekly/history, notes, archive and export flows remain usable.
+- Legacy fixtures upgrade without losing original habit/log fields or
+  productivity history. Migrations 2/3/4/100/200 are versioned and transactional;
+  the installed upgrade retains the real workspace and original user-data path.
+- Complete JSON backups restore in isolated data, legacy formats remain
+  importable and malformed input cannot cause partial writes. Existing records
+  and running timers retain precedence; pristine restore starts idle with Guard
+  disabled. Safety copies accompany schema/import changes.
+- The main timer survives window close and restart, logs completed phases once,
+  excludes unfinished/break time from completed focus totals and waits for an
+  explicit next start. Computed views update after genuine data changes.
+- Local rollover, schedules and week/month/year/DST boundaries have automated
+  evidence. Physical overnight and sleep/wake checks are recorded separately.
+- Guard remains opt-in with globally reachable Emergency exit and repair.
+  Isolated fixtures establish matching, idempotence, unrelated hosts preservation,
+  cleanup and crash recovery. Any live Windows elevation/repair/application
+  closure check has separate evidence and a bounded harmless target.
+- The final independent reviewer launches the actual frozen package, verifies
+  every screen in both themes at desktop/narrow sizes, checks keyboard/dialog
+  behavior and visually confirms the three final layout fixes. Passing overflow
+  metrics alone do not establish readable layout.
+- The installed app opens from the Tempo desktop shortcut, loads retained data,
+  works offline, persists changes and relaunches correctly. Tray/global shortcuts
+  and native delivery are checked or explicitly recorded as unverified.
+- A release commit/tag, installer identity, complete third-party notices,
+  backup/recovery instructions and a concise user guide accompany the release.
+  No unresolved issue blocks daily use or risks data loss.
+
+## Scope of native evidence
+
+Actual generated Windows PowerShell hosts/watchdog scripts passed against
+isolated files. Session/identity fixtures and read-only running-app enumeration
+in Tempo's own session also passed. No live UAC, real hosts mutation or closure
+of user-selected applications is certified by those results. Physical native
+notification/sound delivery depends on OS settings and remains unverified.
+Browser secure DNS may bypass hosts blocking; the app explains this in Settings.
+macOS/Linux native behavior is not certified by the Windows checks.
+
+These limits must accompany the final release disposition. Fixture success
+cannot be relabelled as a live native pass or silently satisfy an unperformed
+installed-app acceptance check.
+
+## Review stopping rule
+
+The user's review loop stops at 9/10 or above, after five rounds, or after two
+consecutive rounds without meaningful gain. Weights are completeness 20%,
+correctness 25%, design fidelity 25%, code quality 15% and
+UX/accessibility/responsiveness 15%.
+
+A stopping rule ends review iteration; it does not make a broken workflow pass.
+A score alone does not establish installed readiness. Record the independent
+final verdict and the actual installed acceptance result separately.
