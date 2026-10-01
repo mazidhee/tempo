@@ -38,6 +38,10 @@ async function packageDesktop() {
     path.join(root, 'electron-builder.yml'),
     path.join(stage, 'electron-builder.yml'),
   );
+  fs.copyFileSync(
+    path.join(root, 'THIRD-PARTY-NOTICES.txt'),
+    path.join(stage, 'THIRD-PARTY-NOTICES.txt'),
+  );
   const electronExecutable = require('electron'); // Initializes Electron's first-use download if needed.
   await build({
     projectDir: stage,
@@ -49,6 +53,7 @@ async function packageDesktop() {
       electronVersion: metadata.devDependencies.electron,
       electronDist: path.dirname(electronExecutable),
       npmRebuild: false,
+      files: ['dist', 'dist-electron', 'THIRD-PARTY-NOTICES.txt'],
     },
   });
 }

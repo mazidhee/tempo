@@ -43,8 +43,8 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
 
-  mainWindow.on('close', event => {
-    if (!quitting && lifecycles.some(module => module.onWindowClose?.())) event.preventDefault();
+  mainWindow.on('close', (event) => {
+    if (!quitting && lifecycles.some((module) => module.onWindowClose?.())) event.preventDefault();
   });
   mainWindow.on('closed', () => {
     mainWindow = null;
