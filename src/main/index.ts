@@ -104,6 +104,7 @@ app.whenReady().then(() => {
       getWindow: () => mainWindow,
       showWindow: () => {
         if (!mainWindow) createWindow();
+        if (mainWindow?.isMinimized()) mainWindow.restore();
         mainWindow?.show();
         mainWindow?.focus();
       },
@@ -138,6 +139,7 @@ app.on('before-quit', (event) => {
 });
 
 app.on('second-instance', () => {
+  if (mainWindow?.isMinimized()) mainWindow.restore();
   mainWindow?.show();
   mainWindow?.focus();
 });
