@@ -98,3 +98,16 @@ control width corrected. The final functional-only run at `.review/reflection-17
 that activity refresh saves unsaved written prompts, recomputes activity and persists
 the prompts after process restart. Boundary fixes pass all regression/build checks.
 This is module validation, not a packaged release or independent review claim.
+
+The targeted minimum-width follow-up used real Electron at 390×860 in light and dark,
+covering Plan, Journal, Goals, Review and the exact notification component. All ten
+captures passed document-width and control-bound checks; longer fixture labels wrapped
+without clipping. Evidence: `.review/reflection-390-1790858304475/result.json` and its ten
+PNGs. The Foundation Settings shell does not yet mount contributed sections, so the
+notification component was mounted through a temporary fixture route for this check;
+the route source was restored afterward. No module visual changes were required.
+The app shell's top bar clips its rightmost window control at 390px; this lies outside
+B's ownership and is handed to integration. `scripts/reflection-narrow-smoke.cjs`
+defaults to C's integrated Settings section; its fixture-route option is documented in
+the script for isolated Foundation checks. Existing unit tests were not rerun because
+the follow-up did not change implementation.
