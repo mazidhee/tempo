@@ -21,7 +21,7 @@ export function ReflectionNotifications() {
       <div className="reflection-stack">
         <ActionError error={action.error} />
         {(['morning', 'evening', 'weekly'] as const).map((kind) => (
-          <div className="reflection-row" key={kind}>
+          <div className="reflection-row reflection-reminder-row" key={kind}>
             <label className="reflection-grow" htmlFor={`reminder-${kind}`}>
               {kind === 'morning'
                 ? 'Morning plan'

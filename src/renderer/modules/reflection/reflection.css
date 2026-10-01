@@ -211,3 +211,13 @@
     padding: var(--space-5) var(--space-4);
   }
 }
+
+/* Time fields own one bounded column; they must not consume the reminder label. */
+.reflection-reminder-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(8rem, 10rem);
+}
+.reflection-reminder-row input {
+  min-width: 0;
+  width: 100%;
+}

@@ -104,6 +104,11 @@ export default function Tasks() {
                 </button>
                 <div>
                   <strong className={task.completedAt ? 'done-text' : ''}>{task.title}</strong>
+                  <div className="task-mobile-meta">
+                    <span>{task.due === today ? 'Today' : task.due || 'No date'}</span>
+                    <span>{task.priority} priority</span>
+                    {task.project && <span>{task.project}</span>}
+                  </div>
                   <div className="task-meta">
                     {task.tags.map((tag) => (
                       <span className="tag" key={tag}>
@@ -297,7 +302,7 @@ export default function Tasks() {
               {table.getHeaderGroups().map((group) => (
                 <TableRow key={group.id}>
                   {group.headers.map((header) => (
-                    <TableHead key={header.id} scope="col">
+                    <TableHead key={header.id} scope="col" data-column={header.column.id}>
                       <table.FlexRender header={header} />
                     </TableHead>
                   ))}
@@ -308,7 +313,7 @@ export default function Tasks() {
               {table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getAllCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} data-column={cell.column.id}>
                       <table.FlexRender cell={cell} />
                     </TableCell>
                   ))}
