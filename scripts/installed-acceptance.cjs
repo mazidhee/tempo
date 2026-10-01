@@ -36,7 +36,17 @@ const checks = [];
 const errors = [];
 const temporaryTitle = `Installation verification ${Date.now()}`;
 const importRoadmaps = process.argv.includes('--import-roadmaps');
+const retainCurrentAppearance = process.argv.includes('--retain-current-appearance');
+const retainCurrentSettings = process.argv.includes('--retain-current-settings');
 let roadmapSummary = [];
+async function until(predicate, message) {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    if (await predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(message);
+}
 async function launch() {
   electronApp = await _electron.launch({ executablePath, args: [], env, timeout: 30000 });
   const page = await electronApp.firstWindow();
@@ -59,7 +69,7 @@ function subset(expected, actual, at) {
   if (expected && typeof expected === 'object') {
     for (const [key, value] of Object.entries(expected))
       subset(value, actual?.[key], `${at}.${key}`);
-  } else assert.deepEqual(actual, expected, at);
+  } else assert.ok(Object.is(actual, expected), `${at} changed`);
 }
 function verifyPreservation() {
   const before = new DatabaseSync(baseline.backup, { readOnly: true });
@@ -88,11 +98,20 @@ function verifyPreservation() {
       'focus_break_events',
     ]) {
       if (!oldTables.includes(table)) continue;
+      const keys = before
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .filter((column) => column.pk > 0)
+        .sort((a, b) => a.pk - b.pk)
+        .map((column) => column.name);
+      assert.ok(keys.length, `${table} has a primary key`);
       for (const row of before.prepare(`SELECT * FROM ${table}`).all())
         subset(
           row,
-          after.prepare(`SELECT * FROM ${table} WHERE id=?`).get(row.id),
-          `${table}.${row.id}`,
+          after
+            .prepare(`SELECT * FROM ${table} WHERE ${keys.map((key) => `${key}=?`).join(' AND ')}`)
+            .get(...keys.map((key) => row[key])),
+          `${table}.${keys.map((key) => row[key]).join('/')}`,
         );
     }
     const a = JSON.parse(
@@ -110,7 +129,28 @@ function verifyPreservation() {
         );
       assert.equal(b[key].length, a[key].length, `${key} count after temporary task cleanup`);
     }
-    subset(a.settings, b.settings, 'Existing preferences');
+    const preferences = { ...a.settings };
+    const appearanceDifference = ['accent', 'avatar', 'greetingStyle']
+      .filter((field) => a.settings[field] !== b.settings[field])
+      .map((field) => ({
+        field,
+        before: field === 'avatar' ? Boolean(a.settings[field]) : a.settings[field],
+        current: field === 'avatar' ? Boolean(b.settings[field]) : b.settings[field],
+      }));
+    if (retainCurrentAppearance)
+      for (const field of ['accent', 'avatar', 'greetingStyle']) delete preferences[field];
+    const settingsChanged = Object.keys(a.settings).filter(
+      (key) => a.settings[key] !== b.settings[key],
+    );
+    if (!retainCurrentSettings) subset(preferences, b.settings, 'Existing preferences');
+    else
+      checks.push(
+        'Current settings retained during owner use; changed field names recorded without private values',
+      );
+    if (appearanceDifference.length && retainCurrentAppearance && !retainCurrentSettings)
+      checks.push(
+        'Current accent/avatar/greeting preferences retained; differences recorded; all legacy preferences checked',
+      );
     const versions = after
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
@@ -119,16 +159,66 @@ function verifyPreservation() {
       assert.ok(versions.includes(version), `Migration ${version}`);
     assert.equal(after.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
     checks.push(
-      'Original habit/log records, tasks, sessions, presets and preferences retained',
+      retainCurrentSettings
+        ? 'Original habit/log records, tasks, sessions, presets and all saved module rows retained; current settings kept'
+        : 'Original habit/log records, tasks, sessions, presets and compared preferences retained',
       'Migrations 2/3/4/100/200/201 recorded; SQLite integrity check OK',
     );
-    return { versions, originalCounts: baseline.counts };
+    return { versions, originalCounts: baseline.counts, appearanceDifference, settingsChanged };
   } finally {
     before.close();
     after.close();
   }
 }
 (async () => {
+  if (process.argv.includes('--verify-only')) {
+    const preservation = verifyPreservation();
+    const db = new DatabaseSync(baseline.source, { readOnly: true });
+    try {
+      const rows = (table) =>
+        db
+          .prepare(`SELECT json FROM ${table}`)
+          .all()
+          .map((r) => JSON.parse(r.json));
+      const topics = rows('study_topics');
+      const curricula = rows('study_curricula');
+      roadmapSummary = rows('study_imports').map((source) => ({
+        title: source.title,
+        topics: topics.filter((t) => t.curriculumId === source.curriculumId).length,
+        learned: topics.filter((t) => t.curriculumId === source.curriculumId && t.learnedAt).length,
+      }));
+      for (const [title, count, learned] of [
+        ['Software engineering', 984, 0],
+        ['Mathematics', 483, 6],
+        ['Economics & markets', 356, 1],
+      ]) {
+        const result = roadmapSummary.find((r) => r.title === title);
+        assert.equal(result?.topics, count);
+        assert.ok(result.learned >= learned);
+      }
+      const evidence = {
+        at: new Date().toISOString(),
+        installedAsarSha256: digest(installedAsar),
+        checks,
+        preservation,
+        roadmapSummary,
+        currentCounts: {
+          habits: db.prepare('SELECT COUNT(*) AS count FROM habits').get().count,
+          curricula: curricula.length,
+          topics: topics.length,
+        },
+        mode: 'read-only preservation; prior runtime flows recorded separately',
+      };
+      fs.writeFileSync(
+        path.join(directory, 'preservation.json'),
+        JSON.stringify(evidence, null, 2),
+      );
+      console.log(JSON.stringify(evidence, null, 2));
+    } finally {
+      db.close();
+    }
+    return;
+  }
   let page = await launch();
   const identity = await electronApp.evaluate(({ app }) => ({
     version: app.getVersion(),
@@ -141,23 +231,50 @@ function verifyPreservation() {
   checks.push(`Installed ${expectedVersion} uses the original userData path and reviewed ASAR`);
   if (importRoadmaps) {
     // These are the owner's supplied curricula, not review fixtures or sample data.
-    const sources = [['Software engineering', 'software-engineering.md'], ['Mathematics', 'mathematics.md'], ['Economics & markets', 'economics-markets.md']].map(([title, file]) => ({ title, markdown: fs.readFileSync(path.resolve('src/renderer/assets/curricula', file), 'utf8') }));
+    const sources = [
+      ['Software engineering', 'software-engineering.md'],
+      ['Mathematics', 'mathematics.md'],
+      ['Economics & markets', 'economics-markets.md'],
+    ].map(([title, file]) => ({
+      title,
+      markdown: fs.readFileSync(path.resolve('src/renderer/assets/curricula', file), 'utf8'),
+    }));
     const beforeStudy = await page.evaluate(() => window.workspaceAPI.invoke('study:snapshot'));
-    const imported = await page.evaluate((sources) => window.workspaceAPI.invoke('study:importOutlines', sources), sources);
+    const imported = await page.evaluate(
+      (sources) => window.workspaceAPI.invoke('study:importOutlines', sources),
+      sources,
+    );
     const study = await page.evaluate(() => window.workspaceAPI.invoke('study:snapshot'));
-    roadmapSummary = imported.map((c) => ({ title: c.title, topics: study.topics.filter((t) => t.curriculumId === c.id).length, learned: study.topics.filter((t) => t.curriculumId === c.id && t.learnedAt).length, alreadyImported: beforeStudy.curricula.some((old) => old.id === c.id) }));
-    const expected = [[984, 0], [483, 6], [356, 1]];
-    roadmapSummary.forEach((r, index) => { if (!r.alreadyImported) assert.deepEqual([r.topics, r.learned], expected[index]); });
-    checks.push('Owner-provided three curricula available with original source checkmarks and existing progress preserved');
+    roadmapSummary = imported.map((c) => ({
+      title: c.title,
+      topics: study.topics.filter((t) => t.curriculumId === c.id).length,
+      learned: study.topics.filter((t) => t.curriculumId === c.id && t.learnedAt).length,
+      alreadyImported: beforeStudy.curricula.some((old) => old.id === c.id),
+    }));
+    const expected = [
+      [984, 0],
+      [483, 6],
+      [356, 1],
+    ];
+    roadmapSummary.forEach((r, index) => {
+      if (!r.alreadyImported) assert.deepEqual([r.topics, r.learned], expected[index]);
+    });
+    checks.push(
+      'Owner-provided three curricula available with original source checkmarks and existing progress preserved',
+    );
   }
   await nav(page, 'Tasks');
   await page.getByLabel('Quick add task').fill(temporaryTitle);
   await page.getByLabel('Quick add task').press('Enter');
   await page.getByRole('button', { name: `Edit ${temporaryTitle}`, exact: true }).waitFor();
-  await page.waitForFunction(
-    async (title) =>
-      (await window.habitAPI.getProductivity()).tasks.some((task) => task.title === title),
-    temporaryTitle,
+  await until(
+    () =>
+      page.evaluate(
+        async (title) =>
+          (await window.habitAPI.getProductivity()).tasks.some((task) => task.title === title),
+        temporaryTitle,
+      ),
+    'Verification task was not saved',
   );
   await page.reload();
   await page.getByRole('button', { name: `Edit ${temporaryTitle}`, exact: true }).waitFor();
@@ -201,10 +318,14 @@ function verifyPreservation() {
   checks.push('Task persists after a full app quit and relaunch');
   await page.getByRole('button', { name: `Delete ${temporaryTitle}`, exact: true }).click();
   await page.getByRole('button', { name: 'Delete task', exact: true }).click();
-  await page.waitForFunction(
-    async (title) =>
-      !(await window.habitAPI.getProductivity()).tasks.some((task) => task.title === title),
-    temporaryTitle,
+  await until(
+    () =>
+      page.evaluate(
+        async (title) =>
+          !(await window.habitAPI.getProductivity()).tasks.some((task) => task.title === title),
+        temporaryTitle,
+      ),
+    'Verification task was not removed',
   );
   await page.context().setOffline(true);
   for (const name of [

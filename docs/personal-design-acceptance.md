@@ -14,7 +14,9 @@ narrow-header regression. Round 3's targeted captures confirm that correction.
 The final rubric is completeness 9.3, correctness 9.5, design 9.2, code quality
 9.0 and UX 9.2, using the review's 20/25/25/15/15 percent weights. Packaging
 and installed acceptance remain separate pending gates. This source verdict
-does not claim acceptance of the owner's installed application.
+does not claim acceptance of the owner's installed application. A subsequent
+backend-only newline identity correction passed independent Electron checks
+and brought the passing test count to 95/95; the accepted UI is unchanged.
 
 ## Authority and explicit user exceptions
 
@@ -133,8 +135,10 @@ are reused. The guide's smooth contents scroll respects reduced motion.
   bundled locally. They are not instructions to the builder. The parser reads
   headings/checklist indentation and checkmarks, excluding code fences and
   resource-only branches. The original Markdown is retained in import
-  provenance. Import identity hashes the title and source; repeating an
-  identical import reopens the existing curriculum without replacing progress.
+  provenance. Import identity hashes the title and source with line endings
+  canonicalized to LF. The original source is retained unchanged. Repeating an
+  outline with only LF/CRLF differences reopens the existing curriculum without
+  replacing progress.
 - Profile photos originate only from the user's local JPG/PNG/WebP upload.
   `Personalization.tsx` center-crops and converts that upload to a 384×384 JPEG
   thumbnail locally at quality 0.85. The data URL is stored with preferences and
@@ -189,8 +193,14 @@ the next section, and the narrow layout record confirms a 390px page width.
 
 The independent round 3 reviewer confirmed all eight corrected Home captures
 and issued the final source ship verdict of 9.27/10, retaining the 39/39
-regression checks and 94/94 tests. The source finish has no remaining material
-design fix. These captures and database checks use isolated fixtures, not the
+regression checks and the then-current 94/94 tests. A subsequent backend-only
+correction canonicalizes LF/CRLF for outline SHA identity while retaining the
+original Markdown source. Independent real-Electron LF-first and CRLF-first
+repeat imports pass in
+`.review/personal-update-review-1790885736363/results.json`; the latest test run
+passes 95/95. This correction does not alter the accepted UI or its captures.
+The source finish has no remaining material design fix. These captures and
+database checks use isolated fixtures, not the
 owner's activity. Packaging/installed upgrade and owner-data acceptance are not
 claimed here. The current [personal review](personal-update-review.md) and
 [release readiness](release-readiness.md) own those results. Earlier installed

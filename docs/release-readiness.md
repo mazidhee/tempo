@@ -5,7 +5,22 @@ checkout decisions in [the implementation plan](master-build-plan.md).
 Implementation evidence is in [master integration](master-integration.md), and
 actual use is described in [the user guide](user-guide.md).
 
-## Current checkpoint
+## Current checkpoint: personal workspace 1.3.0
+
+Tempo 1.3.0 is installed and open from the existing desktop shortcut. The
+production source is `3420fa94`; independent source/package acceptance is
+9.27/10 with 95/95 tests. The three supplied roadmaps contain 1,823 topics,
+including seven original checked items. Final read-only installed verification
+confirms all original rows against the retained backup, plus four curricula
+(the earlier SWE curriculum and the three imports). Current settings are kept
+while the owner uses the app; their differences are explicitly recorded.
+
+See [personal release evidence](personal-release.md) for exact hashes,
+backup locations, runtime evidence and the unexplained initial installation
+discrepancy. That discrepancy was recovered from safety copies; no cause is
+claimed and source/package scores do not certify its cause as fixed.
+
+## Earlier checkpoint: master workspace 1.2.0
 
 Phase 1 was independently accepted at 9.2/10. Foundation was committed at
 `33f3c19` and tagged before Focus, Reflection and Restyle integrated in the
@@ -22,15 +37,15 @@ Guard operations and physical notification/sound delivery remain unverified.
 
 ## Milestones and evidence
 
-| Milestone | Required outcome | Current evidence |
-| --- | --- | --- |
-| Phase 1 | Preserve habits, notes, schedules, freezes, pauses, tasks, Focus and privacy | Independent Phase 1 acceptance and retained regression coverage |
-| Foundation | Linear tokens, offline fonts, shared kit, typed registries and Study contracts | Tested commit/tag, component sources/licences and migration 4 checks |
-| Focus | Main timer, recovery, tray, shortcuts, optional Guard and emergency exit | Suite and real-Electron flows; Windows script fixtures and own-session enumeration; live native limits below |
-| Reflection | Daily priorities, journal/FTS, saved reviews, goals and reminders | Persistence, aggregation, search and Home integration checks |
-| Restyle and Study | Existing behavior retained, both themes, narrow layouts and minimal Study | Electron capture matrices, Study tests and independent confirmation of all three final layout changes |
-| Integration | A/B/C merge order, shared widgets, complete compatible backups | 82 tests/build; format 3, legacy import, collision and timer ownership checks |
-| Windows release | Review the frozen package, upgrade installed app and verify retained workspace | Installer built; independent acceptance at 9.18/10; actual installed 1.2.0 acceptance passed |
+| Milestone         | Required outcome                                                               | Current evidence                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Phase 1           | Preserve habits, notes, schedules, freezes, pauses, tasks, Focus and privacy   | Independent Phase 1 acceptance and retained regression coverage                                              |
+| Foundation        | Linear tokens, offline fonts, shared kit, typed registries and Study contracts | Tested commit/tag, component sources/licences and migration 4 checks                                         |
+| Focus             | Main timer, recovery, tray, shortcuts, optional Guard and emergency exit       | Suite and real-Electron flows; Windows script fixtures and own-session enumeration; live native limits below |
+| Reflection        | Daily priorities, journal/FTS, saved reviews, goals and reminders              | Persistence, aggregation, search and Home integration checks                                                 |
+| Restyle and Study | Existing behavior retained, both themes, narrow layouts and minimal Study      | Electron capture matrices, Study tests and independent confirmation of all three final layout changes        |
+| Integration       | A/B/C merge order, shared widgets, complete compatible backups                 | 82 tests/build; format 3, legacy import, collision and timer ownership checks                                |
+| Windows release   | Review the frozen package, upgrade installed app and verify retained workspace | Installer built; independent acceptance at 9.18/10; actual installed 1.2.0 acceptance passed                 |
 
 Installed evidence is `.install-check/master-upgrade-1790863834869/acceptance.json`,
 with `installed-home.png` and a consistent pre-upgrade `before.db` in that
