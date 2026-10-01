@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Notification, ipcMain } from 'electron';
+import { app, BrowserWindow, Notification, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { initDatabase, getIncompleteCount, getDb } from './database/db';
 import { registerIpcHandlers } from './ipc/handlers';
@@ -133,6 +133,7 @@ app.on('before-quit', (event) => {
       quitting = false;
       mainWindow?.show();
       console.error('Could not safely quit:', error);
+      dialog.showErrorBox('Tempo could not finish cleanup', `Tempo is staying open so you can repair its Focus Guard settings and retry quitting.\n\n${String(error)}`);
     });
 });
 

@@ -7,15 +7,11 @@ met belong to a later release; they do not keep this build open indefinitely.
 
 ## Current checkpoint
 
-Phase 1's habit-engine implementation and clock-isolation fix are present.
-On October 1, 2026, the builder reran type checking, all 36 project tests and the
-production build successfully. Existing Round 3 artifacts record passing old
-schema migrations, packaged-app flows and improved renderer performance.
-Work is now paused at the user's explicit request. The final already-running
-timer/midnight regression passed before cleanup; the independent reviewer saved
-[an incomplete progress report](phase1-review-round-3.md) without a final score.
-Phase 1's installer is not the completed master
-build. The larger modules below have not been integrated into this checkout.
+Phase 1 is independently accepted at 9.2/10. Foundation is implemented,
+tested (40 tests at the checkpoint), built and exercised in real Electron with
+isolated SQLite, then committed/tagged at 33f3c19. Focus, Reflection and Restyle
+are now building in isolated branches from that tag. Integration and the whole
+app review remain pending. The installed desktop app is still the prior release.
 
 ## Remaining long-running milestones
 
