@@ -114,6 +114,9 @@ export class SystemHostsAdapter implements HostsAdapter {
     this.owner = null;
     if (!owner) return;
     await this.writeLease(owner, 0);
+    // A denied permission prompt never started a watchdog or installed a block.
+    // Waiting for its acknowledgement would needlessly stall every later action.
+    if (!(await this.read()).includes(hostsStart)) return;
     for (let n = 0; n < 40; n++) {
       const clean = !(await this.read()).includes(hostsStart);
       if (clean && (await readFile(this.leaseFile + '.released', 'utf8').catch(() => '')) === owner)
@@ -154,7 +157,7 @@ export class SystemHostsAdapter implements HostsAdapter {
           script += `try{$child=Start-Process -FilePath powershell.exe -WindowStyle Hidden -PassThru -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',${psQuote(encoded)});if(!$child){throw 'No watchdog'}}catch{\n${windowsHostsRewrite(this.filename, [])}\nthrow}\n`;
         }
         await writeFile(helper, script, 'utf8');
-        const command = `$p=Start-Process -FilePath powershell.exe -WindowStyle Hidden -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File','"${helper}"'); if($p.ExitCode -ne 0){throw 'Guard elevation was cancelled or failed'}`;
+        const command = `$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; $p=Start-Process -FilePath powershell.exe -WindowStyle Hidden -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File','"${helper}"'); if($p.ExitCode -ne 0){throw 'Guard elevation was cancelled or failed'}`;
         await exec(
           'powershell.exe',
           [

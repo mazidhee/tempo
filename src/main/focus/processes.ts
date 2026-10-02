@@ -30,7 +30,7 @@ export class SystemProcessAdapter implements ProcessAdapter {
           '-Command',
           `$ErrorActionPreference='Stop'; $owner=Get-CimInstance Win32_Process -Filter 'ProcessId=${process.pid}'; if(!$owner -or $owner.SessionId -le 0){exit 0}; Get-CimInstance Win32_Process | Where-Object { $_.SessionId -eq $owner.SessionId -and $_.ExecutablePath } | Select-Object ProcessId,Name,ExecutablePath | ConvertTo-Json -Compress`,
         ],
-        { windowsHide: true, maxBuffer: 4 * 1024 * 1024 },
+        { windowsHide: true, maxBuffer: 4 * 1024 * 1024, timeout: 10_000 },
       );
       const records = JSON.parse(stdout || '[]');
       return (Array.isArray(records) ? records : [records])
@@ -74,7 +74,7 @@ export class SystemProcessAdapter implements ProcessAdapter {
           identity +
             `$proc=Get-Process -Id ${app.pid}; if($proc.MainWindowHandle -ne 0){$null=$proc.CloseMainWindow()}`,
         ],
-        { windowsHide: true },
+        { windowsHide: true, timeout: 10_000 },
       );
       await new Promise((r) => setTimeout(r, 3000));
       await exec(
@@ -85,7 +85,7 @@ export class SystemProcessAdapter implements ProcessAdapter {
           '-Command',
           identity + `Stop-Process -Id ${app.pid} -Force`,
         ],
-        { windowsHide: true },
+        { windowsHide: true, timeout: 10_000 },
       );
     } else {
       process.kill(app.pid, 'SIGTERM');

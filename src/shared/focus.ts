@@ -40,7 +40,15 @@ export interface FocusSnapshot {
   productivity: Productivity;
   settings: FocusSettings;
   events: FocusBreak[];
-  guard: { active: boolean; error: string; repairedAt: string | null };
+  guard: {
+    active: boolean;
+    error: string;
+    repairedAt: string | null;
+    pending?: boolean;
+    appsActive?: boolean;
+    websitesActive?: boolean;
+    diagnostics?: string;
+  };
   shortcutErrors: string[];
   emergencyReadyAt: number | null;
 }
@@ -208,6 +216,7 @@ declare module './workspace' {
     'focus:settings': { input: FocusSettings; output: FocusSnapshot };
     'focus:runningApps': { input: undefined; output: RunningApp[] };
     'focus:repair': { input: undefined; output: FocusSnapshot };
+    'focus:retryWebsites': { input: undefined; output: FocusSnapshot };
     'focus:emergencyBegin': { input: undefined; output: FocusSnapshot };
     'focus:emergencyExit': { input: { phrase?: string }; output: FocusSnapshot };
   }

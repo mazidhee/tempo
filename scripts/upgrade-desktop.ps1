@@ -1,5 +1,5 @@
 # Upgrade the existing per-user Tempo installation after the review gate.
-param([Parameter(Mandatory=$true)][string]$ReviewedInstallerSha256)
+param([Parameter(Mandatory=$true)][string]$ReviewedInstallerSha256, [switch]$ImportRoadmaps)
 $ErrorActionPreference = 'Stop'
 $tempoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $tempoProgram = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\Tempo\Habit Tracker.exe'))
@@ -39,7 +39,9 @@ try {
     if ($tempoSetup.ExitCode -ne 0) { throw "Installer exit code $($tempoSetup.ExitCode)." }
     $tempoVersion = (Get-Item -LiteralPath $tempoProgram).VersionInfo.ProductVersion
     if ($tempoVersion -notlike "$($tempoMetadata.version)*") { throw "Unexpected installed version $tempoVersion." }
-    & node scripts/installed-acceptance.cjs $tempoBaselinePath --import-roadmaps
+    $tempoAcceptanceArguments = @($tempoBaselinePath)
+    if ($ImportRoadmaps) { $tempoAcceptanceArguments += '--import-roadmaps' }
+    & node scripts/installed-acceptance.cjs @tempoAcceptanceArguments
     if ($LASTEXITCODE -ne 0) { throw 'Installed acceptance failed. Backup and evidence are retained.' }
     $tempoShortcut = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Tempo.lnk'
     if (-not (Test-Path -LiteralPath $tempoShortcut)) { throw 'Desktop shortcut missing.' }

@@ -64,11 +64,22 @@ export function registerFocus(context: ModuleContext) {
   let shortcutConfiguration = '';
   let queue: Promise<unknown> = Promise.resolve(),
     lastPoll = 0;
+  let nativeQueue: Promise<unknown> = Promise.resolve(),
+    nativePending = 0,
+    syncScheduled = false;
   const snapshot = (): FocusSnapshot => ({
     productivity: store.productivity(),
     settings: store.settings(),
     events: store.events(),
-    guard: { active: guard.active, error: guard.error, repairedAt: guard.repairedAt },
+    guard: {
+      active: guard.active,
+      error: guard.error,
+      repairedAt: guard.repairedAt,
+      pending: nativePending > 0,
+      appsActive: guard.appsActive,
+      websitesActive: guard.websitesActive,
+      diagnostics: guard.diagnostics,
+    },
     shortcutErrors,
     emergencyReadyAt: store.emergencyReadyAt,
   });
@@ -83,20 +94,43 @@ export function registerFocus(context: ModuleContext) {
     queue = result.catch(() => undefined);
     return result;
   };
-  const sync = () =>
-    context.isQuitting()
-      ? Promise.resolve()
-      : guard.sync(store.settings(), store.productivity().timer);
+  // Native effects may wait for UAC or another process. They never share the
+  // timer's write queue, and polling is coalesced rather than building a backlog.
+  const nativeEnqueue = <T>(operation: () => Promise<T>): Promise<T> => {
+    nativePending++;
+    const result = nativeQueue.then(operation).finally(() => {
+      nativePending--;
+      emit();
+    });
+    nativeQueue = result.catch(() => undefined);
+    return result;
+  };
+  const signature = () => JSON.stringify([store.settings(), store.productivity().timer]);
+  const sync = () => {
+    if (context.isQuitting() || disposed || syncScheduled) return;
+    syncScheduled = true;
+    let before = '';
+    void nativeEnqueue(async () => {
+      before = signature();
+      if (!context.isQuitting())
+        await guard.sync(
+          store.settings(),
+          store.productivity().timer,
+          () => before === signature(),
+        );
+    })
+      .finally(() => {
+        syncScheduled = false;
+        if (before !== signature()) sync();
+      })
+      .catch(() => undefined);
+  };
   const action = (input: unknown) =>
-    enqueue(async () => {
+    enqueue(() => {
       if (context.isQuitting()) throw new Error('Tempo is releasing Guard before quitting.');
       store.command(input);
-      try {
-        await sync();
-      } finally {
-        emit();
-      }
-      return snapshot();
+      sync();
+      return emit();
     });
   const shortcuts = (settings: FocusSettings) => {
     shortcutConfiguration = JSON.stringify(settings.shortcuts);
@@ -189,7 +223,7 @@ export function registerFocus(context: ModuleContext) {
               void enqueue(async () => {
                 store.command({ action: 'configure', presetId: p.id, timerMode: 'pomodoro' });
                 store.command({ action: 'start' });
-                await sync();
+                sync();
                 emit();
               }).catch((e) => {
                 guard.error = (e as Error).message;
@@ -231,9 +265,9 @@ export function registerFocus(context: ModuleContext) {
     tray = new Tray(trayIcon(1));
     tray.on('click', context.showWindow);
     shortcuts(store.settings());
-    await guard.repair();
+    void nativeEnqueue(() => guard.repair()).catch(() => undefined);
     store.complete();
-    await sync();
+    sync();
     emit();
   });
   initialization.catch((e) => {
@@ -256,32 +290,37 @@ export function registerFocus(context: ModuleContext) {
     }),
   );
   ipcMain.handle('focus:legacyTimer', (_e, input) =>
-    enqueue(async () => {
+    enqueue(() => {
       store.legacy(input);
-      try {
-        await sync();
-      } finally {
-        emit();
-      }
-      return snapshot();
+      sync();
+      return emit();
     }),
   );
   ipcMain.handle('focus:settings', (_e, input) =>
-    enqueue(async () => {
+    enqueue(() => {
       store.saveSettings(input);
       shortcuts(store.settings());
-      try {
-        await sync();
-      } finally {
-        emit();
-      }
-      return snapshot();
+      sync();
+      return emit();
     }),
   );
-  ipcMain.handle('focus:runningApps', () => enqueue(() => guard.processes.list()));
+  ipcMain.handle('focus:runningApps', () =>
+    guard.processes.list().catch(() => {
+      throw new Error('Could not read running apps. Try Refresh again.');
+    }),
+  );
   ipcMain.handle('focus:repair', () =>
-    enqueue(async () => {
-      await guard.repair(store.productivity().timer.runId);
+    enqueue(() => {
+      void nativeEnqueue(() => guard.repair(store.productivity().timer.runId)).catch(
+        () => undefined,
+      );
+      return emit();
+    }),
+  );
+  ipcMain.handle('focus:retryWebsites', () =>
+    enqueue(() => {
+      guard.retryWebsites();
+      sync();
       return emit();
     }),
   );
@@ -294,15 +333,8 @@ export function registerFocus(context: ModuleContext) {
     // Website cleanup is serialized after that dialog so a late helper can
     // never reapply entries after the emergency repair has completed.
     store.emergencyExit(input);
-    emit();
-    return enqueue(async () => {
-      try {
-        await guard.repair();
-      } finally {
-        emit();
-      }
-      return snapshot();
-    });
+    void nativeEnqueue(() => guard.repair()).catch(() => undefined);
+    return emit();
   });
   const interval = setInterval(() => {
     if (disposed) return;
@@ -314,7 +346,7 @@ export function registerFocus(context: ModuleContext) {
       try {
         if (ended || Date.now() - lastPoll >= 2500) {
           lastPoll = Date.now();
-          await sync();
+          sync();
         }
       } finally {
         if (ended) emit();
@@ -330,7 +362,7 @@ export function registerFocus(context: ModuleContext) {
     },
     async beforeQuit() {
       try {
-        await enqueue(() => guard.repair());
+        await nativeEnqueue(() => guard.repair());
       } catch (e) {
         emit();
         context.showWindow();

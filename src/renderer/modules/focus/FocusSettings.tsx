@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Switch } from '../../components/ui/switch';
 import { FocusEmergency } from './EmergencyExit';
 import { useFocus } from './useFocus';
+import { GuardNotice } from './GuardNotice';
 import './focus.css';
 export function FocusSettings() {
   const { snapshot, error, run } = useFocus(),
@@ -38,6 +39,11 @@ export function FocusSettings() {
         stays active while paused and normally releases during breaks. Closing Tempo keeps your
         timer in the tray.
       </p>
+      <p className="muted small">
+        Gentle mode only notifies you. Choose Close app to enforce app blocking. App checks do not
+        require administrator permission and keep working if website permission is declined.
+      </p>
+      <GuardNotice guard={snapshot.guard} error={error} />
       <p className="muted small">
         Repair releases Guard for the current phase. It can activate again when a new phase starts.
       </p>
@@ -222,7 +228,6 @@ export function FocusSettings() {
           {e}
         </p>
       ))}
-      {(error || snapshot.guard.error) && <p role="alert">{error || snapshot.guard.error}</p>}
       <div className="focus-actions">
         <Button
           disabled={busy || !dirty}

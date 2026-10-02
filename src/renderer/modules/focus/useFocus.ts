@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { FocusSnapshot } from '../../../shared/focus';
 export function useFocus() {
   const [snapshot, setSnapshot] = useState<FocusSnapshot | null>(null);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   useEffect(() => {
     let alive = true;
     const off = window.workspaceAPI.on('focus:changed', (s) => {
@@ -21,13 +23,19 @@ export function useFocus() {
       off();
     };
   }, []);
-  async function run(operation: Promise<FocusSnapshot>) {
+  async function run(operation: Promise<FocusSnapshot> | (() => Promise<FocusSnapshot>)) {
+    if (pending.current && typeof operation === 'function') return;
+    pending.current = true;
+    setBusy(true);
     setError('');
     try {
-      setSnapshot(await operation);
+      setSnapshot(await (typeof operation === 'function' ? operation() : operation));
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      pending.current = false;
+      setBusy(false);
     }
   }
-  return { snapshot, error, run };
+  return { snapshot, error, run, busy };
 }

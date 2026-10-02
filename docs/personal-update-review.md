@@ -200,3 +200,23 @@ Code-path inspection finds one userData-derived database path; synchronous SQLit
 Two installed-harness issues were distinguished from causality. The builder corrected preservation comparison to use ordered primary-key columns from PRAGMA instead of assuming every module uses `id` (reflection reviews use `start`, plans/journal use `date`). Separately, installed acceptance's async IPC `waitForFunction` predicates are a concrete polling weakness: the installed Playwright poller treats the returned Promise as truthy and fulfills without retrying a false resolved value. Explicit Node-side polling is preferable. This can weaken waits for queued task writes; it cannot explain an already awaited/committed Study import disappearing, or differing read-only pre-launch counts. Neither issue proves the database-state discrepancy's cause.
 
 The builder subsequently reported a protected, non-destructive backup-API merge and successful full installed quit/relaunch preserving the original task/SWE IDs, with 1 habit, 1 task, 4 curricula, 1,823 topics and 3 imports. Its recovery record is `.install-check/personal-recovery-1790887353167/recovery.json`. That is recovery evidence supplied by the builder, not an independently repeated owner-data write/launch. Original backups remain retained. The original discrepancy remains **unexplained**; source/package fixture acceptance and subsequent installed acceptance must remain separate claims.
+
+## October 2 UX/Guard follow-up: diagnosis only
+
+The user reported further UX/native Guard problems. The prior 9.27 score does not accept this follow-up. Final weighted review is pending a complete submitted build. The agreed focus is bounded Plan study selection, searchable Focus links, rapid pause/duplicate actions, concise errors, independent app Guard despite website-permission failure, centered collapsed navigation, and solid dark palette options.
+
+Original code diagnosis identifies shared serialization: timer commands, Guard sync, process enumeration/closing, website permission and polling share a queue; a timer action emits/returns after Guard work. Native close includes multiple PowerShell process checks and a grace delay. Website failure occurs before app listing, then matching `failedDomains` returns before the app branch on subsequent polls.
+
+Real reproduction is `.review/personal-update-review-1790937007643/guard-diagnosis.json`, with the original committed Focus module/guard/process source preserved in `guard-source-before.json`. The harness privately bundles copied production main paths, uses actual Electron/SQLite/renderer and imports all **1,823** topics. Its review-only FileHosts adapter injects a 1,400ms website denial; the sole process identity is a dedicated reviewer-owned temporary cloned Node executable. SystemProcessAdapter enforces its native identity/session checks and closes only that target. No owner data, real hosts or owner app target is configured.
+
+| Original-source reproduction | Result |
+|---|---|
+| Pause while website operation is pending | **1,513ms**, blocked behind injected 1,400ms operation |
+| App checks after website denial | **0 lists, 0 closes** |
+| App checks on cached denied-domain retry | **0 lists, 0 closes**, without another website attempt |
+| Pause while native app work is pending | **21,878ms**, blocked behind native work |
+| Dedicated target native closure | Actual target exited; native close recorded no error |
+
+All temporary app/target processes were cleaned up. A preceding delayed invocation compiled the builder's in-progress changes instead of the original baseline; that preliminary run (`1790936802235`) recorded 355ms and 36ms Pause returns during pending Guard work and reached the independent app branch. Its target-exit field was sampled before background native work settled, so it is explicitly not final native-close acceptance or a final build score.
+
+Final review will use the submitted production build with fresh isolated data, the complete topic set, actual UI clicks, pause/duplicate-action timing and persistence checks, safe independent Guard fault/native targets, and desktop/narrow screenshots in the new dark palettes. No score is assigned until builder readiness.

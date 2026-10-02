@@ -155,14 +155,14 @@ function verifyPreservation() {
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
       .map((r) => r.version);
-    for (const version of [2, 3, 4, 100, 200, 201])
+    for (const version of [2, 3, 4, 100, 200, 201, 202])
       assert.ok(versions.includes(version), `Migration ${version}`);
     assert.equal(after.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
     checks.push(
       retainCurrentSettings
         ? 'Original habit/log records, tasks, sessions, presets and all saved module rows retained; current settings kept'
         : 'Original habit/log records, tasks, sessions, presets and compared preferences retained',
-      'Migrations 2/3/4/100/200/201 recorded; SQLite integrity check OK',
+      'Migrations 2/3/4/100/200/201/202 recorded; SQLite integrity check OK',
     );
     return { versions, originalCounts: baseline.counts, appearanceDifference, settingsChanged };
   } finally {

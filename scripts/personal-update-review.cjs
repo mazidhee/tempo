@@ -255,8 +255,121 @@ async function reviewPackage(executable) {
     });
   }, absolute);
 }
+async function diagnoseGuard() {
+  const { _electron } = require('C:/Users/USER/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+  const { spawn } = require('node:child_process');
+  const os = require('node:os');
+  const probeDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'focus-review-probe-'));
+  const probePath = path.join(probeDirectory, 'FocusReviewProbe.exe');
+  fs.copyFileSync(process.execPath, probePath);
+  const probe = spawn(probePath, ['-e', 'setInterval(()=>{},1000)'], { windowsHide: true, stdio: 'ignore' });
+  let application;
+  const mainDirectory = path.join(evidence, 'dist-electron', 'main');
+  fs.mkdirSync(mainDirectory, { recursive: true });
+  fs.cpSync(path.resolve('dist'), path.join(evidence, 'dist'), { recursive: true });
+  fs.cpSync(path.resolve('dist-electron/preload'), path.join(evidence, 'dist-electron', 'preload'), { recursive: true });
+  const mainFile = path.join(mainDirectory, 'index.js');
+  const baseline = process.argv.includes('--guard-baseline');
+  const sourceBefore = Object.fromEntries(['module', 'guard', 'processes'].map((name) => [name, baseline
+    ? require('node:child_process').execFileSync('git', ['show', `HEAD:src/main/focus/${name}.ts`], { encoding: 'utf8' })
+    : fs.readFileSync(`src/main/focus/${name}.ts`, 'utf8')]));
+  const sourceDirectory = path.join(evidence, 'source');
+  fs.cpSync(path.resolve('src/main'), path.join(sourceDirectory, 'src/main'), { recursive: true });
+  fs.cpSync(path.resolve('src/shared'), path.join(sourceDirectory, 'src/shared'), { recursive: true });
+  for (const [name, contents] of Object.entries(sourceBefore)) fs.writeFileSync(path.join(sourceDirectory, `src/main/focus/${name}.ts`), contents);
+  fs.writeFileSync(path.join(evidence, 'guard-source-before.json'), JSON.stringify(sourceBefore, null, 2));
+  // Review-only adapter substitution around the real production main module.
+  // No SystemHostsAdapter is constructed: userData isolation selects FileHosts.
+  // The only supplied process identity is this helper's dedicated owned target.
+  require('esbuild').buildSync({ stdin: { contents: `
+    import { ipcMain } from 'electron';
+    import { FileHostsAdapter } from './src/main/focus/hosts';
+    import { NoProcessAdapter, SystemProcessAdapter } from './src/main/focus/processes';
+    import './src/main/index';
+    const stats = { websiteAttempts: 0, appLists: 0, appCloses: 0, closeElapsedMs: 0, closeSettled: false, closeError: '' };
+    const replace = FileHostsAdapter.prototype.replace;
+    FileHostsAdapter.prototype.replace = async function(domains) {
+      if (domains.length) { stats.websiteAttempts++; await new Promise(r=>setTimeout(r,1400)); throw new Error('Website permission denied (isolated review fixture)'); }
+      return replace.call(this, domains);
+    };
+    const owned = JSON.parse(process.env.FOCUS_REVIEW_OWNED_PROCESS!);
+    NoProcessAdapter.prototype.list = async function() { stats.appLists++; return [owned]; };
+    NoProcessAdapter.prototype.close = async function(target) {
+      if (target.pid !== owned.pid || target.executable !== owned.executable) throw new Error('Refusing non-review process');
+      stats.appCloses++; const started=Date.now();
+      try { await new SystemProcessAdapter().close(target); } catch(e) { stats.closeError=String(e); throw e; }
+      finally { stats.closeElapsedMs=Date.now()-started; stats.closeSettled=true; }
+    };
+    ipcMain.handle('review:guardProbe', ()=>({...stats}));
+  `, resolveDir: sourceDirectory, loader: 'ts' }, outfile: mainFile, bundle: true, platform: 'node', format: 'cjs', external: ['electron', 'node:*'] });
+  const env = { ...process.env, HABIT_TRACKER_DATA_DIR: evidence, FOCUS_REVIEW_OWNED_PROCESS: JSON.stringify({ pid: probe.pid, name: 'FocusReviewProbe.exe', executable: probePath }) };
+  delete env.ELECTRON_RUN_AS_NODE;
+  delete env.VITE_DEV_SERVER_URL;
+  try {
+    application = await _electron.launch({ executablePath: path.resolve('node_modules/electron/dist/electron.exe'), args: [mainFile], env });
+    const page = await application.firstWindow();
+    await page.waitForFunction(() => !!window.workspaceAPI && !!window.habitAPI);
+    await invoke(page, 'study:importOutlines', bundled);
+    const study = await invoke(page, 'study:snapshot');
+    assert.equal(study.topics.length, 1823);
+    const s = await snapshot(page);
+    await invoke(page, 'focus:settings', { ...s.settings, enabled: true, mode: 'close', strict: false, selected: ['review'], blocklists: [{ id: 'review', name: 'Owned review target', apps: ['FocusReviewProbe.exe'], websites: ['blocked.review.example'] }] });
+    await invoke(page, 'focus:command', { action: 'configure', timerMode: 'pomodoro', phase: 'focus', presetId: 'classic' });
+    await page.evaluate(() => { window.__guardReviewStart = window.workspaceAPI.invoke('focus:command', { action: 'start' }).catch((e) => ({ message: e.message })); });
+    await until(async () => (await snapshot(page)).productivity.timer.deadline !== null, 'Timer never started');
+    const pauseStarted = Date.now();
+    await invoke(page, 'focus:command', { action: 'pause' });
+    const pauseLatencyMs = Date.now() - pauseStarted;
+    const firstStats = await invoke(page, 'review:guardProbe');
+    await invoke(page, 'focus:command', { action: 'start' });
+    const cachedFailureStats = await invoke(page, 'review:guardProbe');
+    await navigate(page, 'Focus');
+    await capture(page, 'guard-denied-focus');
+    let deniedGuard = null;
+    if (!baseline) {
+      await until(async () => (await invoke(page, 'review:guardProbe')).closeSettled, 'Independent native close did not settle', 45000);
+      await until(async () => !!(await snapshot(page)).guard.error, 'Website denial did not become visible', 8000);
+      deniedGuard = (await snapshot(page)).guard;
+      for (const width of [1280, 390]) {
+        await page.setViewportSize({ width, height: width === 390 ? 844 : 860 });
+        await capture(page, `guard-denied-final-${width}`);
+      }
+      await page.setViewportSize({ width: 1280, height: 860 });
+    }
+    const current = await snapshot(page);
+    await page.evaluate((settings) => { window.__guardReviewSettings = window.workspaceAPI.invoke('focus:settings', { ...settings, blocklists: [{ id: 'review', name: 'Owned review target', apps: ['FocusReviewProbe.exe'], websites: [] }] }).catch((e) => ({ message: e.message })); }, current.settings);
+    await until(async () => (await invoke(page, 'review:guardProbe')).appCloses > 0, 'Native close did not reach the owned target');
+    const nativePauseStarted = Date.now();
+    await invoke(page, 'focus:command', { action: 'pause' });
+    const nativePauseLatencyMs = Date.now() - nativePauseStarted;
+    await until(async () => (await invoke(page, 'review:guardProbe')).closeSettled, 'Native owned-target close did not settle', 25000);
+    await page.waitForTimeout(100);
+    const finalStats = await invoke(page, 'review:guardProbe');
+    await invoke(page, 'focus:settings', { ...current.settings, enabled: false });
+    await invoke(page, 'focus:command', { action: 'stop' });
+    const diagnosis = { run, baseline, topics: study.topics.length, pauseLatencyMs, firstStats, cachedFailureStats, nativePauseLatencyMs, finalStats, deniedGuard, probeExited: probe.exitCode !== null,
+      scope: 'Real Electron/SQLite/renderer and production main paths; website denial/delay injected only in FileHosts fixture; only one owned temporary process supplied' };
+    fs.writeFileSync(path.join(evidence, 'guard-diagnosis.json'), JSON.stringify(diagnosis, null, 2));
+    console.log(JSON.stringify(diagnosis, null, 2));
+    return diagnosis;
+  } finally {
+    if (application) await application.close();
+    if (probe.exitCode === null) {
+      const closed = new Promise((resolve) => probe.once('exit', resolve));
+      probe.kill();
+      await Promise.race([closed, new Promise((r) => setTimeout(r, 2500))]);
+    }
+    assert.equal(path.dirname(probePath), probeDirectory);
+    assert.ok(probeDirectory.startsWith(path.join(os.tmpdir(), 'focus-review-probe-')));
+    fs.rmSync(probeDirectory, { recursive: true, force: true });
+  }
+}
 async function main() {
   fs.mkdirSync(evidence, { recursive: true });
+  if (process.argv.includes('--guard-diagnosis')) {
+    await diagnoseGuard();
+    return;
+  }
   if (process.argv.includes('--diagnose-installed-readonly')) {
     diagnoseInstalledReadOnly();
     // Playwright's imported driver can retain a handle even though this mode
@@ -599,4 +712,5 @@ async function main() {
   await reviewHome();
   finish();
 }
-main().catch((error) => { console.error(error); process.exitCode = 1; });
+module.exports = { diagnoseGuard, evidence };
+if (require.main === module) main().catch((error) => { console.error(error); process.exitCode = 1; });

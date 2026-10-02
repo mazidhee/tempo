@@ -3,6 +3,7 @@ import { Download, Upload, Monitor, Sun, Moon, ShieldCheck, Keyboard, Check } fr
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { PageHeader, download, Modal } from '../components/ui';
 import { localDate } from '../../shared/productivity';
+import { themePalettes } from '../../shared/appearance';
 import { navigation } from '../components/Sidebar';
 import { settingsSections } from '../registry/settings';
 import Personalization from '../components/Personalization';
@@ -116,6 +117,41 @@ function GeneralSettings() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="theme-palette-section">
+          <h3>Surface palette</h3>
+          <p className="muted">
+            Choose a workspace atmosphere. Each palette supports Light, Dark and System; your accent
+            stays separate.
+          </p>
+          <div className="theme-palette-grid" role="group" aria-label="Surface palettes">
+            {themePalettes.map((palette) => (
+              <button
+                type="button"
+                key={palette.id}
+                className="theme-palette-choice"
+                aria-pressed={(settings.themePalette || 'default') === palette.id}
+                onClick={() => set('themePalette', palette.id)}
+              >
+                <span
+                  className="theme-palette-preview"
+                  aria-hidden="true"
+                  style={{ background: palette.dark[0], color: '#f7f8f8' }}
+                >
+                  <span style={{ background: palette.dark[1] }} />
+                  <span style={{ background: palette.dark[3] }} />
+                </span>
+                <strong>
+                  {palette.name}
+                  {(settings.themePalette || 'default') === palette.id && <Check />}
+                </strong>
+                <small>{palette.description}</small>
+              </button>
+            ))}
+          </div>
+          <p className="muted small">
+            Previews show dark mode. Switch Appearance to Dark to use those surfaces.
+          </p>
         </div>
       </section>
       <section className="panel">

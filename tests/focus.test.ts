@@ -353,10 +353,10 @@ test('cancelled elevation does not repeatedly prompt; repair retries and clears 
   );
   const s = { ...defaultFocusSettings(), enabled: true };
   const t = startTimer(defaultProductivity().timer, 1000);
-  await assert.rejects(() => guard.sync(s, t));
+  await guard.sync(s, t);
   await guard.sync(s, t);
   assert.equal(prompts, 1);
-  assert.match(guard.error, /UAC/);
+  assert.match(guard.error, /permission/);
   deny = false;
   await guard.repair();
   assert.equal(guard.error, '');

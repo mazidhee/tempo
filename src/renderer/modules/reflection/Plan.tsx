@@ -1,7 +1,7 @@
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, X, ArrowUp, CalendarCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, X, ArrowUp, CalendarCheck, Timer } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
 import type { PlanPriority, PriorityKind } from '../../../shared/reflection';
 import { PageHeader, Empty } from '../../components/ui';
@@ -10,9 +10,12 @@ import { Input } from '../../components/ui/input';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
 import { useReflection } from './useReflection';
+import { SearchPicker } from '../../components/SearchPicker';
+import { studyOptions } from '../../../shared/picker';
 import { ActionError, Field, LoadState, Panel, ReflectionNav, Select, useAction } from './ui';
 export default function Plan() {
   const privacy = usePrivacy();
+  const navigate = useNavigate();
   const { snapshot } = useReflection(),
     action = useAction(),
     [date, setDate] = useState(localDate()),
@@ -39,36 +42,35 @@ export default function Plan() {
         ? ''
         : String(saved.evening.energy),
     );
-  }, [date, saved?.updatedAt, savedJournal?.updatedAt]);
+    // Hydrate when opening a day. Background saves must not erase an unfinished
+    // journal line, sleep input, or priority draft in this same workspace.
+  }, [date, !!snapshot]);
   if (!snapshot) return <LoadState />;
   const source = snapshot.source,
     options = [
       ...source.productivity.tasks
         .filter((t) => !t.completedAt)
-        .map((t) => ({ value: `task:${t.id}`, label: `Task · ${t.title}` })),
+        .map((t) => ({
+          value: `task:${t.id}`,
+          label: t.title,
+          group: 'task',
+          groupLabel: 'Tasks',
+        })),
       ...source.habits
         .filter((h) => !h.is_archived)
         .map((h) => ({
           value: `habit:${h.id}`,
-          label: `Habit · ${privacy ? 'Private habit' : h.name}`,
+          label: privacy ? 'Private habit' : h.name || 'Habit',
+          group: 'habit',
+          groupLabel: 'Habits',
         })),
-      ...source.study.topics
-        .filter(
-          (t) =>
-            !t.archived &&
-            source.study.curricula.some((c) => c.id === t.curriculumId && !c.archived),
-        )
-        .map((t) => ({ value: `study:${t.id}`, label: `Study · ${t.title}` })),
+      ...studyOptions(source.study),
     ];
   const add = () => {
     if (priorities.length >= 3) return;
     const [kind, ...rest] = choice.split(':'),
       linkId = rest.join(':') || null;
-    const linked = options
-      .find((o) => o.value === choice)
-      ?.label.split(' · ')
-      .slice(1)
-      .join(' · ');
+    const linked = options.find((o) => o.value === choice)?.label;
     if (!(choice === 'free' ? title.trim() : linked)) return;
     setPriorities([
       ...priorities,
@@ -89,6 +91,16 @@ export default function Plan() {
   };
   const save = () =>
     window.workspaceAPI.invoke('plan:save', { date, priorities, studyTopicIds: topics });
+  const changeTopics = (next: string[]) => {
+    setTopics(next);
+    void action.run(
+      () => window.workspaceAPI.invoke('plan:save', { date, priorities, studyTopicIds: next }),
+      'Study plan updated',
+    );
+  };
+  const selectedTopics = topics
+    .map((id) => source.study.topics.find((t) => t.id === id))
+    .filter((t) => t !== undefined);
   const close = async () => {
     await save();
     await window.workspaceAPI.invoke('plan:evening', {
@@ -175,14 +187,15 @@ export default function Plan() {
             {priorities.length < 3 && (
               <div className="reflection-stack">
                 <Field label="Add a priority">
-                  <Select value={choice} onChange={(e) => setChoice(e.target.value)}>
-                    <option value="free">Write a priority</option>
-                    {options.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </Select>
+                  <SearchPicker
+                    label="Link a priority"
+                    value={choice === 'free' ? '' : choice}
+                    options={options}
+                    onChange={(value) => setChoice(value || 'free')}
+                    emptyLabel="Write a priority"
+                    allowClear
+                    clearLabel="Write a priority"
+                  />
                 </Field>
                 {choice === 'free' && (
                   <Input
@@ -266,38 +279,77 @@ export default function Plan() {
         </div>
         <Panel
           title="Today’s study plan"
-          description="Keep your learning commitments alongside your priorities."
+          description={`${topics.length} chosen for ${date === localDate() ? 'today' : 'this day'}. Choose a few topics, then start with one.`}
         >
           <div className="reflection-stack">
-            {source.study.topics
-              .filter(
-                (t) =>
-                  !t.archived &&
-                  source.study.curricula.some((c) => c.id === t.curriculumId && !c.archived),
-              )
-              .map((t) => (
-                <label key={t.id} className="reflection-check">
-                  <Checkbox
-                    checked={topics.includes(t.id)}
-                    onCheckedChange={(checked) =>
-                      setTopics(checked ? [...topics, t.id] : topics.filter((id) => id !== t.id))
-                    }
-                  />
-                  <span>
-                    {t.title}
-                    <span className="reflection-caption">
-                      {' '}
-                      · {source.study.curricula.find((c) => c.id === t.curriculumId)?.title}
+            <SearchPicker
+              label="Add study topic"
+              value=""
+              options={studyOptions(source.study).filter((o) => !topics.includes(o.value.slice(6)))}
+              disabled={action.busy}
+              emptyLabel="Find a topic to study"
+              onChange={(value) => changeTopics([...topics, value.slice(6)])}
+            />
+            <div className="plan-study-list" aria-label="Selected study topics">
+              {selectedTopics.map((t) => (
+                <div key={t.id} className="plan-study-row">
+                  <div>
+                    <strong>{t.title}</strong>
+                    <small className="muted">
+                      {source.study.curricula.find((c) => c.id === t.curriculumId)?.title}
                       {t.reviewDue && t.reviewDue <= date ? ' · Review due' : ''}
-                    </span>
-                  </span>
-                </label>
+                    </small>
+                    {source.productivity.timer.startedAt === null ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={action.busy}
+                        onClick={() =>
+                          void action.run(async () => {
+                            await save();
+                            await window.workspaceAPI.invoke('focus:command', {
+                              action: 'configure',
+                              timerMode: 'pomodoro',
+                              phase: 'focus',
+                              link: {
+                                type: 'study',
+                                id: t.id,
+                                name: t.title,
+                                curriculumId: t.curriculumId,
+                              },
+                            });
+                            await window.workspaceAPI.invoke('focus:command', { action: 'start' });
+                            navigate('/focus');
+                          }, 'Study focus started')
+                        }
+                      >
+                        <Timer />
+                        Start focus
+                      </Button>
+                    ) : (
+                      <Link to="/focus">Open active focus</Link>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={action.busy}
+                    aria-label={`Remove study topic ${t.title}`}
+                    onClick={() => changeTopics(topics.filter((id) => id !== t.id))}
+                  >
+                    <X />
+                  </Button>
+                </div>
               ))}
-            {!source.study.topics.length && (
+            </div>
+            {!topics.length && (
               <p className="muted">
-                Add a curriculum and topics in Study to plan a learning session.
+                Your whole roadmap stays in Study. Only the topics you choose appear here.
               </p>
             )}
+            <p className="muted small">
+              Topic choices save automatically. Time is logged to the topic and its parent chapters.
+            </p>
             <Link to="/study" className="reflection-widget-link">
               Open Study
             </Link>

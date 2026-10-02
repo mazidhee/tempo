@@ -2,7 +2,7 @@
 
 Tempo keeps your workspace on this computer. Production features work offline;
 there is no cloud synchronization. The original Habit Tracker database and
-history remain in use. This guide covers the Windows 1.3 personal study update.
+history remain in use. This guide covers the Windows 1.4 study and Focus UX update.
 Acceptance evidence and native verification limits are tracked in
 [release readiness](release-readiness.md).
 
@@ -19,16 +19,16 @@ Review and Settings. Plan and Review also link to Journal. At narrow window size
 use the sidebar button to open navigation. Dense calendars and tables may scroll
 inside their panels.
 
-| Control | Action |
-| --- | --- |
-| Ctrl/Cmd+K | Open or close the command palette |
-| Ctrl/Cmd+B | Expand/collapse the sidebar or toggle narrow-window navigation |
-| Ctrl/Cmd+Shift+P | Toggle habit privacy |
-| Up/Down, Home/End in sidebar navigation | Move focus between links |
-| Escape | Close a dialog or leave Focus mode |
-| Ctrl/Cmd+Shift+F | Global Focus start/resume/pause, using the last preset |
-| Ctrl/Cmd+Shift+S | Global skip phase |
-| Ctrl/Cmd+Shift+X | Global stop phase |
+| Control                                 | Action                                                         |
+| --------------------------------------- | -------------------------------------------------------------- |
+| Ctrl/Cmd+K                              | Open or close the command palette                              |
+| Ctrl/Cmd+B                              | Expand/collapse the sidebar or toggle narrow-window navigation |
+| Ctrl/Cmd+Shift+P                        | Toggle habit privacy                                           |
+| Up/Down, Home/End in sidebar navigation | Move focus between links                                       |
+| Escape                                  | Close a dialog or leave Focus mode                             |
+| Ctrl/Cmd+Shift+F                        | Global Focus start/resume/pause, using the last preset         |
+| Ctrl/Cmd+Shift+S                        | Global skip phase                                              |
+| Ctrl/Cmd+Shift+X                        | Global stop phase                                              |
 
 The last three are configurable defaults in **Settings → Focus**. They work while
 Tempo is running, including in the tray. Conflicts appear in that settings section;
@@ -63,8 +63,14 @@ time before switching to the new task or habit.
 ## Plan and reflect
 
 In **Plan**, choose a date and add up to three priorities from tasks, habits,
-Study topics or your own text. Select topics for the day's study plan, then use
-**Save plan**. Mark priorities as done when appropriate. Linking a priority does
+Study topics or your own text. **Add study topic** opens a searchable picker:
+type words from a topic or its parent, filter by curriculum, then select a result.
+Only 30 results appear at a time; use Previous/Next or narrow your search.
+Arrow keys and Enter select a result; Escape closes the picker.
+Only your selected topics appear in today's compact study list. Adding or removing
+a study topic saves the selection automatically. Choose its **Start focus** button
+to launch a linked Pomodoro; an existing active phase opens instead of being replaced.
+Use **Save plan** to save priority edits. Mark priorities as done when appropriate. Linking a priority does
 not itself complete the underlying habit, task or Study topic.
 
 The **Evening reflection** panel accepts a sentence about your day and optional
@@ -87,7 +93,10 @@ open or in the tray, and do not replay missed notifications.
 ## Focus on one phase
 
 Choose a preset, Focus/Short break/Long break, and an optional task, habit or
-Study link. Start the phase; pause/resume, skip or stop using the timer controls.
+Study link using the searchable **Working on** control above the timer. Search and
+curriculum filters keep large roadmaps manageable. Start the phase; pause/resume,
+skip or stop using the timer controls. Buttons wait briefly for an acknowledgement
+to prevent duplicate actions; background Guard work does not delay timer controls.
 Stop the current phase before changing its rhythm or link. Presets can be created,
 edited and deleted.
 
@@ -125,6 +134,10 @@ enable Guard, then **Save Focus settings**.
 Website blocking requests administrator permission and adds a marked section to
 the hosts file. Browser secure DNS can bypass it; the Focus settings panel shows
 the relevant browser controls. Guard does not block a phone.
+If you cancel website permission, selected app checks continue independently.
+Choose **Retry websites** in the concise Guard notice when ready to approve the
+Windows prompt. Detailed diagnostics are available in an expandable section.
+**Gentle** only notifies; choose **Close app** to enforce app closure.
 
 **Emergency exit** is reachable from workspace chrome and the Focus page. Type
 `I choose to end this focus` or wait 30 seconds, then choose **End focus**. This
@@ -134,8 +147,9 @@ can activate it again. Startup recovery and Quit also attempt cleanup. Read any
 reported Guard error; a failed cleanup is not a confirmed release of blocking.
 
 Current verification covers real Windows PowerShell against isolated hosts and
-control files, watchdog cleanup fixtures, identity/session fixtures and read-only
-own-session app enumeration. Live UAC, real hosts edits, user-app closure and
+control files, watchdog cleanup fixtures, identity/session fixtures and actual
+closure of a dedicated test app in Tempo's Windows session, including when website
+permission fails. Live UAC, real hosts edits, owner-app closure and
 physical native notification/sound delivery remain outside the certified evidence.
 
 ## Learn with Study and track goals
@@ -198,6 +212,11 @@ recorded duration excludes timer pauses and may therefore be shorter than its sp
 Settings General offers your greeting name, system/light/dark appearance,
 sound/notifications and the existing end-of-day habit reminder. Fonts and Lucide
 icons are packaged locally.
+Choose a separate solid surface palette: **Tempo, Graphite, Slate, Dusk or Forest**.
+Graphite uses warm charcoal; Slate cool mineral surfaces; Dusk subtle plum tones;
+Forest deep green. Each supports light and dark appearance, independently of your
+accent. Previews show dark mode; choose **Dark** for the dark surfaces or **System**
+to follow Windows. These palettes use no gradients.
 
 Choose a solid accent: **Lavender, Cedar, Terracotta, Mulberry, Ochre or Petrol**.
 It applies to actions, charts and calendars in either theme. Upload a local JPG,

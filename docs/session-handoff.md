@@ -1,4 +1,18 @@
-# Active continuation — October 1, 2026
+# Latest checkpoint — October 2, 2026
+
+Tempo **1.4.0** is installed from the reviewed package. The UX request is complete:
+compact selected study plans/search pickers, responsive timer/partial Guard errors,
+centered collapsed sidebar and independent solid palettes. Review rounds 8.62 then
+9.27; 101 tests, 5 packaged groups and installed post-recovery persistence pass.
+Read [UX release](ux-release.md) first for final hashes, backups and limitations.
+The older dataset discrepancy has no proven cause. Current topic identities and
+progress are retained; the old paused phase ended with explicit user permission;
+missing older records were merged and duplicate recovery curricula archived.
+There are 1,823 active supplied topics and 1,823 archived recovery-copy topics.
+Do not restore an older snapshot over current preferences or silently delete the
+archived copies. Source/package acceptance and installed recovery remain distinct.
+
+# Historical continuation — October 1, 2026
 
 The user resumed in the desktop chat. Foundation passes typecheck, 40 tests,
 production build and actual Electron smoke. See build-status.md for current

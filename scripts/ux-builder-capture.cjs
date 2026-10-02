@@ -1,0 +1,30 @@
+// One bounded builder capture batch. The independent reviewer owns acceptance.
+const fs = require('node:fs'), path = require('node:path');
+const { withApp } = require('./electron-runtime.cjs');
+const run = 'ux-builder-' + Date.now();
+withApp(run, async ({ page, nav, directory, errors }) => {
+  const roadmaps = ['software-engineering.md', 'mathematics.md', 'economics-markets.md'].map((file) => ({ title: file.split('.')[0], markdown: fs.readFileSync(path.resolve('src/renderer/assets/curricula', file), 'utf8') }));
+  await page.evaluate((outlines) => window.workspaceAPI.invoke('study:importOutlines', outlines), roadmaps);
+  await nav('Plan');
+  await page.getByRole('heading', { name: 'Today’s study plan' }).waitFor();
+  await page.screenshot({ path: path.join(directory, 'plan-desktop.png') });
+  await page.getByRole('button', { name: 'Add study topic', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Search add study topic' }).fill('Data types mutability');
+  await page.locator('[cmdk-item]').first().click();
+  await page.getByRole('button', { name: 'Start focus', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.screenshot({ path: path.join(directory, 'focus-desktop.png') });
+  await nav('Settings');
+  await page.getByRole('button', { name: 'Dark', exact: true }).click();
+  await page.getByRole('button', { name: /Graphite/ }).click();
+  await page.waitForFunction(() => document.documentElement.dataset.palette === 'graphite');
+  await page.screenshot({ path: path.join(directory, 'themes-desktop.png') });
+  await page.setViewportSize({ width: 800, height: 860 });
+  await page.screenshot({ path: path.join(directory, 'themes-narrow.png') });
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await nav('Focus');
+  await page.keyboard.press('Control+b');
+  await page.screenshot({ path: path.join(directory, 'sidebar-collapsed.png') });
+  fs.writeFileSync(path.join(directory, 'capture.json'), JSON.stringify({ errors }, null, 2));
+  console.log(JSON.stringify({ directory, errors }));
+}).catch((error) => { console.error(error); process.exitCode = 1; });

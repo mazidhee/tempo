@@ -5,7 +5,19 @@ checkout decisions in [the implementation plan](master-build-plan.md).
 Implementation evidence is in [master integration](master-integration.md), and
 actual use is described in [the user guide](user-guide.md).
 
-## Current checkpoint: personal workspace 1.3.0
+## Current checkpoint: UX update 1.4.0 — October 2
+
+Tempo 1.4.0 is installed from the independently reviewed package: **9.27/10**,
+**101/101 tests**, **5/5 package smoke**, and final installed quit/relaunch,
+offline and exact post-recovery data/preference preservation checks pass.
+Plan/Focus use bounded searchable topic selection; Guard work no longer blocks
+timer controls; new solid palettes and fitted Settings/collapsed navigation ship.
+See [UX release evidence](ux-release.md) and [independent review](ux-update-review.md).
+The historical dataset discrepancy remains unexplained. Current data is retained,
+the missing task recovered, and duplicate recovery copies are archived rather than
+deleted; 1,823 active study topics remain available.
+
+## Earlier checkpoint: personal workspace 1.3.0
 
 Tempo 1.3.0 is installed and open from the existing desktop shortcut. The
 production source is `3420fa94`; independent source/package acceptance is

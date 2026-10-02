@@ -9,7 +9,8 @@ import React, {
 } from 'react';
 import { defaultProductivity, type Productivity } from '../../shared/productivity';
 import '../../shared/focus';
-import { accentTokens } from '../../shared/appearance';
+import { accentTokens, themeTokens } from '../../shared/appearance';
+import { reconcileProductivity } from '../../shared/productivitySync';
 type Update = (fn: (s: Productivity) => Productivity) => void;
 const Context = createContext<{
   state: Productivity;
@@ -24,6 +25,12 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const queue = useRef(Promise.resolve());
+  const pendingWrites = useRef(0);
+  const acceptSnapshot = useCallback((actual: Productivity) => {
+    const reconciled = reconcileProductivity(actual, ref.current, pendingWrites.current);
+    ref.current = reconciled;
+    setState(reconciled);
+  }, []);
   const update: Update = useCallback(
     (fn) => {
       if (!ready) return;
@@ -31,6 +38,7 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
       const next = fn(previous);
       ref.current = next;
       setState(next);
+      pendingWrites.current++;
       // Serialize disk writes: a pause can never be overwritten by an earlier tick.
       queue.current = queue.current
         .then(async () => {
@@ -42,22 +50,22 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
                   timer: next.timer,
                 })
               : await window.workspaceAPI.invoke('focus:snapshot');
-          ref.current = snapshot.productivity;
-          setState(snapshot.productivity);
+          pendingWrites.current--;
+          acceptSnapshot(snapshot.productivity);
           window.dispatchEvent(new Event('workspace-data-changed'));
         })
         .catch(async (e) => {
+          pendingWrites.current--;
           const actual = await window.workspaceAPI.invoke('focus:snapshot').catch(() => null);
           if (actual) {
-            ref.current = actual.productivity;
-            setState(actual.productivity);
+            acceptSnapshot(actual.productivity);
           }
           setError(
             `Could not save your changes: ${e.message}. Keep the app open and export a backup.`,
           );
         });
     },
-    [ready],
+    [ready, acceptSnapshot],
   );
   useEffect(() => {
     let alive = true;
@@ -80,11 +88,10 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
   }, []);
   useEffect(() => {
     return window.workspaceAPI.on('focus:changed', (snapshot) => {
-      ref.current = snapshot.productivity;
-      setState(snapshot.productivity);
+      acceptSnapshot(snapshot.productivity);
       window.dispatchEvent(new Event('workspace-data-changed'));
     });
-  }, []);
+  }, [acceptSnapshot]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
@@ -92,13 +99,18 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
         state.settings.theme === 'dark' || (state.settings.theme === 'system' && media.matches);
       document.documentElement.classList.toggle('dark', dark);
       document.documentElement.classList.toggle('light', !dark);
-      for (const [property, value] of Object.entries(accentTokens(state.settings.accent, !dark)))
+      document.documentElement.dataset.palette = state.settings.themePalette || 'default';
+      const palette = themeTokens(state.settings.themePalette, !dark);
+      for (const [property, value] of Object.entries({
+        ...palette,
+        ...accentTokens(state.settings.accent, !dark, palette['--surface-2']),
+      }))
         document.documentElement.style.setProperty(property, value);
     };
     apply();
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
-  }, [state.settings.theme, state.settings.accent]);
+  }, [state.settings.theme, state.settings.accent, state.settings.themePalette]);
   const dismiss = useCallback(() => setError(''), []);
   const value = useMemo(
     () => ({ state, update, ready, error, dismiss }),

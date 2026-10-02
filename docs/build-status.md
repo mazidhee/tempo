@@ -1,4 +1,12 @@
-# Build status — October 1, 2026
+# Build status — October 2, 2026
+
+Latest installed release: **Tempo 1.4.0**, independent **9.27/10**, 101/101 tests,
+production build, exact package smoke 5/5 and installed post-recovery restart/data
+checks pass. See [UX release](ux-release.md) and [UX review](ux-update-review.md).
+The historical dataset discrepancy remains unexplained; recovery copies stay
+archived and the original active 1,823 topic identities/progress remain intact.
+
+## Historical foundation checkpoint — October 1
 
 Phase 1 is independently accepted at **9.2/10** (weighted 9.160), with the
 recorded limitations in [round 3](phase1-review-round-3.md).

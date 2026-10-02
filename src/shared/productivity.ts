@@ -59,6 +59,7 @@ export interface Productivity {
   timer: Timer;
   settings: {
     accent?: AccentId;
+    themePalette?: ThemePalette;
     avatar?: string | null;
     greetingStyle?: 'mixed' | 'simple';
     name: string;
@@ -109,6 +110,7 @@ export function defaultProductivity(): Productivity {
       notifications: false,
       reminder: true,
       accent: 'lavender',
+      themePalette: 'default',
       avatar: null,
       greetingStyle: 'mixed',
     },
@@ -294,6 +296,7 @@ export function validProductivity(value: unknown): value is Productivity {
     !!s.settings &&
     text(s.settings.name) &&
     (s.settings.accent === undefined || validAccent(s.settings.accent)) &&
+    (s.settings.themePalette === undefined || validThemePalette(s.settings.themePalette)) &&
     (s.settings.avatar === undefined || validAvatar(s.settings.avatar)) &&
     (s.settings.greetingStyle === undefined ||
       ['mixed', 'simple'].includes(s.settings.greetingStyle)) &&
@@ -303,4 +306,10 @@ export function validProductivity(value: unknown): value is Productivity {
     )
   );
 }
-import { validAccent, validAvatar, type AccentId } from './appearance';
+import {
+  validAccent,
+  validAvatar,
+  validThemePalette,
+  type AccentId,
+  type ThemePalette,
+} from './appearance';

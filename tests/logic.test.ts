@@ -176,3 +176,4 @@ test('invalid durations and incomplete imported state are rejected', () => {
 import './focus.test';
 import './reflection.test';
 import './backup.test';
+import './ux.test';

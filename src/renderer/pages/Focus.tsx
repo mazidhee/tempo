@@ -33,13 +33,16 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { FocusEmergency } from '../modules/focus/EmergencyExit';
 import { useFocus } from '../modules/focus/useFocus';
+import { GuardNotice } from '../modules/focus/GuardNotice';
+import { SearchPicker } from '../components/SearchPicker';
+import { studyOptions } from '../../shared/picker';
 import '../modules/focus/focus.css';
 const phases: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
 const dial = { center: 150, radius: 139, circumference: Math.PI * 278 };
 export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boolean) => void }) {
   const privacy = usePrivacy();
   const { state, update } = useProductivity();
-  const { snapshot, error, run } = useFocus();
+  const { snapshot, error, run, busy } = useFocus();
   const now = useClock();
   const { habits } = useHabits();
   const [study, setStudy] = useState<StudySnapshot>({ curricula: [], topics: [], reviews: [] });
@@ -89,7 +92,10 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
     phase?: Phase;
     link?: Link | null;
     timerMode?: 'pomodoro' | 'stopwatch';
-  }) => void run(window.workspaceAPI.invoke('focus:command', { action: 'configure', ...options }));
+  }) =>
+    void run(() =>
+      window.workspaceAPI.invoke('focus:command', { action: 'configure', ...options }),
+    );
   const reset = () => {
     if (
       !tracking &&
@@ -97,7 +103,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
       !window.confirm('Stop this phase? Unfinished time will not be logged.')
     )
       return;
-    void run(window.workspaceAPI.invoke('focus:command', { action: 'stop' }));
+    void run(() => window.workspaceAPI.invoke('focus:command', { action: 'stop' }));
   };
   const savePreset = (p: Preset) => {
     update((s) => ({
@@ -130,13 +136,40 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
           </div>
         }
       />
-      {(error || snapshot?.guard.error) && (
-        <p className="focus-warning" role="alert">
-          {error || snapshot?.guard.error}
-        </p>
-      )}
+      {snapshot && <GuardNotice guard={snapshot.guard} error={error} />}
       <div className="focus-workspace">
         <section className="panel focus-timer-card" aria-label="Focus timer">
+          <div className="focus-field focus-link-field">
+            <span>Working on</span>
+            <SearchPicker
+              label="Choose focus link"
+              value={linked}
+              disabled={inProgress || busy}
+              emptyLabel="Unlinked focus session"
+              selectedLabel={
+                privacy && timer.link?.type === 'habit' ? 'Private habit' : timer.link?.name
+              }
+              options={[
+                ...links
+                  .filter((l) => l.type !== 'study')
+                  .map((l) => ({
+                    value: `${l.type}:${l.id}`,
+                    label: privacy && l.type === 'habit' ? `Private habit ${l.id}` : l.name,
+                    group: l.type,
+                    groupLabel: l.type === 'task' ? 'Tasks' : 'Habits',
+                  })),
+                ...studyOptions(study),
+              ]}
+              allowClear
+              clearLabel="Unlinked focus session"
+              onChange={(value) =>
+                configure({
+                  phase: timer.phase,
+                  link: links.find((l) => `${l.type}:${l.id}` === value) || null,
+                })
+              }
+            />
+          </div>
           <div className="focus-phase-tabs" role="group" aria-label="Timer mode">
             <Button
               variant={!tracking ? 'secondary' : 'ghost'}
@@ -208,7 +241,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
               size={tracking ? 'default' : 'icon'}
               aria-label={tracking ? 'Save and stop tracking' : 'Stop timer'}
               title={tracking ? 'Save and stop tracking' : 'Stop timer'}
-              disabled={strict}
+              disabled={strict || busy}
               onClick={reset}
             >
               {tracking ? (
@@ -221,9 +254,9 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
               )}
             </Button>
             <Button
-              disabled={strict && running}
+              disabled={busy || (strict && running)}
               onClick={() =>
-                void run(
+                void run(() =>
                   window.workspaceAPI.invoke('focus:command', {
                     action: running ? 'pause' : 'start',
                   }),
@@ -244,69 +277,39 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
               size="icon"
               aria-label="Skip phase"
               title="Skip phase"
-              disabled={strict || tracking}
+              disabled={strict || tracking || busy}
               onClick={() => {
                 if (
                   inProgress &&
                   !window.confirm('Skip this phase? Unfinished time will not be logged.')
                 )
                   return;
-                void run(window.workspaceAPI.invoke('focus:command', { action: 'skip' }));
+                void run(() => window.workspaceAPI.invoke('focus:command', { action: 'skip' }));
               }}
             >
               <SkipForward />
             </Button>
           </div>
+          {strict && (
+            <p className="muted small">Strict mode is on. Use Emergency exit to end this phase.</p>
+          )}
           <p className="muted small">
             {tracking
               ? 'Counts up. Pauses are excluded. Save and stop adds this time to your history.'
               : `${timer.completed} completed · long break every ${preset.cycles} sessions`}
           </p>
-          <label className="focus-field">
-            Working on
-            <select
-              className="input"
-              disabled={inProgress}
-              value={linked}
-              onChange={(e) =>
-                configure({
-                  phase: timer.phase,
-                  link: links.find((x) => `${x.type}:${x.id}` === e.target.value) || null,
-                })
-              }
-            >
-              <option value="">Unlinked focus session</option>
-              {timer.link && !links.some((x) => `${x.type}:${x.id}` === linked) && (
-                <option value={linked}>
-                  {privacy && timer.link.type === 'habit'
-                    ? `Private habit ${timer.link.id}`
-                    : timer.link.name}
-                </option>
-              )}
-              {(['task', 'habit', 'study'] as const).map((type) => (
-                <optgroup
-                  label={type === 'task' ? 'Tasks' : type === 'habit' ? 'Habits' : 'Study topics'}
-                  key={type}
-                >
-                  {links
-                    .filter((l) => l.type === type)
-                    .map((l) => (
-                      <option key={l.id} value={`${type}:${l.id}`}>
-                        {privacy && type === 'habit' ? `Private habit ${l.id}` : l.name}
-                      </option>
-                    ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
           <div className="focus-actions">
             <Shield />
             <span className="muted small">
-              {snapshot?.guard.active
-                ? 'Guard active, including while paused'
-                : snapshot?.settings.enabled
-                  ? 'Guard will activate when a phase starts'
-                  : 'Guard is off — opt in under Settings → Focus'}
+              {snapshot?.guard.appsActive
+                ? `${snapshot.settings.mode === 'gentle' ? 'App Guard: notify only' : 'App Guard: closes chosen apps'}${snapshot.guard.websitesActive ? ' · Websites blocked' : ''}`
+                : snapshot?.guard.websitesActive
+                  ? 'Websites blocked'
+                  : snapshot?.guard.pending
+                    ? 'Applying Guard — timer controls remain available'
+                    : snapshot?.settings.enabled
+                      ? 'Guard will activate when a phase starts'
+                      : 'Guard is off — opt in under Settings → Focus'}
               {strict ? ' · Strict mode' : ''}
             </span>
           </div>

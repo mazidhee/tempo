@@ -19,11 +19,6 @@ export function FocusEmergency({ compact = false }: { compact?: boolean }) {
   if (!snapshot) return null;
   return (
     <>
-      {snapshot.guard.error && (
-        <span className="focus-warning small" role="alert">
-          {snapshot.guard.error}
-        </span>
-      )}
       <Button
         variant="outline"
         size={compact ? 'icon' : 'sm'}
@@ -51,7 +46,11 @@ export function FocusEmergency({ compact = false }: { compact?: boolean }) {
           <p className="muted" role="status">
             {seconds ? `${seconds} seconds until exit is available` : 'You can exit now.'}
           </p>
-          {error && <p role="alert">{error}</p>}
+          {error && (
+            <p className="focus-warning" role="alert">
+              {error}
+            </p>
+          )}
           <div className="focus-actions">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Keep focusing

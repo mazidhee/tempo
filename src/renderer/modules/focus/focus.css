@@ -36,6 +36,32 @@
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-sm);
   color: var(--ink-muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin-bottom: var(--space-4);
+}
+.focus-warning p {
+  margin: 0 0 var(--space-3);
+}
+.focus-warning details {
+  margin-top: var(--space-3);
+}
+.focus-warning summary {
+  cursor: pointer;
+  font-size: var(--type-caption);
+}
+.focus-warning pre {
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--type-caption);
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-xs);
+}
+.focus-link-field {
+  width: 100%;
 }
 .focus-workspace {
   display: grid;
@@ -50,7 +76,7 @@
 }
 .focus-ring {
   position: relative;
-  width: min(100%, calc(var(--space-section) * 3));
+  width: min(100%, 240px);
   aspect-ratio: 1;
 }
 .focus-ring svg {
