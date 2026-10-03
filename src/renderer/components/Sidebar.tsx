@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Command, AudioLines, PanelLeft } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { navigation } from '../registry/navigation';
@@ -15,6 +15,7 @@ import {
 export { navigation } from '../registry/navigation';
 export default function Sidebar({ openCommand }: { openCommand: () => void }) {
   const { state } = useProductivity();
+  const { pathname } = useLocation();
   const { toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   return (
     <SidebarFrame collapsible="icon" className="tempo-sidebar" aria-label="App sidebar">
@@ -53,12 +54,23 @@ export default function Sidebar({ openCommand }: { openCommand: () => void }) {
                   to={to}
                   end={to === '/'}
                   aria-label={label}
+                  aria-current={
+                    to === '/habits' && ['/weekly', '/history'].includes(pathname)
+                      ? 'page'
+                      : undefined
+                  }
                   onClick={() => {
                     if (isMobile) setOpenMobile(false);
                   }}
                 >
                   {({ isActive }) => (
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={label}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        isActive || (to === '/habits' && ['/weekly', '/history'].includes(pathname))
+                      }
+                      tooltip={label}
+                    >
                       <span>
                         <Icon />
                         <span>{label}</span>

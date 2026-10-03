@@ -56,9 +56,18 @@ export function studyContinuation(
     timer?.startedAt !== null && timer?.link?.type === 'study'
       ? unfinished.find((t) => t.id === timer.link?.id)
       : undefined;
+  // A manually chosen later chapter establishes the resume point even after its
+  // leaf is completed. Advance from there before returning to earlier gaps.
+  const anchor =
+    leaves.find((t) => t.id === curriculum.currentTopicId) ??
+    leaves.find((t) => t.id === linked[0]?.link?.id);
+  const afterAnchor = anchor
+    ? leaves.slice(leaves.indexOf(anchor) + 1).find((t) => !t.learnedAt)
+    : undefined;
   const topic =
     running ??
     unfinished.find((t) => t.id === curriculum.currentTopicId) ??
+    (anchor?.learnedAt ? afterAnchor : undefined) ??
     unfinished.find((t) => t.id === linked[0]?.link?.id) ??
     unfinished[0];
   const next = topic ? unfinished[unfinished.findIndex((t) => t.id === topic.id) + 1] : undefined;

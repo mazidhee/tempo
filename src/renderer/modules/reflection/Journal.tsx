@@ -6,6 +6,7 @@ import { validDate, shiftDay } from '../../../shared/habits';
 import type { JournalEntry } from '../../../shared/reflection';
 import { PageHeader } from '../../components/ui';
 import { JournalWriter } from '../../components/JournalWriter';
+import { LogseqJournalFrame } from '../../components/LogseqJournalFrame';
 import { useReflection } from './useReflection';
 import { ActionError, Field, LoadState } from './ui';
 import '../../styles/document-pages.css';
@@ -20,6 +21,7 @@ export default function Journal() {
   const [results, setResults] = useState<JournalEntry[]>([]),
     [error, setError] = useState(''),
     [page, setPage] = useState(0);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
   useEffect(() => {
     if (!browse) return;
     let alive = true;
@@ -152,7 +154,41 @@ export default function Journal() {
         })}
         description="A little space for your thoughts."
       />
-      <JournalWriter key={date} date={date} entry={entry} />
+      <LogseqJournalFrame key={date} date={date}>
+        <JournalWriter date={date} entry={entry} />
+      </LogseqJournalFrame>
+      {snapshot.journal.some((j) => j.date < date) && (
+        <section className="journal-recent-pages" aria-label="Recent daily pages">
+          <h2>Recent daily pages</h2>
+          {snapshot.journal
+            .filter((j) => j.date < date)
+            .slice(0, 3)
+            .map((j) => (
+              <details
+                key={j.date}
+                open={expandedDay === j.date}
+                onToggle={(event) => {
+                  if (event.currentTarget.open) setExpandedDay(j.date);
+                  else setExpandedDay((current) => (current === j.date ? null : current));
+                }}
+              >
+                <summary>
+                  {new Date(j.date + 'T12:00:00').toLocaleDateString(undefined, {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  <small>{j.text.slice(0, 100) || 'An open page'}</small>
+                </summary>
+                {expandedDay === j.date && (
+                  <LogseqJournalFrame date={j.date}>
+                    <JournalWriter key={j.date} date={j.date} entry={j} />
+                  </LogseqJournalFrame>
+                )}
+              </details>
+            ))}
+        </section>
+      )}
     </div>
   );
 }

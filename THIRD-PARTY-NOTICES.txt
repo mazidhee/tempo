@@ -3178,3 +3178,10 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+Logseq journal component — Logseq contributors
+Source commit 22a29b30dee3b3930cf49bba50454650c31d2a07
+https://github.com/logseq/logseq
+Adapted into React by Tempo on October 3, 2026.
+GNU Affero General Public License version 3. Full licence: LICENSE.md.
+Corresponding source: private owner repository https://github.com/mazidhee/tempo, third-party/logseq and src/renderer/components/LogseqJournalFrame.tsx.

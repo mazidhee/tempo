@@ -1,9 +1,9 @@
 import { usePrivacy } from '../../hooks/PrivacyContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, X, ArrowUp, CalendarCheck, Timer } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
-import type { PlanPriority, PriorityKind } from '../../../shared/reflection';
+import type { PriorityKind } from '../../../shared/reflection';
 import '../../styles/document-pages.css';
 import { PageHeader, Empty } from '../../components/ui';
 import { Button } from '../../components/ui/button';
@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Badge } from '../../components/ui/badge';
 import { useReflection } from './useReflection';
+import { usePlanDraft } from './usePlanDraft';
 import { SearchPicker } from '../../components/SearchPicker';
 import { studyOptions } from '../../../shared/picker';
 import { ActionError, Field, LoadState, Panel, Select, useAction } from './ui';
@@ -19,30 +20,23 @@ export default function Plan() {
   const navigate = useNavigate();
   const { snapshot } = useReflection(),
     action = useAction(),
-    [date, setDate] = useState(localDate()),
-    [priorities, setPriorities] = useState<PlanPriority[]>([]),
-    [topics, setTopics] = useState<string[]>([]),
-    [sleep, setSleep] = useState(''),
-    [energy, setEnergy] = useState(''),
-    [choice, setChoice] = useState('free'),
-    [title, setTitle] = useState('');
+    [date, setDate] = useState(localDate());
   const saved = snapshot?.plans.find((p) => p.date === date);
-  useEffect(() => {
-    setPriorities(saved?.priorities || []);
-    setTopics(saved?.studyTopicIds || []);
-    setSleep(
-      saved?.evening.sleep === undefined || saved.evening.sleep === null
-        ? ''
-        : String(saved.evening.sleep),
-    );
-    setEnergy(
-      saved?.evening.energy === undefined || saved.evening.energy === null
-        ? ''
-        : String(saved.evening.energy),
-    );
-    // Hydrate when opening a day. Background saves must not erase an unfinished
-    // journal line, sleep input, or priority draft in this same workspace.
-  }, [date, !!snapshot]);
+  const {
+    priorities,
+    setPriorities,
+    topics,
+    setTopics,
+    sleep,
+    setSleep,
+    energy,
+    setEnergy,
+    choice,
+    setChoice,
+    title,
+    setTitle,
+    draftError,
+  } = usePlanDraft(date, saved, !!snapshot);
   if (!snapshot) return <LoadState />;
   const source = snapshot.source,
     options = [
@@ -131,7 +125,7 @@ export default function Plan() {
         <Link to="/goals">Your goals</Link>
         <Link to="/review">Review this week</Link>
       </div>
-      <ActionError error={action.error} />
+      <ActionError error={action.error || draftError} />
       <div className="reflection-layout">
         <div className="reflection-stack">
           <Panel
@@ -234,7 +228,8 @@ export default function Plan() {
                 Save priorities
               </Button>
               <span className="reflection-caption">
-                Plan completions keep linked records separate.
+                Drafts stay on this device when you switch days or pages. Save priorities to include
+                them in backups.
               </span>
             </div>
           </Panel>

@@ -6,6 +6,7 @@ import { personalMigration } from '../study/personalMigration';
 import { appearanceMigration } from './appearanceMigration';
 import { continuityMigration } from '../study/continuityMigration';
 import { documentMigration } from '../reflection/documentMigration';
+import { outlineMigration } from '../reflection/outlineMigration';
 export interface Migration {
   version: number;
   name: string;
@@ -19,6 +20,7 @@ export const migrations: Migration[] = [
   appearanceMigration,
   continuityMigration,
   documentMigration,
+  outlineMigration,
 ];
 /** A batch gets one consistent safety snapshot; every migration is atomic. */
 export function runModuleMigrations(db: Database, backup = true) {

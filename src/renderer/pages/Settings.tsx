@@ -8,6 +8,7 @@ import { navigation } from '../components/Sidebar';
 import { settingsSections } from '../registry/settings';
 import Personalization from '../components/Personalization';
 import { useSearchParams } from 'react-router-dom';
+import licenseText from '../../../LICENSE.md?raw';
 export default function Settings() {
   const [params, setParams] = useSearchParams();
   const section = params.get('section') || 'general';
@@ -50,6 +51,7 @@ function GeneralSettings() {
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [licenseOpen, setLicenseOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const set = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) =>
     update((s) => ({ ...s, settings: { ...s.settings, [key]: value } }));
@@ -293,8 +295,23 @@ function GeneralSettings() {
         </div>
       </section>
       <p className="muted page-footnote">
-        Tempo · A personal workspace built on your original Habit Tracker.
+        Tempo · A personal workspace built on your original Habit Tracker. Journal page framing
+        includes adapted Logseq code. AGPL-3.0; no warranty.{' '}
+        <button className="text-link" onClick={() => setLicenseOpen(true)}>
+          Licence and source
+        </button>
       </p>
+      {licenseOpen && (
+        <Modal title="Licence and source" onClose={() => setLicenseOpen(false)}>
+          <p>
+            Logseq contributors · journal component adapted into React by Tempo, October 3, 2026.
+            You may modify and redistribute this work under GNU AGPL version 3. Source is included
+            in your Tempo repository; the upstream component and exact commit are in
+            third-party/logseq.
+          </p>
+          <pre className="license-text">{licenseText}</pre>
+        </Modal>
+      )}
       {pending !== null && (
         <Modal
           title="Import a backup?"

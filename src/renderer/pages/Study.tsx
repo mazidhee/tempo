@@ -95,6 +95,10 @@ export default function Study() {
     ? studyContinuation(snapshot, curriculum, state.sessions, state.timer)
     : null;
   const selectedTopic = topics.find((t) => t.id === params.get('topic'));
+  const inspector = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (selectedTopic) inspector.current?.scrollIntoView({ block: 'nearest' });
+  }, [selectedTopic?.id]);
   const parent =
     topics.find((t) => t.id === params.get('chapter')) ??
     (selectedTopic?.parentId ? topics.find((t) => t.id === selectedTopic.parentId) : undefined);
@@ -394,6 +398,52 @@ export default function Study() {
               Reviews{due.length ? ` (${due.length})` : ''}
             </button>
           </div>
+          {selectedTopic && (
+            <section ref={inspector} className="study-topic-inspector" aria-label="Selected topic">
+              <div className="section-heading">
+                <h2>{selectedTopic.title}</h2>
+                <button
+                  className="icon-button"
+                  aria-label="Close topic details"
+                  onClick={() => setParams(parent ? { chapter: parent.id } : {})}
+                >
+                  <ArrowLeft />
+                </button>
+              </div>
+              <p className="muted">
+                {formatStudyTime(time.topicSeconds[selectedTopic.id] || 0)} recorded across all
+                sessions{selectedTopic.reviewDue ? ` · Review ${selectedTopic.reviewDue}` : ''}
+              </p>
+              {selectedTopic.details && (
+                <p className="study-topic-details">{selectedTopic.details}</p>
+              )}
+              <div className="row-actions">
+                <button
+                  className="btn-primary"
+                  disabled={focus.busy || curriculum.archived || selectedTopic.archived}
+                  onClick={() => void focus.start(curriculum, selectedTopic)}
+                >
+                  <Play />
+                  Start focus
+                </button>
+                <button
+                  className="btn-secondary"
+                  disabled={
+                    busy ||
+                    curriculum.archived ||
+                    selectedTopic.archived ||
+                    !!selectedTopic.learnedAt
+                  }
+                  onClick={() =>
+                    saveCurriculum({ currentTopicId: selectedTopic.id, studyFocus: true })
+                  }
+                >
+                  <Target />
+                  Make current topic
+                </button>
+              </div>
+            </section>
+          )}
           <section className="study-topic-browser" aria-label="Topic browser">
             <div className="study-browser-header">
               <nav className="study-breadcrumbs" aria-label="Study chapters">
@@ -560,52 +610,6 @@ export default function Study() {
               Show archived topics
             </label>
           </section>
-          {selectedTopic && (
-            <section className="study-topic-inspector" aria-label="Selected topic">
-              <div className="section-heading">
-                <h2>{selectedTopic.title}</h2>
-                <button
-                  className="icon-button"
-                  aria-label="Close topic details"
-                  onClick={() => setParams(parent ? { chapter: parent.id } : {})}
-                >
-                  <ArrowLeft />
-                </button>
-              </div>
-              <p className="muted">
-                {formatStudyTime(time.topicSeconds[selectedTopic.id] || 0)} recorded across all
-                sessions{selectedTopic.reviewDue ? ` · Review ${selectedTopic.reviewDue}` : ''}
-              </p>
-              {selectedTopic.details && (
-                <p className="study-topic-details">{selectedTopic.details}</p>
-              )}
-              <div className="row-actions">
-                <button
-                  className="btn-primary"
-                  disabled={focus.busy || curriculum.archived || selectedTopic.archived}
-                  onClick={() => void focus.start(curriculum, selectedTopic)}
-                >
-                  <Play />
-                  Start focus
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={
-                    busy ||
-                    curriculum.archived ||
-                    selectedTopic.archived ||
-                    !!selectedTopic.learnedAt
-                  }
-                  onClick={() =>
-                    saveCurriculum({ currentTopicId: selectedTopic.id, studyFocus: true })
-                  }
-                >
-                  <Target />
-                  Make current topic
-                </button>
-              </div>
-            </section>
-          )}
         </>
       )}
       {curriculumDraft && (

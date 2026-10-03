@@ -280,3 +280,5 @@ Curriculum covers are optional owner-selected local images; none is bundled or
 borrowed from the Craft reference. Review prioritises a weekly summary and two
 written reflections; detailed activity expands on demand. Existing actions and
 records stay accessible. Evidence and independent verdict: docs/redesign-release.md.
+
+Journal refinement: Logseq's dated page and bullet-outline interaction, implemented on the existing semantic rich editor. Parent bullets fold children without removing their text; keyboard indentation and recent daily pages are primary interactions. Course covers retain only small corner controls once added. No external brand assets or sample cover photos are bundled.

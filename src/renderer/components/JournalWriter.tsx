@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Bold, Italic, List, ListOrdered, Quote, Code, Undo2, Redo2 } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Quote, Code, Undo2, Redo2, Plus } from 'lucide-react';
+import { JournalOutline } from './JournalOutline';
 import type { JournalEntry } from '../../shared/reflection';
 import {
   plainJournalDocument,
@@ -11,7 +12,20 @@ import {
 } from '../../shared/journalDocument';
 export function JournalWriter({ date, entry }: { date: string; entry?: JournalEntry }) {
   const key = `tempo-journal-draft:${date}`;
-  const initial = useRef(entry?.document || plainJournalDocument(entry?.text || ''));
+  const initial = useRef(
+    entry?.document ||
+      (entry?.text
+        ? plainJournalDocument(entry.text)
+        : {
+            type: 'doc',
+            content: [
+              {
+                type: 'bulletList',
+                content: [{ type: 'listItem', content: [{ type: 'paragraph' }] }],
+              },
+            ],
+          }),
+  );
   const recovered = useRef(false);
   if (!recovered.current) {
     try {
@@ -38,7 +52,10 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
     [error, setError] = useState(''),
     [serif, setSerif] = useState(false);
   const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false })],
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, listItem: false }),
+      JournalOutline,
+    ],
     content: initial.current,
     editorProps: {
       attributes: { role: 'textbox', 'aria-label': 'Daily journal', 'aria-multiline': 'true' },
@@ -189,6 +206,24 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
         </button>
       </div>
       <EditorContent editor={editor} />
+      <div className="journal-outline-help">
+        <button
+          className="btn-ghost"
+          onClick={() =>
+            editor
+              ?.chain()
+              .focus('end')
+              .insertContent({
+                type: 'bulletList',
+                content: [{ type: 'listItem', content: [{ type: 'paragraph' }] }],
+              })
+              .run()
+          }
+        >
+          <Plus /> Add a block
+        </button>
+        <span>Enter · new block&nbsp; / &nbsp;Tab · indent&nbsp; / &nbsp;Shift+Tab · outdent</span>
+      </div>
       {error && (
         <p className="inline-error" role="alert">
           {error}

@@ -25,3 +25,7 @@ electron-builder dependency chain has 8 reported high findings inherited from
 http-cache-semantics 4.2.0. The registry currently offers no patched newer version;
 the suggested automatic fix downgrades electron-builder. It was not blindly
 applied. Those tools are excluded from the staged application package.
+
+Round 1 independent score: **8.88/10**, with 110 tests and 11 real-Electron flow groups. See study-release-review.md for the full original rubric. Improvements implemented before Round 2: per-day local Plan draft recovery, continuation advancing beyond a completed late selection, selected-topic inspector above the browser with scroll visibility, and inline Journal search controls. The user also requested small cover controls and Logseq journal integration. The journal now has nested keyboard outlines, fold state, and recent dated pages. Migration 205 adds explicit defaults for legacy list-item fold state while preserving all journal words and timestamps.
+
+The Logseq journal-item frame is ported from source commit 22a29b30dee3b3930cf49bba50454650c31d2a07. Original source, licence, adaptation date and provenance are retained. The project and packaged notices use AGPL-3.0-only; personal data stays separate, and the source repository stays private.

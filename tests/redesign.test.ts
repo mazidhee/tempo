@@ -17,10 +17,82 @@ import {
 import { activeStudyTopics, isStudyFocus, studyContinuation } from '../src/shared/studyContinuity';
 import { defaultProductivity } from '../src/shared/productivity';
 import { validCover } from '../src/shared/localImage';
+import { outlineMigration } from '../src/main/reflection/outlineMigration';
 const password = 'a long private test password';
+
+test('a completed later resume point advances before returning to earlier gaps', () => {
+  const { db, study } = fixture();
+  const c = study.saveCurriculum({ title: 'SWE' });
+  const earlier = study.saveTopic({ curriculumId: c.id, title: 'Earlier gap', order: 0 });
+  const current = study.saveTopic({ curriculumId: c.id, title: 'Functions', order: 10 });
+  const next = study.saveTopic({ curriculumId: c.id, title: 'Return values', order: 11 });
+  study.saveCurriculum({ ...c, currentTopicId: current.id });
+  study.learn({ id: current.id, learned: true });
+  const curriculum = study.snapshot().curricula[0];
+  assert.equal(studyContinuation(study.snapshot(), curriculum, []).topic?.id, next.id);
+  study.learn({ id: next.id, learned: true });
+  assert.equal(studyContinuation(study.snapshot(), curriculum, []).topic?.id, earlier.id);
+  db.close();
+});
+
+test('journal fold-state migration preserves nested words, formatting and timestamps', () => {
+  const { db, reflection } = fixture();
+  const document = {
+    type: 'doc',
+    content: [
+      {
+        type: 'bulletList',
+        content: [
+          {
+            type: 'listItem',
+            content: [
+              {
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Parent', marks: [{ type: 'bold' }] }],
+              },
+              {
+                type: 'bulletList',
+                content: [
+                  {
+                    type: 'listItem',
+                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Child' }] }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const before = reflection.saveJournal({ date: '2026-10-02', text: '', document });
+  outlineMigration.apply(db);
+  const after = reflection.lookup(before.date)!;
+  assert.equal(after.text, before.text);
+  assert.equal(after.updatedAt, before.updatedAt);
+  assert.equal(after.document!.content![0].content![0].attrs!.collapsed, false);
+  assert.deepEqual(after.document!.content![0].content![0].content![0].content![0].marks, [
+    { type: 'bold' },
+  ]);
+  after.document!.content![0].content![0].attrs!.collapsed = true;
+  validateJournalDocument(after.document);
+  reflection.saveJournal({ date: before.date, text: '', document: after.document });
+  assert.equal(reflection.search({ query: 'Child' })[0].date, before.date);
+  assert.throws(() =>
+    validateJournalDocument({
+      type: 'doc',
+      content: [{ type: 'listItem', attrs: { collapsed: 'true' } }],
+    }),
+  );
+  db.close();
+});
 test('203 and 204 upgrade an actual prior schema without changing saved records', () => {
   const db = new Database(':memory:');
-  db.exec('CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,applied_at TEXT);');
+  db.exec(
+    'CREATE TABLE habits(id INTEGER PRIMARY KEY,name TEXT,created_at TEXT,days_of_week TEXT,is_archived INTEGER DEFAULT 0);CREATE TABLE habit_logs(id INTEGER PRIMARY KEY,habit_id INTEGER,log_date TEXT,is_completed INTEGER,note TEXT,missed_reason TEXT);',
+  );
+  migrateProductivity(db);
+  migrateHabitEngine(db);
   for (const m of migrations.filter((m) => m.version <= 202)) {
     m.apply(db);
     db.prepare('INSERT INTO schema_migrations VALUES(?,?)').run(m.version, '2026-10-01');

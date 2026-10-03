@@ -161,6 +161,28 @@
   background: var(--background);
   padding: 4px;
   border-radius: 10px;
+  opacity: 0.35;
+  transition: opacity 160ms ease;
+}
+.has-cover:hover .cover-controls,
+.has-cover:focus-within .cover-controls {
+  opacity: 1;
+}
+.has-cover .cover-controls .icon-button {
+  width: 32px;
+  height: 32px;
+}
+.has-cover .cover-controls svg {
+  width: 16px;
+  height: 16px;
+}
+.journal-datebar .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.study-topic-inspector {
+  scroll-margin-top: 20px;
 }
 .cover-controls {
   display: flex;
@@ -238,4 +260,94 @@
   cursor: pointer;
   padding: 16px 0;
   font-weight: 600;
+}
+.journal-document .tiptap ul > li {
+  position: relative;
+  list-style: none;
+}
+.outline-bullet {
+  position: absolute;
+  left: -28px;
+  top: 1px;
+  width: 24px;
+  height: 30px;
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  font-size: 20px;
+  line-height: 1;
+}
+.outline-bullet:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.outline-bullet:not(:disabled):hover {
+  background: var(--surface-2);
+  color: var(--foreground);
+}
+.journal-document .outline-content > p {
+  margin-bottom: 8px;
+}
+.journal-document .outline-content > ul,
+.journal-document .outline-content > ol {
+  margin-block: 4px 12px;
+}
+.journal-document li[data-collapsed='true'] > .outline-content > ul,
+.journal-document li[data-collapsed='true'] > .outline-content > ol {
+  display: none;
+}
+.journal-outline-help {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.journal-outline-help button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.journal-outline-help span {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.journal-recent-pages {
+  margin-top: 40px;
+  border-top: 1px solid var(--border);
+}
+.journal-recent-pages > h2 {
+  margin-block: 28px 16px;
+  font-size: 18px;
+}
+.journal-recent-pages > details {
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+}
+.journal-recent-pages summary {
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 600;
+}
+.journal-recent-pages summary > small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.journal-recent-pages .journal-document {
+  margin-top: 20px;
+}
+.journal-recent-pages .tiptap {
+  min-height: 160px;
+}
+.license-text {
+  max-height: 50vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
 }

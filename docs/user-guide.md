@@ -291,3 +291,13 @@ On another computer, install/build Tempo, download the desired `.tempo-backup`
 file from the `tempo-backups` branch, then **Restore encrypted file**. Unlock it,
 review the record counts and merge. Tokens and your backup password are never
 part of your exported workspace. The source repository does not contain your data.
+
+## Daily outlines
+
+New journal days begin with a bullet block, like Logseq. Press Enter for another block, Tab to indent under the previous block, and Shift+Tab to move back out. Click a parent bullet to fold or expand its children; Ctrl+Shift+. also toggles folding. Folded text stays saved and searchable. The toolbar still supports headings, bold, lists, quotes and code. Add a block continues the outline at the end. Existing prose entries keep their formatting.
+
+Recent daily pages appear below the current journal. Expand one to write directly into that day; only one previous editor is open at a time. All journal edits autosave locally.
+
+Plan drafts stay on this device when switching dates or pages, including unfinished priority text, sleep and energy. Use Save priorities to include priorities in database backups; use Save evening reflection for sleep and energy.
+
+Once a curriculum has a cover, its small corner controls fade back until you hover or use the keyboard. The image icon changes the cover and the cross removes it.

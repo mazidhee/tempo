@@ -132,3 +132,7 @@ The stack is React, TypeScript, Electron, Vite, Tailwind, Recharts, React Router
 date-fns and Lucide, with cmdk, TanStack Table and shared shadcn/Radix components.
 Versions are pinned in `package.json` and `package-lock.json`. Inter and JetBrains
 Mono are bundled locally. Runtime tokens live in `src/renderer/styles/tokens.css`.
+
+## Source licence
+
+Tempo now incorporates a React adaptation of Logseq's journal-page frame. The project is licensed under GNU AGPL version 3; see [LICENSE.md](LICENSE.md), [provenance](third-party/logseq/PROVENANCE.md) and THIRD-PARTY-NOTICES.txt. The private repository remains private. Journal/data backups and owner-created cover images are personal data, separate from the app source licence. Keep corresponding source and notices with any future distribution.

@@ -68,9 +68,15 @@ export function CurriculumCover({ curriculum }: { curriculum: Curriculum }) {
         onChange={(e) => void choose(e.target.files?.[0])}
       />
       <div className="cover-controls">
-        <button className="btn-secondary" disabled={busy} onClick={() => input.current?.click()}>
+        <button
+          className={curriculum.coverImage ? 'icon-button' : 'btn-secondary'}
+          aria-label={curriculum.coverImage ? 'Change cover' : 'Add cover'}
+          title={curriculum.coverImage ? 'Change cover' : undefined}
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
           <ImagePlus />
-          {busy ? 'Saving cover…' : curriculum.coverImage ? 'Change cover' : 'Add cover'}
+          {!curriculum.coverImage && (busy ? 'Saving cover…' : 'Add cover')}
         </button>
         {curriculum.coverImage && (
           <button

@@ -19,6 +19,7 @@ async function packageDesktop() {
     author: 'Tempo',
     main: metadata.main,
     private: true,
+    license: 'AGPL-3.0-only',
   };
   fs.writeFileSync(path.join(stage, 'package.json'), JSON.stringify(runtimeMetadata, null, 2));
   fs.writeFileSync(
@@ -42,6 +43,7 @@ async function packageDesktop() {
     path.join(root, 'THIRD-PARTY-NOTICES.txt'),
     path.join(stage, 'THIRD-PARTY-NOTICES.txt'),
   );
+  fs.copyFileSync(path.join(root, 'LICENSE.md'), path.join(stage, 'LICENSE.md'));
   const electronExecutable = require('electron'); // Initializes Electron's first-use download if needed.
   await build({
     projectDir: stage,
@@ -53,7 +55,7 @@ async function packageDesktop() {
       electronVersion: metadata.devDependencies.electron,
       electronDist: path.dirname(electronExecutable),
       npmRebuild: false,
-      files: ['dist', 'dist-electron', 'THIRD-PARTY-NOTICES.txt'],
+      files: ['dist', 'dist-electron', 'THIRD-PARTY-NOTICES.txt', 'LICENSE.md'],
     },
   });
 }

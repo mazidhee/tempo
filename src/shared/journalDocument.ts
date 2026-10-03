@@ -8,12 +8,10 @@ export interface JournalDocument {
 export function plainJournalDocument(text: string): JournalDocument {
   return {
     type: 'doc',
-    content: text
-      .split('\n')
-      .map((line) => ({
-        type: 'paragraph',
-        ...(line ? { content: [{ type: 'text', text: line }] } : {}),
-      })),
+    content: text.split('\n').map((line) => ({
+      type: 'paragraph',
+      ...(line ? { content: [{ type: 'text', text: line }] } : {}),
+    })),
   };
 }
 /** Semantic editor JSON only: reject HTML, images, URLs and arbitrary attributes. */
@@ -46,13 +44,21 @@ export function validateJournalDocument(value: unknown): asserts value is Journa
         allowed =
           n.type === 'heading'
             ? ['level']
-            : n.type === 'orderedList'
-              ? ['start', 'type']
-              : n.type === 'codeBlock'
-                ? ['language']
-                : [];
+            : n.type === 'listItem'
+              ? ['collapsed']
+              : n.type === 'orderedList'
+                ? ['start', 'type']
+                : n.type === 'codeBlock'
+                  ? ['language']
+                  : [];
       if (keys.some((key) => !allowed.includes(key)))
         throw new Error('Unsupported journal attributes.');
+      if (
+        n.type === 'listItem' &&
+        n.attrs.collapsed !== undefined &&
+        typeof n.attrs.collapsed !== 'boolean'
+      )
+        throw new Error('Invalid journal fold state.');
       if (n.type === 'heading' && ![1, 2, 3].includes(Number(n.attrs.level)))
         throw new Error('Invalid heading.');
       if (
