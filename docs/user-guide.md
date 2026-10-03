@@ -1,21 +1,21 @@
 # Tempo user guide
 
 Tempo keeps your workspace on this computer. Production features work offline;
-there is no cloud synchronization. The original Habit Tracker database and
-history remain in use. This guide covers the Windows 1.4 study and Focus UX update.
+online backup is optional and only runs when you choose it. The original Habit Tracker database and
+history remain in use. This guide covers the Windows 1.5 study and daily workspace update.
 Acceptance evidence and native verification limits are tracked in
 [release readiness](release-readiness.md).
 
 ## Move around
 
 For a first visit: set your name in **Settings → General**, import your outlines
-in **Study → Import roadmaps**, expand a topic, and choose **Track**. When you finish,
+in **Study → Import roadmaps**, open its curriculum page, select a topic, and choose **Track time** in its options. When you finish,
 choose **Save and stop**. Your time appears beside the topic and all its parents.
 Use **Statistics → Time explorer** to see the calendar and study-time sunburst.
 The entire guide is available in **Settings → User guide**, with a `.md` download.
 
 Use the sidebar for Home, Plan, Habits, Tasks, Focus, Study, Statistics, Goals,
-Review and Settings. Plan and Review also link to Journal. At narrow window sizes,
+Journal, Review and Settings. Each has its own page; contextual links connect your records. At narrow window sizes,
 use the sidebar button to open navigation. Dense calendars and tables may scroll
 inside their panels.
 
@@ -44,8 +44,11 @@ Home shows the annual calendar directly below your greeting. Hover or use the
 calendar's keyboard controls to inspect a day. Completed work uses your chosen accent
 ramp; freeze days are hatched, and days without due activity remain neutral.
 
-Habits opens to the weekly grid. Open a habit for its detail drawer, history,
-notes and editing controls. Today/manage and history views remain available.
+Habits opens to Today. Check habits complete with one click; notes have their own button.
+Time-of-day sections expand independently. Recovery is collapsed below the daily list.
+Weekly and History are separate views. Open a habit for details or use its options
+to edit/archive. Delete is available on the row and detail page, with confirmation
+and a local safety copy before permanent removal.
 Choose Check, Quantity or Avoid and a schedule when creating a habit. Quantity
 uses the recorded amount and threshold; Avoid records clean days or slips with a
 reason. Freezes protect continuity without counting as completed work, and
@@ -70,13 +73,16 @@ Arrow keys and Enter select a result; Escape closes the picker.
 Only your selected topics appear in today's compact study list. Adding or removing
 a study topic saves the selection automatically. Choose its **Start focus** button
 to launch a linked Pomodoro; an existing active phase opens instead of being replaced.
-Use **Save plan** to save priority edits. Mark priorities as done when appropriate. Linking a priority does
+Use **Save priorities** to save priority edits. Mark priorities as done when appropriate. Linking a priority does
 not itself complete the underlying habit, task or Study topic.
 
-The **Evening reflection** panel accepts a sentence about your day and optional
-sleep hours and energy. Use **Save evening reflection** to save it. Journal allows
-longer dated entries through **Save journal**, with text search and From/Until
-filters. Journal text can also appear in Home calendar tooltips.
+**Close the day** keeps optional sleep and energy separate from your writing.
+Open **Journal** for a full dated page: headings, bold/italic, lists, quotations and
+code blocks, with optional serif reading typography. Changes save locally after a
+short pause, and **Ctrl/Cmd+S** saves immediately. A local draft protects unfinished
+writing during an interrupted save. Find a memory supports words and date ranges.
+Old journal lines remain intact and searchable. Journal text also appears in Home
+calendar tooltips. Evening saves preserve your rich journal formatting.
 
 In **Review**, choose any day in a week and open that week. Tempo saves a snapshot
 of habits, focus, Study, tasks, plans and journal lines. **Refresh activity
@@ -248,3 +254,40 @@ Schema/import safety copies are saved alongside it with `.bak` suffixes. Retain
 those copies if recovery is needed. Before any manual database recovery, use
 **Quit Tempo** and preserve the current database and its companion files. Prefer
 the in-app JSON merge when the app can open; do not overwrite a running database.
+
+## Continue studying
+
+Study opens as a library. Each curriculum has a dedicated page with chapter
+breadcrumbs, searchable topics, progress, recorded time and due reviews. Select a
+chapter to drill down; a topic opens its details and Start focus control. Large
+collections show 30 results per page. Archives remain available through Show archived.
+
+Turn on **Current study focus** for SWE and Mathematics; keep finance ready in the
+library for later. **Edit curriculum** lets you set an optional focus-until date.
+Choose **Make current topic** on an unfinished leaf to pin where you are working.
+Home shows those subjects, the current topic, last recorded study and the next
+unfinished topic. Start focus resumes the existing linked phase or starts a new
+Pomodoro. Changing to a different active topic asks before replacing unfinished work.
+No session learning log is required.
+
+Use **Add cover** on a curriculum page to choose a local JPEG, PNG or WebP under
+10 MB. Tempo crops it to a banner and stores the image in your local database;
+it is included in complete backups. Change or remove it whenever you like.
+
+## Back up to another computer
+
+Open **Settings → Backups**. Daily local snapshots are automatic; **Save local
+snapshot now** captures your latest edits. Preview a snapshot before merging.
+Merging adds missing records and preserves existing records, preferences and an
+active timer; it is not a rewind of existing edits.
+
+For GitHub, save `mazidhee/tempo` as the connection. Use your existing Git sign-in,
+or a fine-grained token limited to this private repository with Contents read/write.
+Choose **Back up to GitHub**, enter and confirm a password of at least 12 characters,
+then encrypt/upload. Nothing uploads until you explicitly choose that action.
+Keep the password safely outside GitHub. A forgotten password cannot be recovered.
+
+On another computer, install/build Tempo, download the desired `.tempo-backup`
+file from the `tempo-backups` branch, then **Restore encrypted file**. Unlock it,
+review the record counts and merge. Tokens and your backup password are never
+part of your exported workspace. The source repository does not contain your data.

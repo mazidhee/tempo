@@ -1,5 +1,4 @@
-import { useState, type ReactNode, type SelectHTMLAttributes } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useRef, useState, type ReactNode, type SelectHTMLAttributes } from 'react';
 import { Button } from '../../components/ui/button';
 import {
   Card,
@@ -12,22 +11,6 @@ import { Skeleton } from '../../components/ui/skeleton';
 import { useReflection, refreshReflection } from './useReflection';
 import { toast } from 'sonner';
 import './reflection.css';
-export function ReflectionNav() {
-  return (
-    <nav aria-label="Reflection navigation" className="reflection-nav">
-      {[
-        ['/plan', 'Daily plan'],
-        ['/journal', 'Journal'],
-        ['/review', 'Weekly review'],
-        ['/goals', 'Goals'],
-      ].map(([to, label]) => (
-        <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'selected' : '')}>
-          {label}
-        </NavLink>
-      ))}
-    </nav>
-  );
-}
 export function Panel({
   title,
   description,
@@ -79,7 +62,10 @@ export function LoadState() {
 export function useAction() {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const running = useRef(false);
   const run = async (operation: () => Promise<unknown>, message = 'Saved') => {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setError('');
     try {
@@ -89,6 +75,7 @@ export function useAction() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
+      running.current = false;
       setBusy(false);
     }
   };

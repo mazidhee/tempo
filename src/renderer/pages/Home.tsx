@@ -25,6 +25,7 @@ import { HomeWidgets, homeWidgets, type HomeSlot } from '../registry/home';
 import { PageHeader, durationLabel } from '../components/ui';
 import { useReflection } from '../modules/reflection/useReflection';
 import { greetingFor } from '../../shared/greetings';
+import ContinueStudy from '../components/ContinueStudy';
 export default function Home({ journal: suppliedJournal }: { journal?: Record<string, string> }) {
   const { state, update } = useProductivity();
   const { snapshot } = useReflection();
@@ -104,6 +105,7 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
         </div>
         <Heatmap details={details} end={today} journal={journal} />
       </section>
+      <ContinueStudy />
       <Link className="home-guide-link" to="/settings?section=guide">
         <BookOpen />
         New here? Open the getting-started guide

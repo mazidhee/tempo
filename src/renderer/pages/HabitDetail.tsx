@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil, Snowflake, CalendarDays } from 'lucide-react';
 import { useHabitData, habitDataChanged } from '../hooks/useHabitData';
 import {
@@ -17,14 +17,18 @@ import Heatmap from '../components/Heatmap';
 import HabitAction from '../components/HabitAction';
 import HabitForm from '../components/HabitForm';
 import { PageHeader } from '../components/ui';
+import DeleteHabitButton from '../components/DeleteHabitButton';
 export default function HabitDetail({
   habitId,
   embedded = false,
+  onDeleted,
 }: {
   habitId?: number;
   embedded?: boolean;
+  onDeleted?: () => void;
 }) {
   const { id: routeId } = useParams();
+  const navigate = useNavigate();
   const id = habitId ?? routeId;
   const { habits, logs, today, mutate, loading, error } = useHabitData();
   const habit = habits.find((h) => h.id === Number(id));
@@ -81,10 +85,13 @@ export default function HabitDetail({
         title={habit.name}
         description={habit.description || 'A little progress, one due occurrence at a time.'}
         action={
+          <div className="row-actions">
           <button className="btn-secondary" onClick={() => setEditing(true)}>
             <Pencil />
             Edit habit & schedule
           </button>
+          <DeleteHabitButton id={habit.id} name={habit.name} onDeleted={() => {if(embedded)onDeleted?.();else navigate('/habits');}} />
+          </div>
         }
       />
       {(error || actionError) && (

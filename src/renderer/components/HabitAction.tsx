@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Check, Snowflake, MessageSquare } from 'lucide-react';
 import { isComplete, progress, canFreeze, type FreezeReason } from '../../shared/habits';
 import type { Habit, HabitLog } from '../types';
@@ -20,18 +20,21 @@ export default function HabitAction({
   compact?: boolean;
 }) {
   const log = logs.find((l) => l.habit_id === habit.id && l.log_date === date);
-  const [dialog, setDialog] = useState<
-    'quantity' | 'slip' | 'freeze' | 'clean' | 'note' | 'complete' | null
-  >(null);
+  const [dialog, setDialog] = useState<'quantity' | 'slip' | 'freeze' | 'clean' | 'note' | null>(
+    null,
+  );
   const [amount, setAmount] = useState('');
   const [quantityAction, setQuantityAction] = useState<'quantity' | 'set_quantity'>('quantity');
   const [reason, setReason] = useState<FreezeReason>('rest');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false),
+    working = useRef(false);
   const complete = isComplete(habit, log),
     locked = date !== today;
   const write = async (action: HabitRecord['action'], extra: Partial<HabitRecord> = {}) => {
+    if (working.current) return;
+    working.current = true;
     setBusy(true);
     setError('');
     try {
@@ -41,12 +44,13 @@ export default function HabitAction({
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      working.current = false;
       setBusy(false);
     }
   };
   const open = (value: typeof dialog) => {
     setError('');
-    setNote(value === 'note' || value === 'complete' ? log?.note || '' : '');
+    setNote(value === 'note' ? log?.note || '' : '');
     setAmount('');
     setQuantityAction('quantity');
     setDialog(value);
@@ -145,13 +149,14 @@ export default function HabitAction({
           disabled={locked || busy}
           aria-label={`${complete ? 'Uncheck' : 'Complete'} habit ${habit.name}`}
           aria-pressed={complete}
-          onClick={() => (complete ? write('uncheck') : open('complete'))}
+          onClick={() => write(complete ? 'uncheck' : 'complete', { note: log?.note || '' })}
         >
           {complete && <Check />}
         </button>
       )}
       {!locked && !frozen && (
         <button
+          disabled={busy}
           className="icon-button"
           aria-label={`Add note for ${habit.name}`}
           onClick={() => open('note')}
@@ -185,9 +190,7 @@ export default function HabitAction({
                   ? 'Log a slip'
                   : dialog === 'clean'
                     ? 'End-of-day confirmation'
-                    : dialog === 'complete'
-                      ? 'Complete habit'
-                      : 'Check-in note'
+                    : 'Check-in note'
           }
           onClose={() => setDialog(null)}
         >
@@ -202,7 +205,6 @@ export default function HabitAction({
               else if (dialog === 'slip') await write('slip', { reason: note });
               else if (dialog === 'freeze') await write('freeze', { reason, note });
               else if (dialog === 'clean') await write('clean', { note });
-              else if (dialog === 'complete') await write('complete', { note });
               else {
                 setBusy(true);
                 try {

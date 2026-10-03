@@ -150,8 +150,8 @@ export const reflectionBackup = {
     }
     for (const j of value.journal)
       db.prepare(
-        'INSERT OR IGNORE INTO reflection_journal(date,text,updated_at) VALUES(?,?,?)',
-      ).run(j.date, j.text, j.updatedAt);
+          'INSERT OR IGNORE INTO reflection_journal(date,text,document,updated_at) VALUES(?,?,?,?)',
+        ).run(j.date, j.text,j.document ? JSON.stringify(j.document) : null,j.updatedAt);
     for (const g of value.goals) {
       const next = {
         ...g,

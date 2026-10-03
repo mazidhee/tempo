@@ -96,7 +96,7 @@ export default function App() {
   const label =
     navigation.find((n) => n.to === location.pathname)?.label ||
     secondaryLabels[location.pathname] ||
-    (location.pathname.startsWith('/habits/') ? 'Habit details' : 'Workspace');
+    (location.pathname.startsWith('/habits/') ? 'Habit details' : location.pathname.startsWith('/study/') ? 'Study' : 'Workspace');
   return (
     <PrivacyContext.Provider value={privacy}>
       <SidebarProvider

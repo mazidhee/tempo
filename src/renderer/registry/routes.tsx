@@ -1,5 +1,5 @@
 import { lazy, type ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Navigate } from 'react-router-dom';
 import Home from '../pages/Home';
 import Today from '../pages/Today';
 import Weekly from '../pages/Weekly';
@@ -32,7 +32,7 @@ export const routeRegistry: WorkspaceRoute[] = [
     path: '/habits',
     render: () => (
       <HabitsLayout>
-        <Weekly />
+        <Today />
       </HabitsLayout>
     ),
   },
@@ -54,13 +54,10 @@ export const routeRegistry: WorkspaceRoute[] = [
   },
   {
     path: '/habits/today',
-    render: () => (
-      <HabitsLayout>
-        <Today />
-      </HabitsLayout>
-    ),
+    render: () => <Navigate to="/habits" replace />,
   },
   { path: '/study', render: () => <Study /> },
+  { path: '/study/:curriculumId', render: () => <Study /> },
   { path: '/habits/:id', render: () => <HabitDetail /> },
   { path: '/tasks', render: () => <Tasks /> },
   { path: '/focus', render: (context) => <Focus {...context} /> },
@@ -74,9 +71,8 @@ function HabitsLayout({ children }: { children: ReactNode }) {
     <div className="legacy-page">
       <div className="tabs habit-tabs">
         {[
-          ['/habits', 'Weekly grid'],
-          ['/habits/today', 'Today & manage'],
-          ['/weekly', 'Weekly view'],
+          ['/habits', 'Today'],
+          ['/weekly', 'Weekly'],
           ['/history', 'History'],
         ].map(([to, label]) => (
           <NavLink key={to} to={to} end className={({ isActive }) => (isActive ? 'selected' : '')}>

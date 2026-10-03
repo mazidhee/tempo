@@ -17,6 +17,7 @@ export interface DailyPlan {
   updatedAt: string;
 }
 export interface JournalEntry {
+  document?: import('./journalDocument').JournalDocument | null;
   date: string;
   text: string;
   updatedAt: string;
@@ -119,7 +120,7 @@ export type SavePlan = Pick<DailyPlan, 'date' | 'priorities' | 'studyTopicIds'>;
 export type EveningInput = {
   date: string;
   doneIds: string[];
-  journal: string;
+  journal?: string;
   sleep: number | null;
   energy: number | null;
 };
@@ -130,7 +131,10 @@ declare module './workspace' {
     'plan:save': { input: SavePlan; output: DailyPlan };
     'plan:evening': { input: EveningInput; output: DailyPlan };
     'plan:saveSettings': { input: ReflectionSettings; output: ReflectionSettings };
-    'journal:save': { input: { date: string; text: string }; output: JournalEntry };
+    'journal:save': {
+      input: { date: string; text: string; document?: import('./journalDocument').JournalDocument };
+      output: JournalEntry;
+    };
     'journal:search': {
       input: { query: string; start?: string; end?: string };
       output: JournalEntry[];

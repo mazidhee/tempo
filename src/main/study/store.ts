@@ -1,6 +1,7 @@
 import type Database from '../database/sqlite';
 import { localDate } from '../../shared/productivity';
-import { shiftDay } from '../../shared/habits';
+import { shiftDay, validDate } from '../../shared/habits';
+import { validCover } from '../../shared/localImage';
 import {
   nextStudyReview,
   type Curriculum,
@@ -48,12 +49,39 @@ export class StudyStore {
         ? undefined
         : this.snapshot().curricula.find((c) => c.id === text(data.id, 'curriculum ID', 100));
     if (data.id !== undefined && !previous) throw new Error('Curriculum not found.');
+    if (data.focusUntil !== undefined && data.focusUntil !== null && !validDate(data.focusUntil))
+      throw new Error('Choose a valid focus end date.');
+    if (
+      data.currentTopicId !== undefined &&
+      data.currentTopicId !== null &&
+      !this.snapshot().topics.some(
+        (t) => t.id === data.currentTopicId && t.curriculumId === previous?.id && !t.archived,
+      )
+    )
+      throw new Error('Choose an active topic in this curriculum.');
     const curriculum: Curriculum = {
+      coverImage:
+        data.coverImage === undefined
+          ? (previous?.coverImage ?? null)
+          : validCover(data.coverImage)
+            ? data.coverImage
+            : (() => {
+                throw new Error('Choose a valid local cover image.');
+              })(),
       id: previous?.id || crypto.randomUUID(),
       title: text(data.title, 'curriculum title'),
       description: text(data.description, 'description', 2000, true),
       createdAt: previous?.createdAt || new Date().toISOString(),
       archived: flag(data.archived, previous?.archived || false),
+      studyFocus: flag(data.studyFocus, previous?.studyFocus ?? false),
+      focusUntil:
+        data.focusUntil === undefined
+          ? (previous?.focusUntil ?? null)
+          : (data.focusUntil as string | null),
+      currentTopicId:
+        data.currentTopicId === undefined
+          ? (previous?.currentTopicId ?? null)
+          : (data.currentTopicId as string | null),
     };
     this.db
       .prepare(
@@ -260,6 +288,8 @@ export class StudyStore {
         .filter((t) => t.parentId === topic.id)
         .forEach((child) => this.writeTopic({ ...child, parentId: null }));
       this.db.prepare('DELETE FROM study_topics WHERE id=?').run(topic.id);
+      const curriculum = snapshot.curricula.find((c) => c.currentTopicId === topic.id);
+      if (curriculum) this.saveCurriculum({ ...curriculum, currentTopicId: null });
     })();
     return true;
   }

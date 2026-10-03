@@ -1,0 +1,241 @@
+:root {
+  --document-width: 760px;
+  --document-body-size: 17px;
+  --document-title-size: 40px;
+  --cover-height: 220px;
+}
+.journal-page {
+  max-width: var(--document-width);
+  margin-inline: auto;
+  width: 100%;
+}
+.journal-page .page-header {
+  margin-block: 32px 24px;
+}
+.journal-datebar,
+.journal-save {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.journal-datebar input {
+  width: auto;
+}
+.journal-document {
+  line-height: 1.8;
+}
+.journal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-block: 1px solid var(--border);
+  background: var(--background);
+}
+.journal-toolbar select {
+  width: 128px;
+  border: 0;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 8px;
+}
+.journal-toolbar [aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--foreground);
+}
+.journal-document .tiptap {
+  min-height: 420px;
+  padding: 24px 4px;
+  font-size: var(--document-body-size);
+  outline: none;
+}
+.journal-document .tiptap:focus-visible {
+  box-shadow: inset 2px 0 var(--primary);
+}
+.journal-document .tiptap p {
+  margin: 0 0 16px;
+}
+.journal-document .tiptap h1 {
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 28px 0 16px;
+}
+.journal-document .tiptap h2 {
+  font-size: 25px;
+  font-weight: 650;
+  margin: 24px 0 12px;
+}
+.journal-document .tiptap h3 {
+  font-size: 20px;
+  font-weight: 650;
+  margin: 20px 0 12px;
+}
+.journal-document .tiptap ul,
+.journal-document .tiptap ol {
+  padding-left: 28px;
+  margin: 16px 0;
+}
+.journal-document .tiptap ul {
+  list-style: disc;
+}
+.journal-document .tiptap ol {
+  list-style: decimal;
+}
+.journal-document .tiptap blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 20px;
+  color: var(--muted-foreground);
+}
+.journal-document .tiptap pre {
+  padding: 20px;
+  background: var(--surface-2);
+  border-radius: 12px;
+  white-space: pre-wrap;
+}
+.journal-document .tiptap code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+.journal-document .tiptap hr {
+  border-color: var(--border);
+  margin: 28px 0;
+}
+.journal-document.serif .tiptap {
+  font-family: Georgia, serif;
+  font-size: 19px;
+}
+.journal-save {
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.journal-browser {
+  margin-top: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+.journal-search-results {
+  max-height: 280px;
+  overflow: auto;
+}
+.journal-search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.journal-search-results small {
+  display: block;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.curriculum-cover {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  position: relative;
+}
+.curriculum-cover.has-cover {
+  height: var(--cover-height);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.curriculum-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.has-cover .cover-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  background: var(--background);
+  padding: 4px;
+  border-radius: 10px;
+}
+.cover-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.review-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-block: 1px solid var(--border);
+  padding: 24px 0;
+  gap: 24px;
+}
+.review-overview strong {
+  display: block;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+  font-weight: 650;
+}
+.review-overview span {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.review-section {
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+}
+.review-section summary {
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+}
+.review-section > div {
+  padding-top: 20px;
+}
+.review-reflections {
+  padding: 28px 0;
+}
+.review-reflections .reflection-grid {
+  gap: 24px;
+}
+.review-page .reflection-layout {
+  display: block;
+}
+.review-page .reflection-caption {
+  margin-top: 12px;
+}
+.plan-context {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 16px 0 24px;
+  color: var(--muted-foreground);
+}
+.plan-context a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (max-width: 650px) {
+  .review-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .journal-toolbar {
+    gap: 0;
+  }
+  .curriculum-cover.has-cover {
+    height: 140px;
+  }
+  .journal-page .page-header {
+    margin-top: 20px;
+  }
+}
+
+.plan-evening > summary {
+  cursor: pointer;
+  padding: 16px 0;
+  font-weight: 600;
+}

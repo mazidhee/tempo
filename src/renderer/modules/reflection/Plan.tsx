@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, X, ArrowUp, CalendarCheck, Timer } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
 import type { PlanPriority, PriorityKind } from '../../../shared/reflection';
+import '../../styles/document-pages.css';
 import { PageHeader, Empty } from '../../components/ui';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -12,7 +13,7 @@ import { Badge } from '../../components/ui/badge';
 import { useReflection } from './useReflection';
 import { SearchPicker } from '../../components/SearchPicker';
 import { studyOptions } from '../../../shared/picker';
-import { ActionError, Field, LoadState, Panel, ReflectionNav, Select, useAction } from './ui';
+import { ActionError, Field, LoadState, Panel, Select, useAction } from './ui';
 export default function Plan() {
   const privacy = usePrivacy();
   const navigate = useNavigate();
@@ -21,17 +22,14 @@ export default function Plan() {
     [date, setDate] = useState(localDate()),
     [priorities, setPriorities] = useState<PlanPriority[]>([]),
     [topics, setTopics] = useState<string[]>([]),
-    [journal, setJournal] = useState(''),
     [sleep, setSleep] = useState(''),
     [energy, setEnergy] = useState(''),
     [choice, setChoice] = useState('free'),
     [title, setTitle] = useState('');
-  const saved = snapshot?.plans.find((p) => p.date === date),
-    savedJournal = snapshot?.journal.find((j) => j.date === date);
+  const saved = snapshot?.plans.find((p) => p.date === date);
   useEffect(() => {
     setPriorities(saved?.priorities || []);
     setTopics(saved?.studyTopicIds || []);
-    setJournal(savedJournal?.text || '');
     setSleep(
       saved?.evening.sleep === undefined || saved.evening.sleep === null
         ? ''
@@ -106,13 +104,12 @@ export default function Plan() {
     await window.workspaceAPI.invoke('plan:evening', {
       date,
       doneIds: priorities.filter((p) => p.done).map((p) => p.id),
-      journal,
       sleep: sleep === '' ? null : Number(sleep),
       energy: energy === '' ? null : Number(energy),
     });
   };
   return (
-    <div className="reflection-page">
+    <div className="reflection-page plan-page">
       <PageHeader
         title="Daily plan"
         description="Give today a clear direction. Three priorities are enough."
@@ -126,7 +123,14 @@ export default function Plan() {
           />
         }
       />
-      <ReflectionNav />
+      <div className="plan-context">
+        <span>
+          {priorities.filter((p) => p.done).length} / {priorities.length} priorities complete
+        </span>
+        <Link to={`/journal?date=${date}`}>Open today’s journal</Link>
+        <Link to="/goals">Your goals</Link>
+        <Link to="/review">Review this week</Link>
+      </div>
       <ActionError error={action.error} />
       <div className="reflection-layout">
         <div className="reflection-stack">
@@ -222,60 +226,61 @@ export default function Plan() {
                 </Button>
               </div>
             )}
-          </Panel>
-          <Panel
-            title="Evening reflection"
-            description="Record what happened. Completion here describes your plan; linked records keep their own history."
-          >
-            <div className="reflection-stack">
-              <Field label="A sentence about your day">
-                <textarea
-                  className="reflection-textarea"
-                  maxLength={20000}
-                  value={journal}
-                  onChange={(e) => setJournal(e.target.value)}
-                  placeholder="What would you like to remember?"
-                />
-              </Field>
-              <div className="reflection-grid">
-                <Field label="Sleep hours (optional)">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={24}
-                    step={0.5}
-                    value={sleep}
-                    onChange={(e) => setSleep(e.target.value)}
-                  />
-                </Field>
-                <Field label="Energy (optional)">
-                  <Select value={energy} onChange={(e) => setEnergy(e.target.value)}>
-                    <option value="">Not recorded</option>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} / 5
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </div>
-              <div className="reflection-actions">
-                <Button
-                  disabled={action.busy}
-                  onClick={() => void action.run(close, 'Evening reflection saved')}
-                >
-                  Save evening reflection
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={action.busy}
-                  onClick={() => void action.run(save, 'Daily plan saved')}
-                >
-                  Save plan
-                </Button>
-              </div>
+            <div className="reflection-actions">
+              <Button
+                disabled={action.busy}
+                onClick={() => void action.run(save, 'Daily plan saved')}
+              >
+                Save priorities
+              </Button>
+              <span className="reflection-caption">
+                Plan completions keep linked records separate.
+              </span>
             </div>
           </Panel>
+          <details className="plan-evening">
+            <summary>Close the day · sleep and energy</summary>
+            <Panel
+              title="Evening reflection"
+              description="Record what happened. Completion here describes your plan; linked records keep their own history."
+            >
+              <div className="reflection-stack">
+                <Link to={`/journal?date=${date}`} className="text-link">
+                  Write freely in your daily journal →
+                </Link>
+                <div className="reflection-grid">
+                  <Field label="Sleep hours (optional)">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={24}
+                      step={0.5}
+                      value={sleep}
+                      onChange={(e) => setSleep(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Energy (optional)">
+                    <Select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+                      <option value="">Not recorded</option>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n} / 5
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+                <div className="reflection-actions">
+                  <Button
+                    disabled={action.busy}
+                    onClick={() => void action.run(close, 'Evening reflection saved')}
+                  >
+                    Save evening reflection
+                  </Button>
+                </div>
+              </div>
+            </Panel>
+          </details>
         </div>
         <Panel
           title="Today’s study plan"

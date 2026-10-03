@@ -6,6 +6,7 @@ import { registerProductivityHandlers } from './ipc/productivity';
 import { localDate } from '../shared/productivity';
 import { mainModules } from './modules/registry';
 import type { ModuleLifecycle } from './modules/contracts';
+import { registerBackups } from './backup/module';
 
 if (process.env.HABIT_TRACKER_DATA_DIR)
   app.setPath('userData', path.resolve(process.env.HABIT_TRACKER_DATA_DIR));
@@ -98,7 +99,7 @@ app.whenReady().then(() => {
     } else if (action === 'close') mainWindow?.close();
     else throw new Error('Unsupported window action.');
   });
-  for (const register of mainModules) {
+  for (const register of [...mainModules,registerBackups]) {
     const lifecycle = register({
       db: getDb(),
       getWindow: () => mainWindow,

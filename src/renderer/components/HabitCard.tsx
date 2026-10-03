@@ -1,8 +1,15 @@
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from './ui/dropdown-menu';
 import { Link } from 'react-router-dom';
-import { Archive, Pencil, Pin } from 'lucide-react';
+import { Archive, Pencil, Pin, Ellipsis } from 'lucide-react';
 import type { Habit, HabitLog } from '../types';
 import { isDue, freezesRemaining, isPaused, periodSummary } from '../../shared/habits';
 import HabitAction from './HabitAction';
+import DeleteHabitButton from './DeleteHabitButton';
 export default function HabitCard({
   habit,
   logs,
@@ -22,7 +29,7 @@ export default function HabitCard({
     week = periodSummary(habit, logs, today);
   const log = logs.find((l) => l.habit_id === habit.id && l.log_date === today);
   return (
-    <article className="habit-card panel" data-habit-id={habit.id}>
+    <article className="habit-card habit-daily-row" data-habit-id={habit.id}>
       <div className="habit-card-heading">
         <div>
           <Link className="habit-name habit-title" to={`/habits/${habit.id}`}>
@@ -34,7 +41,6 @@ export default function HabitCard({
             </span>
           )}
           <p className="muted small">
-            {habit.description && <span className="habit-name">{habit.description} · </span>}
             {habit.scheduled_time || habit.time_of_day} ·{' '}
             {habit.schedule_type === 'weekly_target'
               ? `${week.done}+${week.frozen} / ${week.target} this week`
@@ -42,16 +48,24 @@ export default function HabitCard({
           </p>
         </div>
         <div className="habit-manage">
-          <button className="icon-button" aria-label={`Edit habit ${habit.name}`} onClick={onEdit}>
-            <Pencil />
-          </button>
-          <button
-            className="icon-button"
-            aria-label={`Archive habit ${habit.name}`}
-            onClick={onArchive}
-          >
-            <Archive />
-          </button>
+          <DeleteHabitButton id={habit.id} name={habit.name} compact />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="icon-button" aria-label="Habit options">
+                <Ellipsis />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil />
+                Edit habit
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onArchive}>
+                <Archive />
+                Archive habit
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       {due ? (

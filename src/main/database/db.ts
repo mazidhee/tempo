@@ -182,8 +182,11 @@ export function restoreHabit(id: number) {
   return { id, restored: true };
 }
 
-export function deleteHabit(id: number) {
+export async function deleteHabit(id: number) {
   const d = getDb();
+  if (!Number.isInteger(id) || !d.prepare('SELECT id FROM habits WHERE id=?').get(id))
+    throw new Error('Habit no longer exists.');
+  await d.backup(`${d.name}.before-delete-${Date.now()}.bak`);
   d.transaction(() => {
     d.prepare('UPDATE habits SET after_habit_id=NULL WHERE after_habit_id=?').run(id);
     d.prepare('DELETE FROM habit_pauses WHERE habit_id=?').run(id);

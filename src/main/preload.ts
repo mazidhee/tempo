@@ -49,7 +49,7 @@ const api = {
 contextBridge.exposeInMainWorld('habitAPI', api);
 const workspaceAPI: WorkspaceAPI = {
   invoke(channel, ...args) {
-    if (!/^(focus|plan|journal|review|goals|study|window):[a-zA-Z]+$/.test(channel))
+    if (!/^(focus|plan|journal|review|goals|study|window|backup):[a-zA-Z]+$/.test(channel))
       throw new Error('Unsupported workspace channel.');
     return ipcRenderer.invoke(channel, ...args);
   },

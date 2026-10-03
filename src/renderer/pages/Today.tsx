@@ -1,6 +1,6 @@
-import { usePrivacy } from '../hooks/PrivacyContext';
+import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Plus, ChevronDown, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import { Plus, ChevronDown, Archive, RotateCcw } from 'lucide-react';
 import { useHabitData, habitDataChanged } from '../hooks/useHabitData';
 import {
   isDue,
@@ -11,13 +11,15 @@ import {
   dayOutcome,
   shiftDay,
 } from '../../shared/habits';
+import DeleteHabitButton from '../components/DeleteHabitButton';
+import '../styles/habit-daily.css';
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
 import HabitAction from '../components/HabitAction';
 import { PageHeader } from '../components/ui';
 import type { Habit } from '../types';
 export default function Today() {
-  const privacy = usePrivacy();
+  const [params] = useSearchParams();
   const { active, archived, habits, logs, today, now, mutate, error } = useHabitData();
   const hour = new Date(now).getHours(),
     period = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'anytime';
@@ -41,6 +43,15 @@ export default function Today() {
       )
       .map((date) => ({ habit: h, date })),
   );
+  useEffect(() => {
+    if (params.get('recovery') === '1') {
+      const panel = document.getElementById('habit-recovery') as HTMLDetailsElement | null;
+      if (panel) {
+        panel.open = true;
+        panel.scrollIntoView({ block: 'start' });
+      }
+    }
+  }, [params, recovery.length]);
   const act = async (work: () => Promise<unknown>) => {
     setActionError('');
     try {
@@ -52,7 +63,7 @@ export default function Today() {
   return (
     <div className="page habit-checkin">
       <PageHeader
-        title="Small commitments, kept."
+        title="Today’s habits"
         description={new Date(now).toLocaleDateString(undefined, { dateStyle: 'full' })}
         action={
           <button
@@ -93,33 +104,6 @@ export default function Today() {
           <i style={{ width: `${pinned.length ? (done / pinned.length) * 100 : 0}%` }} />
         </div>
       </section>
-      {!!recovery.length && (
-        <section className="panel recovery-panel">
-          <h2>A little room for recovery</h2>
-          <p className="muted">
-            These missed occurrences are within 48 hours of their day ending. A freeze protects the
-            streak, without counting as done.
-          </p>
-          {recovery.map(({ habit, date }) => (
-            <div className="recovery-row" key={habit.id + date}>
-              <span>
-                <strong className="habit-name">{habit.name}</strong>
-                <small className="muted">
-                  {date} · budget charged to {date.slice(0, 7)}
-                </small>
-              </span>
-              <HabitAction
-                compact
-                habit={habit}
-                date={date}
-                today={today}
-                logs={logs}
-                onChange={habitDataChanged}
-              />
-            </div>
-          ))}
-        </section>
-      )}
       <div className="tabs">
         <button className={!showAll ? 'selected' : ''} onClick={() => setAll(false)}>
           Scheduled today
@@ -139,6 +123,7 @@ export default function Today() {
       )}
       {['morning', 'afternoon', 'evening', 'anytime'].map((section) => {
         const items = orderHabits(displayed.filter((h) => h.time_of_day === section));
+        if (!items.length) return null;
         const open = expanded.includes(section);
         return (
           <section className="habit-section" key={section}>
@@ -181,6 +166,33 @@ export default function Today() {
           </section>
         );
       })}
+      {!!recovery.length && (
+        <details id="habit-recovery" className="recovery-panel">
+          <summary>{recovery.length} recent misses · Review recovery</summary>
+          <div className="recovery-list">
+            <p className="muted">
+              These missed occurrences are within 48 hours of their day ending. A freeze protects
+              the streak, without counting as done.
+            </p>
+            {recovery.map(({ habit, date }) => (
+              <div className="recovery-row" key={habit.id + date}>
+                <span>
+                  <strong className="habit-name">{habit.name}</strong>
+                  <small className="muted">{date}</small>
+                </span>
+                <HabitAction
+                  compact
+                  habit={habit}
+                  date={date}
+                  today={today}
+                  logs={logs}
+                  onChange={habitDataChanged}
+                />
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
       {!!archived.length && (
         <section className="archived-section">
           <button className="btn-ghost" onClick={() => setArchived((x) => !x)}>
@@ -198,20 +210,7 @@ export default function Today() {
                   <RotateCcw />
                   Restore
                 </button>
-                <button
-                  className="btn-ghost"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Permanently delete "${privacy ? 'Private habit' : h.name}" and all its history? This cannot be undone.`,
-                      )
-                    )
-                      void act(() => window.habitAPI.deleteHabit(h.id));
-                  }}
-                >
-                  <Trash2 />
-                  Delete
-                </button>
+                <DeleteHabitButton id={h.id} name={h.name} />
               </div>
             ))}
         </section>

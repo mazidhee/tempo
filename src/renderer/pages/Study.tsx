@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { CurriculumCover } from '../components/CurriculumCover';
+import '../styles/document-pages.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus,
   BookOpen,
@@ -6,15 +8,18 @@ import {
   Archive,
   RotateCcw,
   Trash2,
-  Check,
   Timer,
   ChevronRight,
-  ChevronDown,
   Upload,
+  ArrowLeft,
+  MoreHorizontal,
+  Target,
+  Play,
   ChartNoAxesColumn,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStudy } from '../hooks/useStudy';
+import { useStudyFocus } from '../hooks/useStudyFocus';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import {
   curriculumProgress,
@@ -24,62 +29,100 @@ import {
   type StudyTopic,
   type ReviewGrade,
 } from '../../shared/study';
-import { localDate, focusRequest } from '../../shared/productivity';
+import { localDate } from '../../shared/productivity';
+import {
+  activeStudyTopics,
+  isStudyFocus,
+  studyContinuation,
+  topicPath,
+} from '../../shared/studyContinuity';
+import { studyOptions } from '../../shared/picker';
 import { PageHeader, Modal, Empty } from '../components/ui';
 import { Progress } from '../components/ui/progress';
-import { ChartContainer } from '../components/ui/chart';
-import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
+import { SearchPicker } from '../components/SearchPicker';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../components/ui/dropdown-menu';
 import StudyImport from '../components/StudyImport';
 import { formatStudyTime } from '../../shared/time';
-const progressChart = { progress: { label: 'Learned', color: 'var(--ink-muted)' } };
+import '../styles/study-workspace.css';
+
+const pageSize = 30;
 export default function Study() {
   const { snapshot, ready, error } = useStudy();
   const { state } = useProductivity();
-  const navigate = useNavigate();
-  const [selected, setSelected] = useState('');
-  const [archived, setArchived] = useState(false);
+  const focus = useStudyFocus(),
+    navigate = useNavigate(),
+    { curriculumId } = useParams();
+  const [params, setParams] = useSearchParams();
+  const [archived, setArchived] = useState(false),
+    [search, setSearch] = useState(''),
+    [page, setPage] = useState(0);
+  const [tab, setTab] = useState('topics'),
+    [busy, setBusy] = useState(false),
+    [actionError, setActionError] = useState('');
+  const working = useRef(false);
   const [curriculumDraft, setCurriculumDraft] = useState<Partial<Curriculum> | null>(null);
-  const [topicDraft, setTopicDraft] = useState<Partial<StudyTopic> | null>(null);
-  const [actionError, setActionError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [importing, setImporting] = useState(false),
-    [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const time = useMemo(() => studyTimeTotals(snapshot, state.sessions), [snapshot, state.sessions]);
+  const [topicDraft, setTopicDraft] = useState<Partial<StudyTopic> | null>(null),
+    [importing, setImporting] = useState(false);
+  useEffect(() => {
+    setSearch('');
+    setPage(0);
+    setTab('topics');
+  }, [curriculumId]);
+  useEffect(() => {
+    setPage(0);
+  }, [search, tab, params.toString(), archived]);
+  const curriculum = snapshot.curricula.find((c) => c.id === curriculumId);
   const curricula = snapshot.curricula.filter((c) => archived || !c.archived);
-  const curriculum = curricula.find((c) => c.id === selected) || curricula[0];
-  const topics = snapshot.topics
-    .filter((t) => t.curriculumId === curriculum?.id && (archived || !t.archived))
-    .sort((a, b) => a.order - b.order);
-  const visible = new Set<string>();
-  if (search.trim())
-    for (const topic of topics.filter((t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()),
-    )) {
-      let current: StudyTopic | undefined = topic;
-      while (current && !visible.has(current.id)) {
-        visible.add(current.id);
-        current = topics.find((t) => t.id === current!.parentId);
-      }
-    }
-  const children = new Map<string | null, StudyTopic[]>();
-  for (const topic of topics) {
-    const key =
-      topic.parentId && topics.some((t) => t.id === topic.parentId) ? topic.parentId : null;
-    children.set(key, [...(children.get(key) ?? []), topic]);
-  }
+  const topics = useMemo(
+    () =>
+      archived
+        ? snapshot.topics
+            .filter((t) => t.curriculumId === curriculumId)
+            .sort((a, b) => a.order - b.order)
+        : activeStudyTopics(snapshot, curriculumId || ''),
+    [snapshot, curriculumId, archived],
+  );
+  const time = useMemo(() => studyTimeTotals(snapshot, state.sessions), [snapshot, state.sessions]);
   const progress = curriculum
     ? curriculumProgress(snapshot, curriculum.id)
-    : { learned: 0, total: 0, percent: 0 };
-  const due = snapshot.topics.filter(
-    (t) =>
-      !t.archived &&
-      t.learnedAt &&
-      t.reviewDue &&
-      t.reviewDue <= localDate() &&
-      !snapshot.curricula.find((c) => c.id === t.curriculumId)?.archived,
+    : { total: 0, learned: 0, percent: 0 };
+  const continuation = curriculum
+    ? studyContinuation(snapshot, curriculum, state.sessions, state.timer)
+    : null;
+  const selectedTopic = topics.find((t) => t.id === params.get('topic'));
+  const parent =
+    topics.find((t) => t.id === params.get('chapter')) ??
+    (selectedTopic?.parentId ? topics.find((t) => t.id === selectedTopic.parentId) : undefined);
+  const hasChildren = new Set(topics.map((t) => t.parentId));
+  const due = topics.filter(
+    (t) => t.learnedAt && t.reviewDue && t.reviewDue <= localDate() && !t.archived,
   );
+  const needle = search.trim().toLocaleLowerCase();
+  const filtered = (
+    tab === 'reviews'
+      ? due
+      : needle
+        ? topics
+        : topics.filter((t) => (t.parentId || null) === (parent?.id || null))
+  ).filter(
+    (t) =>
+      !needle ||
+      [t.title, ...topicPath(snapshot, t).map((p) => p.title)]
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes(needle),
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize)),
+    currentPage = Math.min(page, pages - 1);
+  const visible = filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
   const act = async (work: () => Promise<unknown>) => {
+    if (working.current) return;
+    working.current = true;
     setBusy(true);
     setActionError('');
     try {
@@ -87,201 +130,191 @@ export default function Study() {
     } catch (reason) {
       setActionError(String(reason));
     } finally {
+      working.current = false;
       setBusy(false);
     }
   };
-  const startFocus = (topic?: StudyTopic, tracking = false) => {
-    if (!curriculum) return;
-    const link = {
-      type: 'study' as const,
-      id: topic?.id ?? curriculum.id,
-      name: topic?.title ?? curriculum.title,
-      curriculumId: curriculum.id,
-    };
-    const action = focusRequest(state.timer, link);
-    if (
-      action === 'confirm' &&
-      !window.confirm(
-        state.timer.stopwatch
-          ? 'Save the current tracked time and switch to this topic?'
-          : 'Replace the current focus session? Unfinished time will not be logged.',
-      )
-    )
-      return;
-    void act(async () => {
-      if (action !== 'resume') {
-        if (state.timer.stopwatch && state.timer.startedAt !== null)
-          await window.workspaceAPI.invoke('focus:command', { action: 'stop' });
-        await window.workspaceAPI.invoke('focus:command', {
-          action: 'configure',
-          phase: 'focus',
-          timerMode: tracking ? 'stopwatch' : 'pomodoro',
-          link,
-        });
-        await window.workspaceAPI.invoke('focus:command', { action: 'start' });
-      }
-      navigate('/focus');
-    });
+  const openTopic = (t: StudyTopic) => {
+    setSearch('');
+    setParams(hasChildren.has(t.id) ? { chapter: t.id } : { topic: t.id });
   };
-  const renderTree = (parent: string | null, level = 0): React.ReactNode =>
-    (children.get(parent) ?? [])
-      .filter((t) => !search.trim() || visible.has(t.id))
-      .map((topic) => (
-        <li key={topic.id}>
-          <div className="study-topic-row">
-            {(children.get(topic.id)?.length ?? 0) > 0 ? (
-              <button
-                className="icon-button topic-expand"
-                aria-label={`${expanded.has(topic.id) || search.trim() ? 'Collapse' : 'Expand'} ${topic.title}`}
-                aria-expanded={expanded.has(topic.id) || !!search.trim()}
-                onClick={() =>
-                  setExpanded((old) => {
-                    const next = new Set(old);
-                    next.has(topic.id) ? next.delete(topic.id) : next.add(topic.id);
-                    return next;
-                  })
-                }
-              >
-                {expanded.has(topic.id) || search.trim() ? <ChevronDown /> : <ChevronRight />}
-              </button>
-            ) : (
-              <span className="topic-spacer" />
-            )}
-            <label>
-              <input
-                type="checkbox"
-                disabled={busy || topic.archived}
-                checked={!!topic.learnedAt}
-                onChange={() =>
-                  void act(() =>
-                    window.workspaceAPI.invoke('study:learn', {
-                      id: topic.id,
-                      learned: !topic.learnedAt,
-                    }),
-                  )
-                }
-              />
-              <span title={topic.details}>{topic.title}</span>
-            </label>
-            <span className="muted small">
-              <strong className="study-topic-time" title="Recorded time, including subtopics">
-                {formatStudyTime(time.topicSeconds[topic.id] || 0)}
-              </strong>{' '}
-              {topic.archived
-                ? 'Archived'
-                : topic.reviewDue
-                  ? `Review ${topic.reviewDue}`
-                  : 'To learn'}
-            </span>
-            <div className="row-actions">
-              <button
-                className="btn-secondary topic-track"
-                disabled={busy || topic.archived || curriculum?.archived}
-                aria-label={`Track time for ${topic.title}`}
-                onClick={() => startFocus(topic, true)}
-              >
-                <Timer />
-                Track
-              </button>
-              <button
-                className="icon-button"
-                disabled={busy || topic.archived || curriculum?.archived}
-                aria-label={`Start focus for ${topic.title}`}
-                title="Start Pomodoro for this topic"
-                onClick={() => startFocus(topic)}
-              >
-                <Timer />
-              </button>
-              <button
-                className="icon-button"
-                aria-label={`Edit topic ${topic.title}`}
-                onClick={() => setTopicDraft(topic)}
-              >
-                <Pencil />
-              </button>
-              <button
-                className="icon-button"
-                aria-label={`Add topic under ${topic.title}`}
-                onClick={() =>
-                  setTopicDraft({
-                    curriculumId: topic.curriculumId,
-                    parentId: topic.id,
-                    title: '',
-                    order: topics.length,
-                  })
-                }
-              >
-                <Plus />
-              </button>
-              <button
-                className="icon-button"
-                disabled={busy}
-                aria-label={`${topic.archived ? 'Restore' : 'Archive'} topic ${topic.title}`}
-                onClick={() =>
-                  void act(() =>
-                    window.workspaceAPI.invoke('study:saveTopic', {
-                      ...topic,
-                      archived: !topic.archived,
-                    }),
-                  )
-                }
-              >
-                {topic.archived ? <RotateCcw /> : <Archive />}
-              </button>
-              <button
-                className="icon-button"
-                disabled={busy || !!topic.learnedAt}
-                title={
-                  topic.learnedAt ? 'Archive a studied topic to preserve its history.' : undefined
-                }
-                aria-label={`Delete topic ${topic.title}`}
-                onClick={() => {
-                  if (
-                    window.confirm(`Delete “${topic.title}”? Child topics will become root topics.`)
-                  )
-                    void act(() => window.workspaceAPI.invoke('study:deleteTopic', topic.id));
-                }}
-              >
-                <Trash2 />
-              </button>
-            </div>
-          </div>
-          {level < topics.length && (expanded.has(topic.id) || search.trim()) && (
-            <ul>{renderTree(topic.id, level + 1)}</ul>
-          )}
-        </li>
-      ));
+  const saveCurriculum = (next: Partial<Curriculum>) =>
+    void act(() => window.workspaceAPI.invoke('study:saveCurriculum', { ...curriculum!, ...next }));
+  const forbiddenParents = new Set<string>();
+  if (topicDraft?.id)
+    for (const t of topics)
+      if (topicPath(snapshot, t).some((p) => p.id === topicDraft.id)) forbiddenParents.add(t.id);
+  const parentOptions = studyOptions(snapshot)
+    .filter((o) => o.group === topicDraft?.curriculumId && !forbiddenParents.has(o.value.slice(6)))
+    .map((o) => ({ ...o, value: o.value.slice(6) }));
+  const addTopic = (parentId: string | null = null) =>
+    setTopicDraft({
+      curriculumId: curriculum!.id,
+      parentId,
+      title: '',
+      order: Math.max(-1, ...topics.map((t) => t.order)) + 1,
+    });
+  const topicMenu = (topic: StudyTopic) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="icon-button"
+          aria-label={`Actions for ${topic.title}`}
+          disabled={busy || focus.busy}
+        >
+          <MoreHorizontal />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          disabled={
+            topic.archived || curriculum?.archived || !!topic.learnedAt || hasChildren.has(topic.id)
+          }
+          onSelect={() => saveCurriculum({ currentTopicId: topic.id, studyFocus: true })}
+        >
+          <Target />
+          Make current topic
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={topic.archived || curriculum?.archived}
+          onSelect={() => void focus.start(curriculum!, topic, true)}
+        >
+          <Timer />
+          Track time
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTopicDraft(topic)}>
+          <Pencil />
+          Edit topic
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={curriculum?.archived} onSelect={() => addTopic(topic.id)}>
+          <Plus />
+          Add subtopic
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() =>
+            void act(() =>
+              window.workspaceAPI.invoke('study:saveTopic', {
+                ...topic,
+                archived: !topic.archived,
+              }),
+            )
+          }
+        >
+          {topic.archived ? <RotateCcw /> : <Archive />}
+          {topic.archived ? 'Restore' : 'Archive'} topic
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={!!topic.learnedAt}
+          onSelect={() => {
+            if (window.confirm(`Delete “${topic.title}”? Child topics will become root topics.`))
+              void act(() => window.workspaceAPI.invoke('study:deleteTopic', topic.id));
+          }}
+        >
+          <Trash2 />
+          Delete topic
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+  const curriculumRow = (c: Curriculum) => {
+    const p = curriculumProgress(snapshot, c.id),
+      next = studyContinuation(snapshot, c, state.sessions, state.timer);
+    return (
+      <Link className="study-library-row" key={c.id} to={`/study/${c.id}`}>
+        <BookOpen />
+        <div>
+          <h3>{c.title}</h3>
+          <p className="muted small">
+            {c.archived ? 'Archived · ' : ''}
+            {p.learned}/{p.total} learned · {formatStudyTime(time.curriculumSeconds[c.id] || 0)}{' '}
+            recorded
+          </p>
+          <p className="muted study-library-next">
+            {next.topic
+              ? `Continue: ${next.topic.title}`
+              : next.complete
+                ? 'Learning path complete'
+                : 'Add your first topic'}
+          </p>
+        </div>
+        <div className="study-library-progress">
+          <Progress value={p.percent} aria-label={`${c.title} progress`} />
+          <span className="muted small">{Math.round(p.percent)}%</span>
+        </div>
+        <ChevronRight />
+      </Link>
+    );
+  };
   return (
-    <div className="page study-page">
+    <div className="page study-page study-workspace">
+      {curriculumId && (
+        <Link className="text-link study-back" to="/study">
+          <ArrowLeft />
+          Study library
+        </Link>
+      )}
+      {curriculum && <CurriculumCover curriculum={curriculum} />}
       <PageHeader
-        title="Study"
-        description="Curricula, learning progress and scheduled reviews."
+        title={curriculum?.title || 'Study'}
+        description={
+          curriculum
+            ? `${progress.learned}/${progress.total} topics learned · ${formatStudyTime(time.curriculumSeconds[curriculum.id] || 0)} recorded`
+            : 'Your learning paths. One place to pick up where you left off.'
+        }
         action={
           <div className="row-actions">
-            <button className="btn-secondary" onClick={() => setImporting(true)}>
-              <Upload />
-              Import roadmaps
-            </button>
-            <button
-              className="btn-primary"
-              onClick={() => setCurriculumDraft({ title: '', description: '' })}
-            >
-              <Plus />
-              New curriculum
-            </button>
+            {curriculum ? (
+              <>
+                <button className="btn-secondary" onClick={() => setCurriculumDraft(curriculum)}>
+                  <Pencil />
+                  Edit curriculum
+                </button>
+                <button
+                  className="btn-primary"
+                  disabled={busy || focus.busy || curriculum.archived || !continuation?.topic}
+                  onClick={() => void focus.start(curriculum, continuation?.topic)}
+                >
+                  <Play />
+                  Continue studying
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn-secondary" onClick={() => setImporting(true)}>
+                  <Upload />
+                  Import roadmaps
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={() =>
+                    setCurriculumDraft({ title: '', description: '', studyFocus: true })
+                  }
+                >
+                  <Plus />
+                  New curriculum
+                </button>
+              </>
+            )}
           </div>
         }
       />
-      {(error || actionError) && (
+      {(error || actionError || focus.error) && (
         <p role="alert" className="inline-error">
-          {error || actionError}
+          {error || actionError || focus.error}
         </p>
       )}
       {!ready && !error ? (
         <p className="muted">Opening study…</p>
-      ) : (
+      ) : curriculumId && !curriculum ? (
+        <Empty
+          icon={<BookOpen />}
+          title="Curriculum not found"
+          description="Return to your library to choose an available curriculum."
+        />
+      ) : !curriculum ? (
         <>
           <div className="study-toolbar">
+            <h2>Current focus</h2>
             <label className="toggle-row">
               <input
                 type="checkbox"
@@ -290,220 +323,289 @@ export default function Study() {
               />
               Show archived
             </label>
-            <span className="muted">{due.length} reviews due</span>
           </div>
-          <div className="study-layout">
-            <aside className="panel curriculum-list" aria-label="Curricula">
-              <h2>Curricula</h2>
-              {curricula.map((c) => (
+          <p className="muted study-section-intro">
+            Pin the subjects you’re working on now. Everything else stays ready for later.
+          </p>
+          <div className="study-library">
+            {curricula.filter((c) => isStudyFocus(c)).map(curriculumRow)}
+          </div>
+          {!curricula.some((c) => isStudyFocus(c)) && (
+            <p className="muted inline-empty">Open a curriculum and turn on Current study focus.</p>
+          )}
+          <h2 className="study-later-heading">Library</h2>
+          <div className="study-library">
+            {curricula.filter((c) => !isStudyFocus(c)).map(curriculumRow)}
+          </div>
+          {!curricula.length && (
+            <Empty
+              icon={<BookOpen />}
+              title="Build a learning path"
+              description="Import your roadmaps or create a curriculum to begin."
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <div className="study-course-toolbar">
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                disabled={busy || curriculum.archived}
+                checked={!!curriculum.studyFocus}
+                onChange={(e) => saveCurriculum({ studyFocus: e.target.checked })}
+              />
+              Current study focus
+            </label>
+            {curriculum.focusUntil && (
+              <span className="muted small">
+                {isStudyFocus(curriculum) ? 'Until' : 'Focus period ended'} {curriculum.focusUntil}
+              </span>
+            )}
+            <button
+              className="text-link"
+              onClick={() =>
+                navigate(`/statistics?view=time&curriculum=${encodeURIComponent(curriculum.id)}`)
+              }
+            >
+              <ChartNoAxesColumn />
+              Study time
+            </button>
+            <button
+              className="text-link"
+              disabled={busy}
+              onClick={() => saveCurriculum({ archived: !curriculum.archived })}
+            >
+              {curriculum.archived ? <RotateCcw /> : <Archive />}
+              {curriculum.archived ? 'Restore' : 'Archive'}
+            </button>
+          </div>
+          {curriculum.archived && (
+            <p className="muted">Archived curriculum. Restore it to resume studying.</p>
+          )}
+          <div className="study-content-tabs tabs">
+            <button className={tab === 'topics' ? 'selected' : ''} onClick={() => setTab('topics')}>
+              Topics
+            </button>
+            <button
+              className={tab === 'reviews' ? 'selected' : ''}
+              onClick={() => setTab('reviews')}
+            >
+              Reviews{due.length ? ` (${due.length})` : ''}
+            </button>
+          </div>
+          <section className="study-topic-browser" aria-label="Topic browser">
+            <div className="study-browser-header">
+              <nav className="study-breadcrumbs" aria-label="Study chapters">
                 <button
-                  key={c.id}
-                  className={`curriculum-option ${curriculum?.id === c.id ? 'selected' : ''}`}
                   onClick={() => {
-                    setSelected(c.id);
-                    setExpanded(new Set());
+                    setParams({});
                     setSearch('');
                   }}
                 >
-                  <BookOpen />
-                  <span>
-                    {c.title}
-                    {c.archived && <small>Archived</small>}
-                  </span>
+                  All topics
                 </button>
-              ))}
-              {!curricula.length && <p className="muted">Create a curriculum to begin.</p>}
-            </aside>
-            <section className="panel curriculum-content">
-              {curriculum ? (
-                <>
-                  <div className="section-heading">
-                    <div>
-                      <h2>{curriculum.title}</h2>
-                      <p className="muted">{curriculum.description}</p>
-                    </div>
-                    <div className="row-actions">
+                {parent &&
+                  topicPath(snapshot, parent).map((t) => (
+                    <span key={t.id}>
+                      <ChevronRight />
                       <button
-                        className="icon-button"
-                        aria-label="Edit curriculum"
-                        onClick={() => setCurriculumDraft(curriculum)}
+                        onClick={() => {
+                          setParams({ chapter: t.id });
+                          setSearch('');
+                        }}
                       >
-                        <Pencil />
+                        {t.title}
                       </button>
-                      <button
-                        className="icon-button"
-                        disabled={busy}
-                        aria-label={
-                          curriculum.archived ? 'Restore curriculum' : 'Archive curriculum'
-                        }
-                        onClick={() =>
-                          void act(() =>
-                            window.workspaceAPI.invoke('study:saveCurriculum', {
-                              ...curriculum,
-                              archived: !curriculum.archived,
-                            }),
-                          )
-                        }
-                      >
-                        {curriculum.archived ? <RotateCcw /> : <Archive />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="study-progress">
-                    <div className="study-progress-ring">
-                      <ChartContainer config={progressChart}>
-                        <RadialBarChart
-                          data={[{ progress: progress.percent }]}
-                          startAngle={90}
-                          endAngle={-270}
-                          innerRadius="76%"
-                          outerRadius="100%"
-                        >
-                          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                          <RadialBar
-                            dataKey="progress"
-                            background={{ fill: 'var(--surface-3)' }}
-                            fill="var(--color-progress)"
-                            isAnimationActive={false}
-                          />
-                        </RadialBarChart>
-                      </ChartContainer>
-                      <strong>{Math.round(progress.percent)}%</strong>
-                    </div>
-                    <Progress value={progress.percent} aria-label="Curriculum progress" />
-                    <span className="muted">
-                      {progress.learned}/{progress.total} topics learned ·{' '}
-                      {Math.round(progress.percent)}%{' · '}
-                      {formatStudyTime(time.curriculumSeconds[curriculum.id] || 0)} recorded
                     </span>
-                  </div>
-                  <div className="study-toolbar">
-                    <button
-                      className="btn-secondary"
-                      onClick={() =>
-                        setTopicDraft({
-                          curriculumId: curriculum.id,
-                          parentId: null,
-                          title: '',
-                          order: topics.length,
-                        })
-                      }
-                    >
-                      <Plus />
-                      Add topic
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      disabled={curriculum.archived}
-                      onClick={() => startFocus()}
-                    >
-                      <Timer />
-                      Study with focus
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      onClick={() =>
-                        navigate(
-                          `/statistics?view=time&curriculum=${encodeURIComponent(curriculum.id)}`,
-                        )
-                      }
-                    >
-                      <ChartNoAxesColumn />
-                      View study time
-                    </button>
-                  </div>
-                  <div className="study-tree-toolbar">
-                    <input
-                      className="input"
-                      aria-label="Search study topics"
-                      placeholder="Find a topic or subtopic…"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <button
-                      className="btn-secondary"
-                      onClick={() => setExpanded(new Set(topics.map((t) => t.id)))}
-                    >
-                      Expand all
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => {
-                        setExpanded(new Set());
-                        setSearch('');
-                      }}
-                    >
-                      Collapse all
-                    </button>
-                  </div>
-                  <p className="muted small">
-                    Time includes all sessions on a topic and its subtopics. Checkmarks track
-                    learning separately; checking a topic keeps its time history.
-                  </p>
-                  <ul className="study-tree">{renderTree(null)}</ul>
-                  {!topics.length && (
-                    <Empty
-                      icon={<BookOpen />}
-                      title="Add your first topic"
-                      description="Chapters can contain topics. Mark each learned topic to schedule its first review."
-                    />
-                  )}
-                </>
-              ) : (
-                <Empty
-                  icon={<BookOpen />}
-                  title="Build a learning path"
-                  description="Create a curriculum, then add its chapters and topics."
-                />
-              )}
-            </section>
-          </div>
-          <section className="panel review-queue">
-            <div className="section-heading">
-              <h2>Review queue</h2>
-              <span className="count-badge">{due.length}</span>
-            </div>
-            <p className="muted">
-              Again: 1 day. Hard: previous interval × 1.2. Good: × 2. Easy: × 3. These are
-              calendar-day intervals.
-            </p>
-            {due.map((topic) => (
-              <div className="review-topic" key={topic.id}>
-                <div>
-                  <strong>{topic.title}</strong>
-                  <p className="muted">
-                    {snapshot.curricula.find((c) => c.id === topic.curriculumId)?.title} · due{' '}
-                    {topic.reviewDue}
-                  </p>
-                </div>
-                <div className="review-grades">
-                  {reviewGrades.map((grade, index) => (
-                    <button
-                      key={grade}
-                      className="btn-secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        void act(() =>
-                          window.workspaceAPI.invoke('study:grade', {
-                            id: topic.id,
-                            grade: index as ReviewGrade,
-                          }),
-                        )
-                      }
-                    >
-                      {index === 2 && <Check />}
-                      {grade}
-                    </button>
                   ))}
-                </div>
-              </div>
-            ))}
-            {!due.length && (
-              <p className="muted inline-empty">
-                No reviews due. Learned topics appear here when their review date arrives.
+              </nav>
+              <button
+                className="btn-secondary"
+                disabled={curriculum.archived}
+                onClick={() => addTopic(parent?.id || null)}
+              >
+                <Plus />
+                Add topic
+              </button>
+            </div>
+            <input
+              className="input study-topic-search"
+              aria-label="Search study topics"
+              placeholder="Search this curriculum…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {tab === 'reviews' && (
+              <p className="muted small">
+                Grade what you remember. Again: 1 day · Hard: ×1.2 · Good: ×2 · Easy: ×3.
               </p>
             )}
+            <div className="study-topic-list">
+              {visible.map((t) => (
+                <div
+                  className={`study-browser-row ${selectedTopic?.id === t.id ? 'selected' : ''}`}
+                  key={t.id}
+                >
+                  <input
+                    type="checkbox"
+                    aria-label={`Mark ${t.title} learned`}
+                    disabled={busy || t.archived || curriculum.archived}
+                    checked={!!t.learnedAt}
+                    onChange={() =>
+                      void act(() =>
+                        window.workspaceAPI.invoke('study:learn', {
+                          id: t.id,
+                          learned: !t.learnedAt,
+                        }),
+                      )
+                    }
+                  />
+                  <button className="study-topic-title" onClick={() => openTopic(t)}>
+                    <span>
+                      {t.title}
+                      {hasChildren.has(t.id) && <ChevronRight />}
+                    </span>
+                    <small className="muted">
+                      {needle
+                        ? topicPath(snapshot, t)
+                            .slice(0, -1)
+                            .map((p) => p.title)
+                            .join(' › ')
+                        : hasChildren.has(t.id)
+                          ? `${topics.filter((c) => c.parentId === t.id).length} topics`
+                          : t.learnedAt
+                            ? 'Learned'
+                            : 'To learn'}
+                      {t.id === curriculum.currentTopicId ? ' · Current topic' : ''}
+                    </small>
+                  </button>
+                  <span className="study-row-time muted small">
+                    {formatStudyTime(time.topicSeconds[t.id] || 0)}
+                  </span>
+                  {tab === 'reviews' ? (
+                    <div className="review-grades">
+                      {reviewGrades.map((grade, index) => (
+                        <button
+                          key={grade}
+                          className="btn-secondary"
+                          disabled={busy || curriculum.archived}
+                          onClick={() =>
+                            void act(() =>
+                              window.workspaceAPI.invoke('study:grade', {
+                                id: t.id,
+                                grade: index as ReviewGrade,
+                              }),
+                            )
+                          }
+                        >
+                          {grade}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <button
+                      className="icon-button"
+                      aria-label={`Start focus for ${t.title}`}
+                      disabled={focus.busy || busy || t.archived || curriculum.archived}
+                      onClick={() => void focus.start(curriculum, t)}
+                    >
+                      <Play />
+                    </button>
+                  )}
+                  {topicMenu(t)}
+                </div>
+              ))}
+            </div>
+            {!filtered.length && (
+              <p className="muted inline-empty">
+                {needle
+                  ? 'No matching topics. Try another search.'
+                  : tab === 'reviews'
+                    ? 'You’re up to date. Learned topics appear here when a review is due.'
+                    : 'No topics here yet. Add a topic to get started.'}
+              </p>
+            )}
+            {filtered.length > 0 && (
+              <div className="study-pagination">
+                <span role="status" className="muted small">
+                  {currentPage * pageSize + 1}–
+                  {Math.min(filtered.length, (currentPage + 1) * pageSize)} of {filtered.length} ·
+                  Page {currentPage + 1}/{pages}
+                </span>
+                <div className="row-actions">
+                  <button
+                    className="btn-secondary"
+                    disabled={currentPage === 0}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    disabled={currentPage === pages - 1}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+            <label className="toggle-row study-show-archived">
+              <input
+                type="checkbox"
+                checked={archived}
+                onChange={(e) => setArchived(e.target.checked)}
+              />
+              Show archived topics
+            </label>
           </section>
+          {selectedTopic && (
+            <section className="study-topic-inspector" aria-label="Selected topic">
+              <div className="section-heading">
+                <h2>{selectedTopic.title}</h2>
+                <button
+                  className="icon-button"
+                  aria-label="Close topic details"
+                  onClick={() => setParams(parent ? { chapter: parent.id } : {})}
+                >
+                  <ArrowLeft />
+                </button>
+              </div>
+              <p className="muted">
+                {formatStudyTime(time.topicSeconds[selectedTopic.id] || 0)} recorded across all
+                sessions{selectedTopic.reviewDue ? ` · Review ${selectedTopic.reviewDue}` : ''}
+              </p>
+              {selectedTopic.details && (
+                <p className="study-topic-details">{selectedTopic.details}</p>
+              )}
+              <div className="row-actions">
+                <button
+                  className="btn-primary"
+                  disabled={focus.busy || curriculum.archived || selectedTopic.archived}
+                  onClick={() => void focus.start(curriculum, selectedTopic)}
+                >
+                  <Play />
+                  Start focus
+                </button>
+                <button
+                  className="btn-secondary"
+                  disabled={
+                    busy ||
+                    curriculum.archived ||
+                    selectedTopic.archived ||
+                    !!selectedTopic.learnedAt
+                  }
+                  onClick={() =>
+                    saveCurriculum({ currentTopicId: selectedTopic.id, studyFocus: true })
+                  }
+                >
+                  <Target />
+                  Make current topic
+                </button>
+              </div>
+            </section>
+          )}
         </>
       )}
       {curriculumDraft && (
@@ -521,7 +623,7 @@ export default function Study() {
                   title: curriculumDraft.title!.trim(),
                   description: curriculumDraft.description || '',
                 });
-                setSelected(saved.id);
+                navigate(`/study/${saved.id}`);
                 setCurriculumDraft(null);
               });
             }}
@@ -547,6 +649,27 @@ export default function Study() {
                 }
               />
             </label>
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={!!curriculumDraft.studyFocus}
+                onChange={(e) =>
+                  setCurriculumDraft({ ...curriculumDraft, studyFocus: e.target.checked })
+                }
+              />
+              Current study focus
+            </label>
+            <label>
+              Focus until (optional)
+              <input
+                className="input"
+                type="date"
+                value={curriculumDraft.focusUntil || ''}
+                onChange={(e) =>
+                  setCurriculumDraft({ ...curriculumDraft, focusUntil: e.target.value || null })
+                }
+              />
+            </label>
             <div className="modal-actions">
               <button
                 type="button"
@@ -566,8 +689,7 @@ export default function Study() {
         <StudyImport
           onClose={() => setImporting(false)}
           onImported={(id) => {
-            setSelected(id);
-            setExpanded(new Set());
+            navigate(`/study/${id}`);
           }}
         />
       )}
@@ -603,20 +725,15 @@ export default function Study() {
             </label>
             <label>
               Parent chapter
-              <select
-                className="input"
+              <SearchPicker
+                label="Parent chapter"
                 value={topicDraft.parentId || ''}
-                onChange={(e) => setTopicDraft({ ...topicDraft, parentId: e.target.value || null })}
-              >
-                <option value="">Root topic</option>
-                {topics
-                  .filter((t) => t.id !== topicDraft.id && !t.archived)
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.title}
-                    </option>
-                  ))}
-              </select>
+                options={parentOptions}
+                allowClear
+                clearLabel="Root topic"
+                emptyLabel="Root topic"
+                onChange={(id) => setTopicDraft({ ...topicDraft, parentId: id || null })}
+              />
             </label>
             <label>
               Order

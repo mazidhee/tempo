@@ -1,0 +1,109 @@
+.habit-checkin {
+  max-width: 960px;
+  margin-inline: auto;
+  width: 100%;
+  gap: 20px;
+}
+.habit-checkin .non-negotiable-summary {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.habit-checkin .habit-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.habit-checkin .habit-section-toggle {
+  padding: 14px 18px;
+  background: var(--surface-1);
+}
+.habit-checkin .habit-daily-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 16px 18px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.habit-daily-row .habit-card-heading {
+  display: contents;
+}
+.habit-daily-row .habit-card-heading > div:first-child {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+.habit-daily-row .habit-manage {
+  grid-column: 2;
+  grid-row: 2;
+  justify-content: flex-end;
+}
+.habit-daily-row .habit-actions {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  justify-content: flex-end;
+}
+.habit-daily-row .habit-card-footer {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  align-self: center;
+}
+.habit-daily-row .pinned-label {
+  padding: 0;
+  background: none;
+  font-size: 11px;
+}
+.habit-daily-row .pinned-label svg {
+  display: none;
+}
+.habit-daily-row .btn-ghost {
+  padding-inline: 8px;
+}
+.habit-checkin .recovery-panel {
+  border-top: 1px solid var(--border);
+  padding: 16px 0;
+}
+.recovery-panel > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.recovery-list {
+  max-height: 380px;
+  overflow: auto;
+  padding-top: 16px;
+}
+.habit-checkin .recovery-row {
+  padding: 14px 4px;
+}
+.habit-checkin .recovery-row small {
+  display: block;
+}
+@media (max-width: 650px) {
+  .habit-checkin .habit-daily-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .habit-daily-row .habit-actions {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .habit-daily-row .habit-card-footer {
+    grid-column: 1;
+    grid-row: 3;
+    padding-right: 90px;
+  }
+  .habit-daily-row .habit-manage {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: end;
+  }
+}

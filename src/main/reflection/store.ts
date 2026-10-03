@@ -23,6 +23,12 @@ import {
 } from '../../shared/reflection';
 import { defaultProductivity, localDate, type Productivity } from '../../shared/productivity';
 import {
+  validateJournalDocument,
+  journalDocumentText,
+  plainJournalDocument,
+  type JournalDocument,
+} from '../../shared/journalDocument';
+import {
   shiftDay,
   weekStart,
   type EngineHabit,
@@ -43,9 +49,13 @@ export class ReflectionStore {
       plans: rows<DailyPlan>('reflection_plans').sort((a, b) => b.date.localeCompare(a.date)),
       journal: this.db
         .prepare(
-          'SELECT date,text,updated_at AS updatedAt FROM reflection_journal ORDER BY date DESC',
+          'SELECT date,text,document,updated_at AS updatedAt FROM reflection_journal ORDER BY date DESC',
         )
-        .all() as unknown as JournalEntry[],
+        .all()
+        .map((row) => ({
+          ...row,
+          document: row.document ? JSON.parse(String(row.document)) : null,
+        })) as unknown as JournalEntry[],
       reviews: rows<WeeklyReview>('reflection_reviews').sort((a, b) =>
         b.start.localeCompare(a.start),
       ),
@@ -150,32 +160,52 @@ export class ReflectionStore {
       },
       updatedAt: this.now().toISOString(),
     };
-    const journal = text(v.journal, 'journal', 20000, true);
+    const journal = v.journal === undefined ? undefined : text(v.journal, 'journal', 200000, true);
     this.db.transaction(() => {
       this.write('reflection_plans', date, plan);
-      this.writeJournal(date, journal);
+      if (journal !== undefined) this.writeJournal(date, journal);
     })();
     return plan;
   }
-  private writeJournal(date: string, value: string): JournalEntry {
-    const entry = { date, text: value, updatedAt: this.now().toISOString() };
+  private writeJournal(date: string, value: string, document?: JournalDocument): JournalEntry {
+    const previous = this.lookup(date);
+    const rich =
+      document ??
+      (previous?.text === value
+        ? (previous.document ?? null)
+        : previous?.document
+          ? plainJournalDocument(value)
+          : null);
+    const entry = { date, text: value, document: rich, updatedAt: this.now().toISOString() };
     this.db
       .prepare(
-        'INSERT INTO reflection_journal(date,text,updated_at) VALUES(?,?,?) ON CONFLICT(date) DO UPDATE SET text=excluded.text,updated_at=excluded.updated_at',
+        'INSERT INTO reflection_journal(date,text,document,updated_at) VALUES(?,?,?,?) ON CONFLICT(date) DO UPDATE SET text=excluded.text,document=excluded.document,updated_at=excluded.updated_at',
       )
-      .run(date, value, entry.updatedAt);
+      .run(date, value, rich ? JSON.stringify(rich) : null, entry.updatedAt);
     return entry;
   }
   saveJournal(input: unknown) {
     const v = object(input);
-    return this.writeJournal(day(v.date), text(v.text, 'journal', 20000, true));
+    if (v.document !== undefined) validateJournalDocument(v.document);
+    const document = v.document as JournalDocument | undefined;
+    return this.writeJournal(
+      day(v.date),
+      text(document ? journalDocumentText(document) : v.text, 'journal', 200000, true),
+      document,
+    );
   }
   lookup(input: unknown): JournalEntry | null {
-    return (
-      (this.db
-        .prepare('SELECT date,text,updated_at AS updatedAt FROM reflection_journal WHERE date=?')
-        .get(day(input)) as unknown as JournalEntry) || null
-    );
+    const row = this.db
+      .prepare(
+        'SELECT date,text,document,updated_at AS updatedAt FROM reflection_journal WHERE date=?',
+      )
+      .get(day(input));
+    return row
+      ? ({
+          ...row,
+          document: row.document ? JSON.parse(String(row.document)) : null,
+        } as unknown as JournalEntry)
+      : null;
   }
   lookupDates(input: unknown) {
     const dates = list(input, 1000).map(day),

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { BackupLinks, ModuleBackupAdapter } from '../database/moduleBackup';
 import type { StudySnapshot } from '../../shared/study';
 import { validDate } from '../../shared/habits';
+import { validCover } from '../../shared/localImage';
 import { StudyStore } from './store';
 const text = (value: unknown, limit: number) => typeof value === 'string' && value.length <= limit;
 const id = (value: unknown) => text(value, 100) && !!(value as string).trim();
@@ -33,7 +34,13 @@ export function validateStudySnapshot(value: unknown): asserts value is StudySna
       !c.title.trim() ||
       !text(c.description, 2000) ||
       !timestamp(c.createdAt) ||
-      typeof c.archived !== 'boolean'
+      typeof c.archived !== 'boolean' ||
+      (c.studyFocus !== undefined && typeof c.studyFocus !== 'boolean') ||
+      (c.focusUntil !== undefined && c.focusUntil !== null && !validDate(c.focusUntil)) ||
+      (c.coverImage !== undefined && !validCover(c.coverImage)) ||
+      (c.currentTopicId !== undefined &&
+        c.currentTopicId !== null &&
+        !data.topics.some((t) => t.id === c.currentTopicId && t.curriculumId === c.id))
     )
       fail();
   for (const t of data.topics) {
@@ -141,6 +148,18 @@ function mergeStudy(db: Database, value: unknown, links: BackupLinks) {
       topic.curriculumId,
       JSON.stringify(topic),
     );
+  }
+  for (const c of value.curricula) {
+    const mapped = links.studyCurricula.get(c.id)!;
+    if (!old.curricula.some((item) => item.id === mapped) && c.currentTopicId)
+      db.prepare('UPDATE study_curricula SET json=? WHERE id=?').run(
+        JSON.stringify({
+          ...c,
+          id: mapped,
+          currentTopicId: links.studyTopics.get(c.currentTopicId) ?? null,
+        }),
+        mapped,
+      );
   }
   for (const r of value.reviews) {
     const existing = old.reviews.find((item) => item.id === r.id);

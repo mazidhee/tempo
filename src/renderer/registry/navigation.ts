@@ -5,6 +5,7 @@ import {
   ListTodo,
   Timer,
   BookOpen,
+  BookText,
   ChartNoAxesColumnIncreasing,
   Target,
   NotebookPen,
@@ -28,6 +29,7 @@ export const navigationRegistry: NavigationEntry[] = [
   { id: 'study', to: '/study', label: 'Study', icon: BookOpen },
   { id: 'statistics', to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },
   { id: 'goals', to: '/goals', label: 'Goals', icon: Target, enabled: true },
+  { id: 'journal', to: '/journal', label: 'Journal', icon: BookText },
   { id: 'review', to: '/review', label: 'Review', icon: NotebookPen, enabled: true },
   { id: 'settings', to: '/settings', label: 'Settings', icon: Settings2 },
 ];

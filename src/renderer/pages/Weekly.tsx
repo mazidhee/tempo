@@ -213,7 +213,7 @@ export default function Weekly() {
             <SheetTitle>Habit details</SheetTitle>
             <SheetDescription>Schedule, check-ins and protection</SheetDescription>
           </SheetHeader>
-          {detail !== null && <HabitDetail key={detail} habitId={detail} embedded />}
+          {detail !== null && <HabitDetail key={detail} habitId={detail} embedded onDeleted={() => setDetail(null)} />}
         </SheetContent>
       </Sheet>
       {form && (

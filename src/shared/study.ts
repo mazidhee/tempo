@@ -8,6 +8,10 @@ export interface Curriculum {
   description: string;
   createdAt: string;
   archived: boolean;
+  studyFocus?: boolean;
+  focusUntil?: string | null;
+  currentTopicId?: string | null;
+  coverImage?: string | null;
 }
 export interface StudyTopic {
   details?: string;

@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import { useReflection } from './useReflection';
-import { ActionError, Field, LoadState, Panel, ReflectionNav, Select, useAction } from './ui';
+import { ActionError, Field, LoadState, Panel, Select, useAction } from './ui';
 const fresh = (): SaveGoal => ({
   title: '',
   kind: 'tasks',
@@ -96,7 +96,6 @@ export default function Goals() {
         title="Goals"
         description="Set a direction. Your existing activity supplies the progress."
       />
-      <ReflectionNav />
       <ActionError error={action.error} />
       <div className="reflection-layout">
         <div className="reflection-stack">

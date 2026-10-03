@@ -265,3 +265,18 @@ The page rhythm is **dense product screenshots** — Linear's marketing leads wi
 - Light mode is not documented because the marketing site does not ship a light theme.
 - Linear's actual product UI uses a richer color-tag palette (red, orange, yellow, green, blue, purple) for issue priorities and project labels — those colors live in the in-product surfaces shown in mockups.
 - The custom display, text, and mono families are proprietary; an open-source substitute is acceptable.
+
+## October 3 daily workspace refinement
+
+Keep the existing Linear-derived tokens, Inter typography, Lucide 1.75 stroke,
+solid user-selected palettes and accents. The user selected the compact daily
+habit list: Today is the default, check-ins come first, recovery expands below.
+Plan, Journal, Goals and Review have direct sidebar destinations. Remove the
+redundant four-way reflection navigation and duplicate weekly habit view.
+Study uses library rows, dedicated curriculum pages, chapter breadcrumbs and
+bounded topic collections. Home continuity derives only from stored progress/time.
+Journal is a 760px writing measure with semantic formatting and local autosave.
+Curriculum covers are optional owner-selected local images; none is bundled or
+borrowed from the Craft reference. Review prioritises a weekly summary and two
+written reflections; detailed activity expands on demand. Existing actions and
+records stay accessible. Evidence and independent verdict: docs/redesign-release.md.

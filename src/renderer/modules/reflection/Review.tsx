@@ -1,13 +1,14 @@
 import { usePrivacy } from '../../hooks/PrivacyContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import '../../styles/document-pages.css';
 import { NotebookPen } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
-import { weekStart } from '../../../shared/habits';
 import { PageHeader, Empty } from '../../components/ui';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useReflection } from './useReflection';
-import { ActionError, Field, LoadState, Panel, ReflectionNav, Select, useAction } from './ui';
+import { ActionError, Field, LoadState, Select, useAction } from './ui';
 const hours = (seconds: number) => `${(seconds / 3600).toFixed(1)} h`;
 function Breakdown({ title, values }: { title: string; values: Record<string, number> }) {
   return (
@@ -28,6 +29,25 @@ function Breakdown({ title, values }: { title: string; values: Record<string, nu
         <p className="muted">No focus sessions recorded.</p>
       )}
     </div>
+  );
+}
+function ReviewSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="review-section">
+      <summary>{title}</summary>
+      <div>
+        {description && <p className="muted">{description}</p>}
+        {children}
+      </div>
+    </details>
   );
 }
 export default function Review() {
@@ -52,12 +72,11 @@ export default function Review() {
     setSelected(result.start);
   };
   return (
-    <div className="reflection-page">
+    <div className="reflection-page review-page">
       <PageHeader
         title="Weekly review"
         description="Notice what moved forward and choose one change for next week."
       />
-      <ReflectionNav />
       <ActionError error={action.error} />
       <div className="reflection-actions">
         <Field label="Saved week">
@@ -74,14 +93,14 @@ export default function Review() {
             ))}
           </Select>
         </Field>
-        <Field label="Choose any day in a week">
+        <Field label="Week containing">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
         <Button
           disabled={action.busy}
           onClick={() => void action.run(generate, 'Weekly review ready')}
         >
-          Open week of {weekStart(date, 1)}
+          Open week
         </Button>
       </div>
       {!review ? (
@@ -92,6 +111,69 @@ export default function Review() {
         />
       ) : (
         <>
+          <div className="review-overview" aria-label="Weekly overview">
+            <div>
+              <strong>{hours(review.summary.focus.seconds)}</strong>
+              <span>Focused · {hours(review.summary.focus.previousSeconds)} last week</span>
+            </div>
+            <div>
+              <strong>{review.summary.tasks.completed}</strong>
+              <span>Tasks completed</span>
+            </div>
+            <div>
+              <strong>{review.summary.study.topicsLearned}</strong>
+              <span>Topics learned</span>
+            </div>
+            <div>
+              <strong>{review.summary.habits.reduce((n, h) => n + h.hits, 0)}</strong>
+              <span>Habit completions</span>
+            </div>
+          </div>
+          <section className="review-reflections">
+            <h2>Take one thing forward</h2>
+            <div className="reflection-grid">
+              <Field label="What got in the way?">
+                <textarea
+                  className="reflection-textarea"
+                  disabled={privacy}
+                  value={privacy ? 'Private reflection' : obstacle}
+                  maxLength={20000}
+                  onChange={(e) => setObstacle(e.target.value)}
+                />
+              </Field>
+              <Field label="One change for next week">
+                <textarea
+                  className="reflection-textarea"
+                  disabled={privacy}
+                  value={privacy ? 'Private reflection' : change}
+                  maxLength={20000}
+                  onChange={(e) => setChange(e.target.value)}
+                  placeholder="Keep this small and specific."
+                />
+              </Field>
+              <Button
+                disabled={action.busy}
+                onClick={() =>
+                  void action.run(
+                    () =>
+                      window.workspaceAPI.invoke('review:save', {
+                        start: review.start,
+                        obstacle,
+                        change,
+                      }),
+                    'Review reflections saved',
+                  )
+                }
+              >
+                Save reflections
+              </Button>
+            </div>
+          </section>{' '}
+          <div className="plan-context">
+            <Link to="/plan">Plan your next day</Link>
+            <Link to="/study">Continue studying</Link>
+            <Link to="/goals">Check your direction</Link>
+          </div>
           <p className="reflection-caption">
             {review.start} – {review.end} · Snapshot saved{' '}
             {new Date(review.generatedAt).toLocaleString()}. Saved summaries preserve the activity
@@ -119,7 +201,7 @@ export default function Review() {
             </Button>
             <span className="reflection-caption">Your written reflections are preserved.</span>
           </div>
-          <Panel
+          <ReviewSection
             title="Habits"
             description="Hits count completions; freezes preserve continuity without counting as completed work. Weekly targets respect each habit’s own week boundary."
           >
@@ -164,8 +246,8 @@ export default function Review() {
             ) : (
               <p className="muted">No missed reasons logged.</p>
             )}
-          </Panel>
-          <Panel
+          </ReviewSection>
+          <ReviewSection
             title="Focus"
             description={`${hours(review.summary.focus.seconds)} this week · ${hours(review.summary.focus.previousSeconds)} last week · Best day: ${review.summary.focus.bestDay || 'No recorded focus'}`}
           >
@@ -174,9 +256,9 @@ export default function Review() {
               <Breakdown title="By curriculum" values={review.summary.focus.byCurriculum} />
               <Breakdown title="By preset" values={review.summary.focus.byPreset} />
             </div>
-          </Panel>
+          </ReviewSection>
           <div className="reflection-layout">
-            <Panel
+            <ReviewSection
               title="Learning"
               description={`${review.summary.study.topicsLearned} topics learned · ${review.summary.study.reviews} reviews completed`}
             >
@@ -197,8 +279,8 @@ export default function Review() {
                   </li>
                 ))}
               </ul>
-            </Panel>
-            <Panel title="Plans and tasks">
+            </ReviewSection>
+            <ReviewSection title="Plans and tasks">
               <div className="reflection-stack">
                 <p>
                   {review.summary.plans.done} / {review.summary.plans.total} priorities completed
@@ -209,15 +291,17 @@ export default function Review() {
                   created
                 </p>
               </div>
-            </Panel>
+            </ReviewSection>
           </div>
-          <Panel title="The week in your words">
+          <ReviewSection title="The week in your words">
             {review.summary.journal.length ? (
               <ul className="reflection-list">
                 {review.summary.journal.map((j) => (
                   <li key={j.date} className="reflection-row">
                     <div>
-                      <time className="reflection-caption">{j.date}</time>
+                      <Link to={`/journal?date=${j.date}`} className="text-link">
+                        {j.date} · Open journal
+                      </Link>
                       <p className="reflection-journal-line">
                         {privacy ? 'Private journal line' : j.text || 'Empty journal line'}
                       </p>
@@ -228,8 +312,8 @@ export default function Review() {
             ) : (
               <p className="muted">No journal lines saved this week.</p>
             )}
-          </Panel>
-          <Panel
+          </ReviewSection>
+          <ReviewSection
             title="Patterns to consider"
             description="Simple correlations from recorded days. These do not establish cause and effect."
           >
@@ -241,46 +325,7 @@ export default function Review() {
                 time.
               </p>
             )}
-          </Panel>
-          <Panel title="Take one thing forward">
-            <div className="reflection-stack">
-              <Field label="What got in the way?">
-                <textarea
-                  className="reflection-textarea"
-                  disabled={privacy}
-                  value={privacy ? 'Private reflection' : obstacle}
-                  maxLength={20000}
-                  onChange={(e) => setObstacle(e.target.value)}
-                />
-              </Field>
-              <Field label="One change for next week">
-                <textarea
-                  className="reflection-textarea"
-                  disabled={privacy}
-                  value={privacy ? 'Private reflection' : change}
-                  maxLength={20000}
-                  onChange={(e) => setChange(e.target.value)}
-                  placeholder="Keep this small and specific."
-                />
-              </Field>
-              <Button
-                disabled={action.busy}
-                onClick={() =>
-                  void action.run(
-                    () =>
-                      window.workspaceAPI.invoke('review:save', {
-                        start: review.start,
-                        obstacle,
-                        change,
-                      }),
-                    'Review reflections saved',
-                  )
-                }
-              >
-                Save reflections
-              </Button>
-            </div>
-          </Panel>
+          </ReviewSection>
         </>
       )}
     </div>

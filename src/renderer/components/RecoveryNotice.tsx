@@ -27,14 +27,14 @@ export default function RecoveryNotice() {
         ),
     [habits, logs, today, now],
   );
-  if (loading || dismissed || !count || location.pathname === '/focus') return null;
+  if (loading || dismissed || !count || (location.pathname === '/focus' || location.pathname === '/habits')) return null;
   return (
     <aside className="recovery-notice" aria-label="Recent missed habits">
       <Snowflake />
       <p>
         {count} recent {count === 1 ? 'miss' : 'misses'} can still be covered with a freeze.
       </p>
-      <button className="btn-ghost" onClick={() => navigate('/habits')}>
+      <button className="btn-ghost" onClick={() => navigate('/habits?recovery=1')}>
         Review recovery
       </button>
       <button

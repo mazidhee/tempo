@@ -3,6 +3,7 @@ import './habit.test';
 import './study.test';
 import './moduleBackup.test';
 import './personal.test';
+import './redesign.test';
 import assert from 'node:assert/strict';
 import {
   defaultProductivity,

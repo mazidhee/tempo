@@ -160,3 +160,12 @@ design/
 
 # Isolated master-build worktrees.
 .worktrees/
+
+# Personal data and credentials must never enter source history.
+*.db
+*.db-wal
+*.db-shm
+*.bak
+*.tempo-backup
+tempo-private-backups/
+github-backup-config.json

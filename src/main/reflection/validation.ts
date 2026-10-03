@@ -1,4 +1,5 @@
 import { validDate } from '../../shared/habits';
+import { validateJournalDocument } from '../../shared/journalDocument';
 import type { DailyPlan, Goal, JournalEntry, ReflectionSettings } from '../../shared/reflection';
 export function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -67,7 +68,8 @@ export function validatePlan(value: unknown): DailyPlan {
 export function validateJournal(value: unknown): JournalEntry {
   const v = object(value);
   day(v.date);
-  text(v.text, 'journal', 20000, true);
+  text(v.text, 'journal', 200000, true);
+  if(v.document!==undefined && v.document!==null)validateJournalDocument(v.document);
   timestamp(v.updatedAt);
   return value as JournalEntry;
 }
