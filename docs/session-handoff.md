@@ -1,4 +1,21 @@
-# Latest checkpoint — October 2, 2026
+# Latest checkpoint — October 3, 2026
+
+Tempo **1.5.0 is installed and open**, with the existing desktop shortcut intact.
+Dedicated curricula, Home continuation, compact Today habits/deletion, distinct
+Plan/Journal/Review/Goals pages, rich nested daily outlines, local covers with
+small controls, and manual encrypted backups ship. No short learning log.
+Logseq journal-frame source is ported and attributed under AGPL-3.0-only.
+
+Review rounds 8.88 → 9.24; 114 tests, production build and 5 exact-package groups
+pass. Final installed read-only comparison across two launches preserves every
+pre-upgrade record and exact settings, with 1,823 active original topics. The
+initial installed database discrepancy has **no proven cause**; its reset copy
+and fresh consistent baseline are retained. Read [redesign release](redesign-release.md)
+before doing further recovery. Never discard archived copies or overwrite current
+preferences from an older backup. Source main and rollback/release tags are on
+private `mazidhee/tempo`; owner data remains ignored and separate.
+
+# Previous checkpoint — October 2, 2026
 
 Tempo **1.4.0** is installed from the reviewed package. The UX request is complete:
 compact selected study plans/search pickers, responsive timer/partial Guard errors,

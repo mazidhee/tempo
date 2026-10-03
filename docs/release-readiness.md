@@ -5,7 +5,20 @@ checkout decisions in [the implementation plan](master-build-plan.md).
 Implementation evidence is in [master integration](master-integration.md), and
 actual use is described in [the user guide](user-guide.md).
 
-## Current checkpoint: UX update 1.4.0 — October 2
+## Current checkpoint: daily workspace 1.5.0 — October 3
+
+Installed and open from the desktop shortcut. Independent **9.24/10**, **114/114
+tests**, production build, **5/5 exact-package checks**, and final installed
+post-recovery quit/relaunch, offline and exact data/preference preservation pass.
+Dedicated Study, compact daily habits/deletion, Home continuation, separate
+document pages, nested rich Journal and compact local covers ship. Source and
+versioned rollback are pushed to private `mazidhee/tempo`; manual encrypted remote
+backup is opt-in. The first installed-data discrepancy has no established cause,
+and source/package acceptance does not certify it fixed. The original data was
+recovered from a fresh backup, and the final full-record comparison passed.
+See [redesign release](redesign-release.md) and [independent review](study-release-review.md).
+
+## Previous checkpoint: UX update 1.4.0 — October 2
 
 Tempo 1.4.0 is installed from the independently reviewed package: **9.27/10**,
 **101/101 tests**, **5/5 package smoke**, and final installed quit/relaunch,

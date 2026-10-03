@@ -1,4 +1,14 @@
-# Build status — October 2, 2026
+# Build status — October 3, 2026
+
+Latest installed release: **Tempo 1.5.0**, independent **9.24/10**, **114/114 tests**,
+production build, **5/5 exact-package checks**, and final installed post-recovery
+quit/relaunch/data checks pass. Source is saved on private `mazidhee/tempo`; the
+desktop shortcut opens the reviewed package. All 1,823 active supplied topics and
+original owner records/preferences are retained. See [redesign release](redesign-release.md)
+and [independent review](study-release-review.md) for the rubric, hashes, safety
+copies and the unconfirmed cause of the initial installed-data discrepancy.
+
+## Previous release — October 2
 
 Latest installed release: **Tempo 1.4.0**, independent **9.27/10**, 101/101 tests,
 production build, exact package smoke 5/5 and installed post-recovery restart/data
