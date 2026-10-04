@@ -1,3 +1,22 @@
+# Latest installed checkpoint — October 4, 2026
+
+Tempo **1.6.0 is installed**, with the existing desktop shortcut intact. Daily
+Plan A supports expanded inline priorities; Tasks and search use calm lists;
+normal Journal is a full writing canvas; Review has a saved daily line graph;
+Goals show recorded progress first. Existing features and local privacy remain.
+
+Independent rounds **8.87 → 9.20 → 9.51**; final **Design 9.5 / UX 9.5** meet the
+stricter user gate. **117/117 tests**, production build, **13/13 exact-package
+workflow groups**, graceful Journal preference restart, and installed two-launch
+all-record/offline checks pass. All three active curricula and **1,823 original
+active topic IDs/progress** remain. Archived recovery copies are retained.
+Migration **206** preserves old review totals/writing and marks unknown daily
+values; use Update activity explicitly for their new trend. The earlier database
+discrepancy still has no proven cause; do not discard copies or overwrite newer
+preferences. Source implementation `8392f50`; final release tag `tempo-1.6.0`.
+See [daily workspace release](daily-workspace-release.md) and
+[independent review](daily-workspace-review.md) for evidence and limitations.
+
 # Build status — October 3, 2026
 
 Latest installed release: **Tempo 1.5.0**, independent **9.24/10**, **114/114 tests**,

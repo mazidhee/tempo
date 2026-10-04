@@ -61,13 +61,47 @@ and fixed the browser's inconsistent focus-hours input step.
 
 Round 2 scored **9.20/10** and passed 13/13 actual Electron workflow groups.
 The later line-chart and normal-journal requests supersede that acceptance.
-Fresh review must reach **9.5 in both design and UX**; final independent review,
-exact-package verification and installed owner-data acceptance are pending. See
+Final round 3 scored **9.51/10**: completeness 9.5, correctness 9.6, design
+**9.5**, code 9.4 and UX **9.5**. Both stricter individual minimums are met.
+Independent build and **117/117 tests** passed. The final exact package passed
+**13/13** workflow groups, backup/import and a full restart; a separate graceful
+Quit/relaunch check retained the Journal font preference. The line chart, legacy
+fallback and normal Journal were visually checked on desktop/narrow light/dark.
+No required fixes remain under this reviewed scope. See
 [the independent report](daily-workspace-review.md) for fresh results.
 
-The Impeccable documenter checked the shipped source patterns and preserved the
-incumbent design system. Existing specification drift was reported rather than
+The Impeccable documenter rechecked the shipped source, final line chart and
+normal Journal screenshots, preserving the incumbent design system. Existing specification drift was reported rather than
 turned into new design rules.
+
+## Installed release — October 4, 2026
+
+The final NSIS installer exited successfully. Installed FileVersion **1.6.0** and
+ProductVersion **1.6.0.0** match the reviewed package. The existing Tempo desktop
+shortcut and original application identity/data directory are retained.
+
+- Installer SHA256: `E1D7992DB3E8FA3C94AADCF903776A69EAFD5E6C2B84A81D6A26A41EBD3B1260`
+- Reviewed and installed ASAR SHA256: `1C214BC5A81533FEF9D22D568A4352DB4C0125D7D17451E991A548E8343FB47A`
+- Fresh closed-app baseline: `.install-check/personal-upgrade-1791094665422/baseline.json`
+- Installed evidence: `.install-check/personal-upgrade-1791094665422/redesign-acceptance.json`
+- Exact packaged evidence: `.review/daily-workspace-package-round3-1791069880000/results.json`
+- Journal normal-Quit evidence: `.review/journal-graceful-package-round3-1791069880000/results.json`
+
+The fresh baseline matched all 3,698 rows of the preceding closed-app copy;
+the timer was idle. After installation, the actual desktop executable opened
+all nine main pages offline. A read-only comparison across two full launches
+verified every original primary key and existing field, including JSON content,
+exact preferences, tasks, sessions and presets. Migration 206 adds only explicit
+unknown historical daily detail. SQLite integrity was OK and renderer errors
+were absent. All **3 active curricula / 1,823 active topic identities and progress**
+remain, as do the **1,823 archived recovery-copy topics**. No owner data is included
+in source control or uploaded by the release verification.
+
+The code implementation is committed as `8392f50`; final release documentation
+and the `tempo-1.6.0` tag provide the installed checkpoint. `tempo-1.5.0` remains
+the immediate preceding release reference. Compare code in a separate checkout;
+never restore an older database merely to compare design. Older saved reviews
+keep their snapshots: click **Update activity** once when a daily trend is wanted.
 
 ## Limits
 

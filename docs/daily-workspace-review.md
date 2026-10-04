@@ -86,3 +86,26 @@ The normal Journal page was also examined independently, beyond Writing mode: fu
 Weighted score: **9.51**. **Design 9.5 and UX 9.5 each meet the new individual minimum.** No required source fixes remain under this reviewed scope; source acceptance is complete. A fresh exact packaged-candidate run and the installed owner-data gate remain before release completion.
 
 Two investigations were excluded from the final clean assessment: an earlier run's Electron window closed unexpectedly during Browse weeks, without a renderer error; a fresh focused probe and the full fresh run did not reproduce it, so its cause remains unproven. The abrupt-kill journal probe lost the newest LocalStorage Serif preference; normal graceful Quit persisted it. Journal text persisted in both cases. Neither finding is represented as proof of zero possible future bugs.
+
+## Final exact package — accepted after round 3
+
+The final Windows 1.6.0 candidate independently passed the **same 13 / 13** real-Electron groups and full process restart with no renderer errors. The line chart, legacy totals-only behavior, default Journal, Writing mode, all retained flows, backup and light/dark narrow layouts were checked in the actual package. Fresh packaged Review and Journal screenshots were personally inspected. Evidence: `.review/daily-workspace-package-round3-1791069880000/results.json` and screenshots.
+
+A separate Playwright Electron run verified **Serif through graceful app.quit and packaged relaunch**: `.review/journal-graceful-package-round3-1791069880000/results.json`.
+
+FileVersion: **1.6.0**. ProductVersion: **1.6.0.0**. Final `resources/app.asar` SHA256 before and after both runs: `1C214BC5A81533FEF9D22D568A4352DB4C0125D7D17451E991A548E8343FB47A` (unchanged).
+
+The final candidate meets the assessed **9.51 overall**, **9.5 Design**, **9.5 UX** gate. All reviewer processes exited and no owner data was accessed or written. Installed owner-data verification remains the builder's final release gate.
+
+## Builder installed acceptance — October 4
+
+The builder installed the exact reviewed 1.6.0 candidate and ran the installed
+executable twice against the original owner data directory. Existing rows and
+JSON fields, preferences, task/session/preset history and all 1,823 active topic
+identities/progress were compared read-only against the fresh closed-app backup.
+Archived recovery copies remain. Migration 206 was present; SQLite integrity
+was OK; all nine main pages rendered offline and no renderer errors occurred.
+Installed ASAR matched the reviewer hash. Evidence:
+`.install-check/personal-upgrade-1791094665422/redesign-acceptance.json`.
+This completes the separate installed gate; it does not establish a cause for
+historical database discrepancies or certify untested native Guard actions.
