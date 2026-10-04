@@ -65,7 +65,7 @@ export function reminderTick(
           ? 'Close your day'
           : 'Your weekly review',
       kind === 'morning'
-        ? 'Choose up to three priorities in Tempo.'
+        ? 'Make room for what matters in your daily plan.'
         : kind === 'evening'
           ? 'Review your priorities and leave a journal line.'
           : 'See the week’s activity and choose one change.',

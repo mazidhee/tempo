@@ -154,12 +154,36 @@ test('FTS supports Unicode prefix terms, date browse, batch lookup and edits wit
   assert.throws(() => store.lookupDates(['2026-02-30']), /valid date/);
   db.close();
 });
-test('plan input validates linked records, maximum three and evening numeric bounds atomically', () => {
+test('plans retain more than three priorities through save, completion and backup validation', () => {
+  const { db, store } = fixture();
+  const priorities = Array.from({ length: 12 }, (_, index) => ({
+    id: 'priority-' + index,
+    kind: 'free',
+    linkId: null,
+    title: 'Priority ' + index,
+    done: false,
+  }));
+  store.savePlan({ date: '2026-10-01', priorities, studyTopicIds: [] });
+  assert.equal(store.data().plans[0].priorities.length, 12);
+  store.evening({
+    date: '2026-10-01',
+    doneIds: priorities.map((p) => p.id),
+    sleep: null,
+    energy: null,
+  });
+  assert.equal(store.data().plans[0].priorities.filter((p) => p.done).length, 12);
+  assert.equal(store.data().plans[0].priorities[11].title, 'Priority 11');
+  const backup = reflectionBackup.export(db);
+  reflectionBackup.validate(backup);
+  assert.equal(backup.plans[0].priorities.length, 12);
+  db.close();
+});
+test('plan input validates linked records, duplicate IDs and evening numeric bounds atomically', () => {
   const { db, store } = fixture();
   const p = { id: 'one', kind: 'free', linkId: null, title: 'One', done: false };
   assert.throws(
     () => store.savePlan({ date: '2026-10-01', priorities: [p, p, p, p], studyTopicIds: [] }),
-    /list length/,
+    /Duplicate priority IDs/,
   );
   assert.throws(
     () =>
@@ -276,6 +300,15 @@ test('weekly focus comparisons, best day and Study recall use the canonical Stud
   assert.equal(summary.focus.byCurriculum.Economics, 3600);
   assert.equal(summary.focus.previousSeconds, 1800);
   assert.equal(summary.focus.bestDay, '2026-09-30');
+  assert.deepEqual(
+    summary.focus.daily?.map((d) => d.seconds),
+    [0, 0, 3600, 0, 0, 0, 0],
+  );
+  const partial = weeklySummary(store.source(), store.data(), '2026-09-28', '2026-10-01');
+  assert.deepEqual(
+    partial.focus.daily?.map((d) => d.seconds),
+    [0, 0, 3600, 0, null, null, null],
+  );
   assert.equal(summary.study.retentionPercent, 100);
   assert.match(summary.study.retentionLabel, /self-reported/);
   assert.equal(summary.tasks.completed, 1);
@@ -291,6 +324,47 @@ test('saved weekly reviews are idempotent immutable snapshots with editable prom
   store.saveReview({ start: first.start, obstacle: 'Travel', change: 'Start earlier' });
   assert.equal(store.generate({ date: first.start }).change, 'Start earlier');
   assert.equal(store.data().reviews.length, 1);
+  db.close();
+});
+
+test('daily review migration preserves legacy snapshots and writing without inventing a trend', () => {
+  const { db, store } = fixture();
+  const saved = store.generate({ date: '2026-10-01' });
+  store.saveReview({ start: saved.start, obstacle: 'Travel', change: 'Read early' });
+  const legacy = store.data().reviews[0];
+  delete legacy.summary.focus.daily;
+  db.prepare('UPDATE reflection_reviews SET json=? WHERE start=?').run(
+    JSON.stringify(legacy),
+    legacy.start,
+  );
+  db.prepare('DELETE FROM schema_migrations WHERE version=206').run();
+  runModuleMigrations(db, false);
+  const migrated = store.data().reviews[0];
+  assert.equal(migrated.summary.focus.daily, null);
+  delete migrated.summary.focus.daily;
+  assert.deepEqual(migrated, legacy);
+  runModuleMigrations(db, false);
+  assert.equal(store.data().reviews[0].summary.focus.daily, null);
+  assert.equal(
+    db.prepare('SELECT COUNT(*) AS n FROM schema_migrations WHERE version=206').get()?.n,
+    1,
+  );
+  db.close();
+});
+
+test('review backups validate ordered daily dates, observed totals and legacy compatibility', () => {
+  const { db, store } = fixture();
+  store.generate({ date: '2026-10-01' });
+  const exported = reflectionBackup.export(db);
+  reflectionBackup.validate(exported);
+  const wrongDate = structuredClone(exported);
+  wrongDate.reviews[0].summary.focus.daily![0].date = '2026-09-29';
+  assert.throws(() => reflectionBackup.validate(wrongDate), /trend date/);
+  const wrongTotal = structuredClone(exported);
+  wrongTotal.reviews[0].summary.focus.daily![0].seconds = 60;
+  assert.throws(() => reflectionBackup.validate(wrongTotal), /trend total/);
+  delete exported.reviews[0].summary.focus.daily;
+  reflectionBackup.validate(exported);
   db.close();
 });
 test('all goal kinds compute recorded completions without counting freezes or break time', () => {
@@ -458,19 +532,17 @@ test('backup restores opted-in reminder settings into missing or default rows an
     if (initialized) {
       const defaults = restored.store.data().settings;
       // Persist defaults in a different property order, as an initialized UI may do.
-      restored.db
-        .prepare('INSERT INTO reflection_settings(id,json) VALUES(1,?)')
-        .run(
-          JSON.stringify({
-            weekly: {
-              day: defaults.weekly.day,
-              time: defaults.weekly.time,
-              enabled: defaults.weekly.enabled,
-            },
-            evening: defaults.evening,
-            morning: defaults.morning,
-          }),
-        );
+      restored.db.prepare('INSERT INTO reflection_settings(id,json) VALUES(1,?)').run(
+        JSON.stringify({
+          weekly: {
+            day: defaults.weekly.day,
+            time: defaults.weekly.time,
+            enabled: defaults.weekly.enabled,
+          },
+          evening: defaults.evening,
+          morning: defaults.morning,
+        }),
+      );
     }
     restored.db.transaction(() =>
       reflectionBackup.merge(restored.db, backup, { habits: new Map() }),

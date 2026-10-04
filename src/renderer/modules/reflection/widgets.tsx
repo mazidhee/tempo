@@ -20,7 +20,7 @@ export function TodayPlanWidget() {
       <CardContent>
         {plan?.priorities.length ? (
           <ul className="reflection-list">
-            {plan.priorities.map((p) => (
+            {plan.priorities.slice(0, 4).map((p) => (
               <li className="reflection-row" key={p.id}>
                 <span className="reflection-grow">
                   {privacy && p.kind === 'habit' ? 'Private habit' : p.title}
@@ -37,7 +37,9 @@ export function TodayPlanWidget() {
           />
         )}
         <Link className="reflection-widget-link" to="/plan">
-          Open daily plan
+          {plan && plan.priorities.length > 4
+            ? `Open all ${plan.priorities.length} priorities`
+            : 'Open daily plan'}
         </Link>
       </CardContent>
     </Card>

@@ -9,6 +9,7 @@ import RecoveryNotice from './components/RecoveryNotice';
 import { routeRegistry } from './registry/routes';
 import { WindowControls } from './components/WindowControls';
 import { Modal } from './components/ui';
+import { SearchHints } from './components/SearchHints';
 import {
   Command,
   CommandInput,
@@ -96,7 +97,11 @@ export default function App() {
   const label =
     navigation.find((n) => n.to === location.pathname)?.label ||
     secondaryLabels[location.pathname] ||
-    (location.pathname.startsWith('/habits/') ? 'Habit details' : location.pathname.startsWith('/study/') ? 'Study' : 'Workspace');
+    (location.pathname.startsWith('/habits/')
+      ? 'Habit details'
+      : location.pathname.startsWith('/study/')
+        ? 'Study'
+        : 'Workspace');
   return (
     <PrivacyContext.Provider value={privacy}>
       <SidebarProvider
@@ -192,7 +197,7 @@ export default function App() {
           </main>
         </div>
         {command && (
-          <Modal title="Search workspace" onClose={() => setCommand(false)}>
+          <Modal title="Search workspace" variant="search" onClose={() => setCommand(false)}>
             <Command>
               <CommandInput
                 aria-label="Search commands"
@@ -295,7 +300,7 @@ export default function App() {
                 </CommandGroup>
               </CommandList>
             </Command>
-            <p className="command-hint muted">↑ ↓ to navigate · Enter to open · Esc to close</p>
+            <SearchHints action="Open" />
           </Modal>
         )}
         <Toaster />

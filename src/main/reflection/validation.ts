@@ -1,6 +1,7 @@
 import { validDate } from '../../shared/habits';
 import { validateJournalDocument } from '../../shared/journalDocument';
 import type { DailyPlan, Goal, JournalEntry, ReflectionSettings } from '../../shared/reflection';
+import { planPriorityLimit } from '../../shared/reflection';
 export function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid reflection data.');
@@ -43,7 +44,7 @@ export function timestamp(value: unknown): string {
 export function validatePlan(value: unknown): DailyPlan {
   const v = object(value);
   day(v.date);
-  list(v.priorities, 3).forEach((x) => {
+  list(v.priorities, planPriorityLimit).forEach((x) => {
     const p = object(x);
     text(p.id, 'priority ID', 100);
     text(p.title, 'priority', 500);
@@ -54,7 +55,7 @@ export function validatePlan(value: unknown): DailyPlan {
     } else text(p.linkId, 'linked ID', 100);
     flag(p.done);
   });
-  const ids = list(v.priorities, 3).map((x) => object(x).id);
+  const ids = list(v.priorities, planPriorityLimit).map((x) => object(x).id);
   if (new Set(ids).size !== ids.length) throw new Error('Duplicate priority IDs.');
   const topics = list(v.studyTopicIds, 500).map((x) => text(x, 'topic ID', 100));
   if (new Set(topics).size !== topics.length) throw new Error('Duplicate study topics.');
@@ -69,7 +70,7 @@ export function validateJournal(value: unknown): JournalEntry {
   const v = object(value);
   day(v.date);
   text(v.text, 'journal', 200000, true);
-  if(v.document!==undefined && v.document!==null)validateJournalDocument(v.document);
+  if (v.document !== undefined && v.document !== null) validateJournalDocument(v.document);
   timestamp(v.updatedAt);
   return value as JournalEntry;
 }

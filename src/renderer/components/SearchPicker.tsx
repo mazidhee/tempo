@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from './ui/command';
 import { pickerPageSize, searchOptions, type PickerOption } from '../../shared/picker';
 import './search-picker.css';
+import { SearchHints } from './SearchHints';
 /** A shared keyboard-searchable picker for large, local collections. */
 export function SearchPicker({
   label,
@@ -16,6 +17,7 @@ export function SearchPicker({
   allowClear = false,
   clearLabel = 'None',
   selectedLabel,
+  className = '',
 }: {
   label: string;
   value: string;
@@ -26,6 +28,7 @@ export function SearchPicker({
   allowClear?: boolean;
   clearLabel?: string;
   selectedLabel?: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState(''),
@@ -44,8 +47,9 @@ export function SearchPicker({
   return (
     <>
       <Button
+        type="button"
         variant="outline"
-        className="search-picker-trigger"
+        className={`search-picker-trigger ${className}`}
         disabled={disabled}
         aria-label={label}
         aria-haspopup="dialog"
@@ -62,7 +66,7 @@ export function SearchPicker({
         <ChevronDown />
       </Button>
       {open && (
-        <Modal title={label} onClose={() => setOpen(false)}>
+        <Modal title={label} variant="search" onClose={() => setOpen(false)}>
           <Command shouldFilter={false} className="search-picker-command">
             <CommandInput
               autoFocus
@@ -139,9 +143,7 @@ export function SearchPicker({
               </div>
             </div>
           </Command>
-          <p className="muted small">
-            Type to search · ↑ ↓ to choose · Enter to select · Esc to close
-          </p>
+          <SearchHints />
         </Modal>
       )}
     </>

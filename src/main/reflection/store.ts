@@ -13,6 +13,7 @@ import {
 } from './validation';
 import { chapterTopics, goalProgress, weeklySummary, type Sources } from './aggregate';
 import {
+  planPriorityLimit,
   defaultReflectionSettings,
   type DailyPlan,
   type Goal,
@@ -147,7 +148,7 @@ export class ReflectionStore {
         evening: { completedAt: null, sleep: null, energy: null },
         updatedAt: this.now().toISOString(),
       },
-      ids = list(v.doneIds, 3).map((x) => text(x, 'priority ID', 100));
+      ids = list(v.doneIds, planPriorityLimit).map((x) => text(x, 'priority ID', 100));
     if (ids.some((id) => !previous.priorities.some((p) => p.id === id)))
       throw new Error('Choose a priority in this plan.');
     const plan: DailyPlan = {

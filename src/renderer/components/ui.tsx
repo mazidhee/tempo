@@ -44,10 +44,12 @@ export function Modal({
   title,
   children,
   onClose,
+  variant = 'default',
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  variant?: 'default' | 'search';
 }) {
   const previous = useRef(document.activeElement as HTMLElement | null);
   return (
@@ -58,7 +60,7 @@ export function Modal({
       }}
     >
       <DialogContent
-        className="modal-content"
+        className={`modal-content${variant === 'search' ? ' search-modal' : ''}`}
         aria-describedby={undefined}
         onOpenAutoFocus={(event) => {
           const input = event.currentTarget as HTMLElement;
@@ -73,7 +75,7 @@ export function Modal({
           previous.current?.focus({ preventScroll: true });
         }}
       >
-        <DialogHeader>
+        <DialogHeader className={variant === 'search' ? 'sr-only' : undefined}>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {children}

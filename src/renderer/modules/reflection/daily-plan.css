@@ -1,0 +1,303 @@
+:root {
+  --daily-page-width: 820px;
+  --daily-page-title: 40px;
+  --daily-row-height: 60px;
+  --daily-row-action: 32px;
+  --daily-study-height: 380px;
+}
+.daily-plan {
+  width: calc(100% - var(--space-16));
+  max-width: var(--daily-page-width);
+  margin: var(--space-8) auto var(--space-16);
+}
+.daily-plan-datebar,
+.daily-plan-datebar > div,
+.daily-plan-section-heading,
+.daily-priority-add,
+.daily-plan-save,
+.daily-plan-evening-footer,
+.daily-plan-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.daily-plan-datebar {
+  color: var(--ink-subtle);
+}
+.daily-plan-datebar > input {
+  width: auto;
+  background: transparent;
+  border-color: transparent;
+}
+.daily-plan-datebar > div {
+  gap: var(--space-1);
+}
+.daily-plan-header {
+  margin-block: var(--space-10) var(--space-12);
+}
+.daily-plan-header h1 {
+  font-size: var(--daily-page-title);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-title);
+  text-wrap: balance;
+}
+.daily-plan-header p {
+  margin-top: var(--space-3);
+  color: var(--ink-subtle);
+  line-height: 1.6;
+}
+.daily-plan > section {
+  margin-bottom: var(--space-12);
+}
+.daily-plan-section-heading {
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.daily-plan-section-heading h2 {
+  font-size: var(--type-subhead);
+  font-weight: 600;
+}
+.daily-plan-section-heading > span {
+  font-size: var(--type-caption);
+  color: var(--ink-subtle);
+}
+.daily-priority-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.daily-priority {
+  display: flex;
+  align-items: center;
+  min-height: var(--daily-row-height);
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.daily-priority-copy {
+  flex: 1;
+  min-width: 0;
+  padding-block: var(--space-3);
+}
+.daily-priority-copy > label {
+  display: block;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.daily-priority.done .daily-priority-copy > label {
+  color: var(--ink-subtle);
+  text-decoration: line-through;
+}
+.daily-priority-meta {
+  display: block;
+  color: var(--ink-subtle);
+  font-size: var(--type-caption);
+  margin-top: var(--space-1);
+}
+.daily-priority-actions {
+  display: flex;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+.daily-priority:hover .daily-priority-actions,
+.daily-priority:focus-within .daily-priority-actions {
+  opacity: 1;
+}
+.daily-priority-actions button {
+  width: var(--daily-row-action);
+  height: var(--daily-row-action);
+  color: var(--ink-subtle);
+}
+.daily-priority-add {
+  min-height: var(--daily-row-height);
+}
+.daily-priority-add > svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  width: var(--icon-size);
+}
+.daily-priority-add > input {
+  flex: 1;
+  min-width: 0;
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0;
+  box-shadow: none;
+  font-size: 16px;
+}
+.daily-plan .plan-inline-picker {
+  width: auto;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-subtle);
+  font-size: var(--type-body);
+  padding-inline: var(--space-2);
+}
+.daily-plan .plan-inline-picker > svg:last-child {
+  display: none;
+}
+.daily-plan-save {
+  color: var(--ink-subtle);
+  font-size: var(--type-caption);
+}
+.daily-plan-save button {
+  color: var(--ink-subtle);
+  font-size: var(--type-caption);
+}
+.daily-plan-empty {
+  color: var(--ink-subtle);
+  line-height: 1.7;
+  padding-block: var(--space-3);
+}
+.daily-plan a {
+  text-underline-offset: var(--space-1);
+}
+.daily-plan-empty a,
+.daily-plan-evening-footer > a {
+  color: var(--primary);
+}
+.daily-study-list {
+  max-height: var(--daily-study-height);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.daily-study-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+}
+.daily-study-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.daily-study-row a {
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.daily-study-row a:hover {
+  text-decoration: underline;
+}
+.daily-study-row span {
+  display: block;
+  color: var(--ink-subtle);
+  font-size: var(--type-caption);
+  margin-top: var(--space-1);
+}
+.daily-study-focus {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.daily-study-row > button:last-child {
+  color: var(--ink-subtle);
+  flex-shrink: 0;
+}
+.daily-plan-evening {
+  border-block: 1px solid var(--hairline);
+}
+.daily-plan-evening > summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-5);
+}
+.daily-plan-evening > summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 500;
+}
+.daily-plan-evening svg {
+  width: var(--icon-size);
+  color: var(--ink-subtle);
+}
+.daily-plan-evening small,
+.daily-plan-evening-content > p {
+  color: var(--ink-subtle);
+}
+.daily-plan-evening-content {
+  padding-bottom: var(--space-6);
+}
+.daily-plan-evening-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-block: var(--space-5);
+}
+.daily-plan-footnote {
+  font-size: var(--type-caption);
+  margin-top: var(--space-4);
+  line-height: 1.6;
+}
+.daily-plan-links {
+  justify-content: flex-start;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  color: var(--ink-subtle);
+  font-size: var(--type-body);
+}
+.daily-plan-links a:hover {
+  color: var(--ink);
+}
+@media (hover: none) {
+  .daily-priority-actions {
+    opacity: 1;
+  }
+}
+@media (max-width: 650px) {
+  .daily-plan {
+    margin-top: var(--space-4);
+  }
+  .daily-plan {
+    width: calc(100% - var(--space-8));
+  }
+  .daily-plan-header h1 {
+    font-size: 32px;
+  }
+  .daily-plan-datebar {
+    flex-wrap: wrap;
+  }
+  .daily-priority {
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .daily-priority-actions {
+    opacity: 1;
+  }
+  .daily-priority-actions button {
+    width: var(--control-height);
+    height: var(--control-height);
+  }
+  .daily-priority-add {
+    flex-wrap: wrap;
+  }
+  .daily-priority-add > input {
+    flex-basis: 65%;
+  }
+  .daily-study-row {
+    flex-wrap: wrap;
+  }
+  .daily-study-row > div {
+    flex-basis: 100%;
+  }
+  .daily-plan-evening-fields {
+    grid-template-columns: 1fr;
+  }
+  .daily-plan-evening-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .daily-plan-evening small {
+    display: none;
+  }
+}

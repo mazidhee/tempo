@@ -1,30 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Check, Timer, Pencil, Trash2, ListTodo, Search } from 'lucide-react';
+import { Plus, Check, Timer, Pencil, Trash2, Search, Flag, ChevronDown } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
-import { localDate, newTimer, focusRequest, type Task } from '../../shared/productivity';
-import { PageHeader, Empty, Modal } from '../components/ui';
-import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../components/ui/table';
-const taskFeatures = tableFeatures({});
-const taskColumns = createColumnHelper<typeof taskFeatures, Task>();
+import { localDate, focusRequest, type Task } from '../../shared/productivity';
+import { shiftDay } from '../../shared/habits';
+import { Modal } from '../components/ui';
+import { Button } from '../components/ui/button';
+import '../styles/task-page.css';
 export default function Tasks() {
-  const { state, update } = useProductivity();
+  const { state, update, ready } = useProductivity();
   const navigate = useNavigate();
-  const [view, setView] = useState('Today');
-  const [quick, setQuick] = useState('');
-  const [query, setQuery] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [view, setView] = useState('Today'),
+    [quick, setQuick] = useState('');
+  const [query, setQuery] = useState(''),
+    [priorityFilter, setPriorityFilter] = useState('all');
   const [editing, setEditing] = useState<Task | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<Task | null>(null);
   const today = localDate();
+  const focusPending = useRef(false);
+  const [focusBusy, setFocusBusy] = useState(false),
+    [focusError, setFocusError] = useState('');
   const save = (task: Task) => {
     update((s) => ({
       ...s,
@@ -37,7 +32,7 @@ export default function Tasks() {
   const create = (title: string): Task => ({
     id: crypto.randomUUID(),
     title: title.trim(),
-    due: view === 'Today' ? today : '',
+    due: view === 'Today' ? today : view === 'Upcoming' ? shiftDay(today, 1) : '',
     priority: priorityFilter === 'all' ? 'medium' : (priorityFilter as Task['priority']),
     project: '',
     tags: [],
@@ -45,8 +40,6 @@ export default function Tasks() {
     createdAt: new Date().toISOString(),
     completedAt: null,
   });
-  const toggle = (task: Task) =>
-    save({ ...task, completedAt: task.completedAt ? null : new Date().toISOString() });
   const tasks = state.tasks
     .filter(
       (t) =>
@@ -56,191 +49,134 @@ export default function Tasks() {
         (priorityFilter === 'all' || t.priority === priorityFilter) &&
         `${t.title} ${t.project} ${t.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()),
     )
-    .sort(
-      (a, b) =>
-        (a.due || '9999').localeCompare(b.due || '9999') ||
-        ['high', 'medium', 'low'].indexOf(a.priority) -
-          ['high', 'medium', 'low'].indexOf(b.priority),
+    .sort((a, b) =>
+      view === 'Completed'
+        ? (b.completedAt || '').localeCompare(a.completedAt || '')
+        : (a.due || '9999').localeCompare(b.due || '9999') ||
+          ['high', 'medium', 'low'].indexOf(a.priority) -
+            ['high', 'medium', 'low'].indexOf(b.priority),
     );
-  const focus = (task: Task) => {
+  const dateLabel = (date: string) =>
+    !date
+      ? 'No date'
+      : date === today
+        ? 'Today'
+        : date === shiftDay(today, 1)
+          ? 'Tomorrow'
+          : new Date(date + 'T12:00:00').toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+            });
+  const groupLabel = (t: Task) =>
+    view === 'Today'
+      ? t.due < today
+        ? 'Overdue'
+        : 'Today'
+      : view === 'Upcoming'
+        ? dateLabel(t.due)
+        : view === 'Completed'
+          ? dateLabel((t.completedAt || '').slice(0, 10))
+          : t.project || 'Personal';
+  const groups = new Map<string, Task[]>();
+  for (const task of tasks) {
+    const key = groupLabel(task);
+    groups.set(key, [...(groups.get(key) || []), task]);
+  }
+  const focus = async (task: Task) => {
+    if (focusPending.current) return;
     const link = { type: 'task' as const, id: task.id, name: task.title, project: task.project };
-    const action = focusRequest(state.timer, link);
-    if (action === 'resume') {
+    const request = focusRequest(state.timer, link);
+    if (request === 'resume') {
       navigate('/focus');
       return;
     }
-    if (action === 'confirm') {
-      if (
-        !window.confirm(
-          state.timer.stopwatch
-            ? 'Save the current tracked time and switch to this task?'
-            : 'Replace the current focus session? Unfinished time will not be logged.',
-        )
+    if (
+      request === 'confirm' &&
+      !window.confirm(
+        state.timer.stopwatch
+          ? 'Save the current tracked time and switch to this task?'
+          : 'Replace the current focus session? Unfinished time will not be logged.',
       )
-        return;
+    )
+      return;
+    focusPending.current = true;
+    setFocusBusy(true);
+    setFocusError('');
+    try {
+      if (state.timer.startedAt !== null)
+        await window.workspaceAPI.invoke('focus:command', { action: 'stop' });
+      await window.workspaceAPI.invoke('focus:command', {
+        action: 'configure',
+        phase: 'focus',
+        timerMode: 'pomodoro',
+        link,
+      });
+      await window.workspaceAPI.invoke('focus:command', { action: 'start' });
+      navigate('/focus');
+    } catch (e) {
+      setFocusError('Could not start focus. ' + (e as Error).message);
+    } finally {
+      focusPending.current = false;
+      setFocusBusy(false);
     }
-    update((s) => ({
-      ...s,
-      timer: newTimer(
-        s.presets.find((p) => p.id === s.timer.presetId)!,
-        'focus',
-        s.timer.completed,
-        { type: 'task', id: task.id, name: task.title, project: task.project },
-      ),
-    }));
-    navigate('/focus');
   };
-  const columns = useMemo(
-    () =>
-      taskColumns.columns([
-        taskColumns.display({
-          id: 'task',
-          header: 'Task',
-          cell: ({ row }) => {
-            const task = row.original;
-            return (
-              <div className="task-table-title">
-                <button
-                  className={`check-button ${task.completedAt ? 'checked' : ''}`}
-                  aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
-                  aria-pressed={!!task.completedAt}
-                  onClick={() => toggle(task)}
-                >
-                  {task.completedAt && <Check />}
-                </button>
-                <div>
-                  <strong className={task.completedAt ? 'done-text' : ''}>{task.title}</strong>
-                  <div className="task-mobile-meta">
-                    <span>{task.due === today ? 'Today' : task.due || 'No date'}</span>
-                    <span>{task.priority} priority</span>
-                    {task.project && <span>{task.project}</span>}
-                  </div>
-                  <div className="task-meta">
-                    {task.tags.map((tag) => (
-                      <span className="tag" key={tag}>
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  {task.subtasks.length > 0 && (
-                    <div className="subtasks">
-                      {task.subtasks.map((sub) => (
-                        <label key={sub.id}>
-                          <input
-                            type="checkbox"
-                            checked={sub.done}
-                            onChange={() =>
-                              save({
-                                ...task,
-                                subtasks: task.subtasks.map((x) =>
-                                  x.id === sub.id ? { ...x, done: !x.done } : x,
-                                ),
-                              })
-                            }
-                          />
-                          <span className={sub.done ? 'done-text' : ''}>{sub.title}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          },
-        }),
-        taskColumns.accessor('due', {
-          header: 'Due',
-          cell: ({ row }) => (
-            <span
-              className={
-                row.original.due < today && !row.original.completedAt && row.original.due
-                  ? 'overdue'
-                  : ''
-              }
-            >
-              {row.original.due === today ? 'Today' : row.original.due || 'No date'}
-            </span>
-          ),
-        }),
-        taskColumns.accessor('priority', { header: 'Priority' }),
-        taskColumns.accessor('project', {
-          header: 'Project',
-          cell: ({ row }) => row.original.project || '—',
-        }),
-        taskColumns.display({
-          id: 'actions',
-          header: 'Actions',
-          cell: ({ row }) => (
-            <div className="row-actions">
-              {!row.original.completedAt && (
-                <button
-                  className="icon-button"
-                  aria-label={`Start focus session for ${row.original.title}`}
-                  onClick={() => focus(row.original)}
-                >
-                  <Timer />
-                </button>
-              )}
-              <button
-                className="icon-button"
-                aria-label={`Edit ${row.original.title}`}
-                onClick={() => setEditing(row.original)}
-              >
-                <Pencil />
-              </button>
-              <button
-                className="icon-button"
-                aria-label={`Delete ${row.original.title}`}
-                onClick={() => setDeleting(row.original)}
-              >
-                <Trash2 />
-              </button>
-            </div>
-          ),
-        }),
-      ]),
-    [state.tasks, state.timer, state.presets, view],
-  );
-  const table = useTable({ features: taskFeatures, columns, data: tasks });
   return (
-    <div className="page">
-      <PageHeader
-        title="Tasks"
-        description="Plan, complete and focus on your work."
-        action={
-          <button className="btn-primary" onClick={() => setEditing(null)}>
-            <Plus />
-            New task
-          </button>
-        }
-      />
-      <div className="task-toolbar">
-        <div className="tabs" aria-label="Task views">
+    <div className="tasks-page">
+      <header className="tasks-page-header">
+        <div>
+          <h1>{view === 'All' ? 'All tasks' : view === 'Completed' ? 'Logbook' : view}</h1>
+          <p>
+            {view === 'Today'
+              ? 'A little clarity for the day ahead.'
+              : view === 'Upcoming'
+                ? 'Make space for what comes next.'
+                : view === 'Completed'
+                  ? 'The small steps that moved you forward.'
+                  : 'Everything you are working towards.'}
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" disabled={!ready} onClick={() => setEditing(null)}>
+          <Plus />
+          New task
+        </Button>
+      </header>
+      {focusError && (
+        <p className="inline-error" role="alert">
+          {focusError}
+        </p>
+      )}
+      <div className="tasks-viewbar">
+        <div className="tasks-views" aria-label="Task views">
           {['Today', 'Upcoming', 'All', 'Completed'].map((v) => (
             <button
               key={v}
-              className={view === v ? 'selected' : ''}
               aria-pressed={view === v}
+              className={view === v ? 'selected' : ''}
               onClick={() => setView(v)}
             >
               {v}
             </button>
           ))}
         </div>
-        <div className="search-field">
-          <Search />
+        <span className="tasks-count">
+          {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+        </span>
+      </div>
+      <div className="tasks-filters">
+        <label className="tasks-search">
+          <Search aria-hidden="true" />
           <input
+            type="search"
             aria-label="Search tasks"
             placeholder="Search tasks, projects, tags"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-        </div>
+        </label>
         <select
-          className="input task-priority-filter"
           aria-label="Filter task priority"
           value={priorityFilter}
-          onChange={(event) => setPriorityFilter(event.target.value)}
+          onChange={(e) => setPriorityFilter(e.target.value)}
         >
           <option value="all">All priorities</option>
           <option value="high">High priority</option>
@@ -248,94 +184,185 @@ export default function Tasks() {
           <option value="low">Low priority</option>
         </select>
       </div>
-      <form
-        className="quick-add"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (quick.trim()) {
-            save(create(quick));
-            setQuick('');
-          }
-        }}
-      >
-        <Plus />
-        <input
-          aria-label="Quick add task"
-          placeholder="What needs your attention? Enter to add a task…"
-          value={quick}
-          onChange={(e) => setQuick(e.target.value)}
-        />
-        <button className="btn-secondary" disabled={!quick.trim()}>
-          Add task
-        </button>
-      </form>
-      <section className="panel task-panel">
-        <div className="section-heading">
+      <div className="tasks-lists">
+        {[...groups].map(([heading, items]) => (
+          <section className="tasks-group" key={heading} aria-label={heading + ' tasks'}>
+            <h2>{heading}</h2>
+            <ul>
+              {items.map((task) => (
+                <li className="task-list-item" key={task.id}>
+                  <button
+                    disabled={!ready}
+                    className={`check-button ${task.completedAt ? 'checked' : ''}`}
+                    aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
+                    aria-pressed={!!task.completedAt}
+                    onClick={() =>
+                      save({
+                        ...task,
+                        completedAt: task.completedAt ? null : new Date().toISOString(),
+                      })
+                    }
+                  >
+                    {task.completedAt && <Check />}
+                  </button>
+                  <div className="task-list-content">
+                    <button
+                      className={task.completedAt ? 'task-title done-text' : 'task-title'}
+                      onClick={() => setEditing(task)}
+                    >
+                      {task.title}
+                    </button>
+                    <div className="task-list-meta">
+                      {task.due && (
+                        <span className={task.due < today && !task.completedAt ? 'overdue' : ''}>
+                          {dateLabel(task.due)}
+                        </span>
+                      )}
+                      {task.project && view !== 'All' && <span>{task.project}</span>}
+                      <span className="task-list-priority">
+                        {task.priority === 'high' && <Flag aria-hidden="true" />}
+                        {task.priority} priority
+                      </span>
+                      {task.tags.map((tag) => (
+                        <span key={tag}>#{tag}</span>
+                      ))}
+                    </div>
+                    {!!task.subtasks.length && (
+                      <details className="task-steps">
+                        <summary>
+                          <ChevronDown />
+                          {task.subtasks.filter((s) => s.done).length} / {task.subtasks.length}{' '}
+                          steps
+                        </summary>
+                        <div>
+                          {task.subtasks.map((sub) => (
+                            <label key={sub.id}>
+                              <input
+                                type="checkbox"
+                                checked={sub.done}
+                                onChange={() =>
+                                  save({
+                                    ...task,
+                                    subtasks: task.subtasks.map((s) =>
+                                      s.id === sub.id ? { ...s, done: !s.done } : s,
+                                    ),
+                                  })
+                                }
+                              />
+                              <span className={sub.done ? 'done-text' : ''}>{sub.title}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                  <div className="task-list-actions">
+                    {!task.completedAt && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={!ready || focusBusy}
+                        aria-label={`Start focus session for ${task.title}`}
+                        onClick={() => void focus(task)}
+                      >
+                        <Timer />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Edit ${task.title}`}
+                      onClick={() => setEditing(task)}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${task.title}`}
+                      onClick={() => setDeleting(task)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      {!tasks.length && (
+        <div className="tasks-empty">
           <h2>
-            {view === 'Today'
-              ? 'Today’s priorities'
+            {query || priorityFilter !== 'all'
+              ? 'No matching tasks'
               : view === 'Completed'
-                ? 'Completed tasks'
-                : view === 'Upcoming'
-                  ? 'Upcoming tasks'
-                  : 'Your open tasks'}
+                ? 'Your progress belongs here.'
+                : 'A little breathing room.'}
           </h2>
-          <span className="count-badge">{tasks.length}</span>
+          <p>
+            {query || priorityFilter !== 'all'
+              ? 'Try another title, project, tag or priority.'
+              : view === 'Completed'
+                ? 'Completed tasks will appear in your logbook.'
+                : 'Write a task below, or use New task to add the details.'}
+          </p>
+          {(query || priorityFilter !== 'all') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setQuery('');
+                setPriorityFilter('all');
+              }}
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
-        {!tasks.length ? (
-          <Empty
-            icon={<ListTodo />}
-            title={
-              query
-                ? 'No matching tasks'
-                : view === 'Completed'
-                  ? 'Progress will live here'
-                  : view === 'Today'
-                    ? 'A little breathing room'
-                    : 'A fresh page'
+      )}
+      {view !== 'Completed' && (
+        <form
+          className="tasks-quick-add"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (quick.trim()) {
+              save(create(quick));
+              setQuick('');
             }
-            description={
-              query
-                ? 'Try another title, tag or project.'
-                : view === 'Completed'
-                  ? 'Complete a task and celebrate a small win.'
-                  : 'Add a task above, or plan something for later.'
-            }
+          }}
+        >
+          <Plus aria-hidden="true" />
+          <input
+            aria-label="Quick add task"
+            maxLength={500}
+            placeholder="Add a task…"
+            value={quick}
+            onChange={(e) => setQuick(e.target.value)}
+            disabled={!ready}
           />
-        ) : (
-          <Table className="tasks-data-table">
-            <TableHeader>
-              {table.getHeaderGroups().map((group) => (
-                <TableRow key={group.id}>
-                  {group.headers.map((header) => (
-                    <TableHead key={header.id} scope="col" data-column={header.column.id}>
-                      <table.FlexRender header={header} />
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getAllCells().map((cell) => (
-                    <TableCell key={cell.id} data-column={cell.column.id}>
-                      <table.FlexRender cell={cell} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </section>
-      <p className="muted page-footnote">
-        Today includes overdue tasks. Undated tasks live in All.
+          <Button variant="ghost" size="sm" disabled={!ready || !quick.trim()}>
+            Add task
+          </Button>
+        </form>
+      )}
+      <p className="tasks-footnote">
+        {view === 'Today'
+          ? 'Today includes overdue tasks. Undated tasks live in All.'
+          : view === 'Upcoming'
+            ? 'Quick-added tasks are scheduled for tomorrow. Open a task to choose another date.'
+            : view === 'All'
+              ? 'Open a task to set its date, project, tags and next steps.'
+              : 'Reopen a completed task whenever you need it.'}
       </p>
       {editing !== undefined && (
         <TaskForm
           task={editing || create('')}
-          onSave={save}
+          onSave={(task) => {
+            const isNew = !state.tasks.some((t) => t.id === task.id);
+            save(task);
+            if (isNew && view === 'Completed') setView('All');
+          }}
           onClose={() => setEditing(undefined)}
         />
       )}

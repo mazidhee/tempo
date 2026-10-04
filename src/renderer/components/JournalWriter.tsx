@@ -50,7 +50,7 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
       savedRevision.current < 0 ? 'Recovered local draft' : 'Saved locally',
     ),
     [error, setError] = useState(''),
-    [serif, setSerif] = useState(false);
+    [serif, setSerif] = useState(() => localStorage.getItem('tempo-journal-serif') === 'true');
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, listItem: false }),
@@ -58,7 +58,12 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
     ],
     content: initial.current,
     editorProps: {
-      attributes: { role: 'textbox', 'aria-label': 'Daily journal', 'aria-multiline': 'true' },
+      attributes: {
+        role: 'textbox',
+        'aria-label': 'Daily journal',
+        'aria-multiline': 'true',
+        'aria-placeholder': 'Start writing. One thought is enough.',
+      },
     },
     onUpdate: ({ editor: current }) => {
       document.current = current.getJSON() as JournalDocument;
@@ -76,6 +81,7 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
   const selection = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
+      empty: !!current?.isEmpty,
       bold: !!current?.isActive('bold'),
       italic: !!current?.isActive('italic'),
       bullet: !!current?.isActive('bulletList'),
@@ -168,7 +174,9 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
     { label: 'Redo', icon: Redo2, active: false, run: () => editor?.chain().focus().redo().run() },
   ];
   return (
-    <div className={`journal-document ${serif ? 'serif' : ''}`}>
+    <div
+      className={`journal-document ${serif ? 'serif' : ''}${selection?.empty ? ' is-empty' : ''}`}
+    >
       <div className="journal-toolbar" role="group" aria-label="Journal formatting">
         <select
           aria-label="Paragraph style"
@@ -201,11 +209,26 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
             <item.icon />
           </button>
         ))}
-        <button className="btn-ghost" aria-pressed={serif} onClick={() => setSerif(!serif)}>
+        <button
+          className="btn-ghost"
+          aria-pressed={serif}
+          onClick={() => {
+            setSerif(!serif);
+            localStorage.setItem('tempo-journal-serif', String(!serif));
+          }}
+        >
           Serif
         </button>
+        <span className="journal-toolbar-status" role="status">
+          {status}
+        </span>
       </div>
-      <EditorContent editor={editor} />
+      <EditorContent
+        editor={editor}
+        onClick={() => {
+          if (editor?.isEmpty) editor.commands.focus('start');
+        }}
+      />
       <div className="journal-outline-help">
         <button
           className="btn-ghost"
@@ -230,7 +253,9 @@ export function JournalWriter({ date, entry }: { date: string; entry?: JournalEn
         </p>
       )}
       <div className="journal-save">
-        <span role="status">{status}</span>
+        <span>
+          {error ? 'Your draft is kept on this device.' : 'Your words stay on this device.'}
+        </span>
         <button className="btn-secondary" onClick={() => void saveRef.current()}>
           Save journal
         </button>

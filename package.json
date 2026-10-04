@@ -1,6 +1,6 @@
 {
   "name": "habit-tracker",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A local personal productivity workspace with habits, tasks and focus",
   "main": "dist-electron/main/index.js",
   "scripts": {

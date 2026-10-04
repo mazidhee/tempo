@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DailyPlan, PlanPriority } from '../../../shared/reflection';
+import { planPriorityLimit } from '../../../shared/reflection';
 
 type Draft = {
   date: string;
@@ -41,7 +42,7 @@ export function usePlanDraft(date: string, saved: DailyPlan | undefined, ready: 
         if (
           recovered.date === date &&
           Array.isArray(recovered.priorities) &&
-          recovered.priorities.length <= 3 &&
+          recovered.priorities.length <= planPriorityLimit &&
           Array.isArray(recovered.topics) &&
           ['sleep', 'energy', 'choice', 'title'].every(
             (key) => typeof recovered[key as keyof Draft] === 'string',

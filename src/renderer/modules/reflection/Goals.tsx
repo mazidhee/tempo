@@ -1,16 +1,17 @@
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Target, Archive, Pencil } from 'lucide-react';
+import { Plus, Archive, Pencil, ArrowUpRight } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
 import { shiftDay } from '../../../shared/habits';
 import type { Goal, GoalKind, SaveGoal } from '../../../shared/reflection';
-import { PageHeader, Empty } from '../../components/ui';
+import { Modal } from '../../components/ui';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Badge } from '../../components/ui/badge';
+import { SearchPicker } from '../../components/SearchPicker';
+import '../../styles/reflection-documents.css';
 import { useReflection } from './useReflection';
-import { ActionError, Field, LoadState, Panel, Select, useAction } from './ui';
+import { ActionError, Field, LoadState, Select, useAction } from './ui';
 const fresh = (): SaveGoal => ({
   title: '',
   kind: 'tasks',
@@ -27,7 +28,8 @@ export default function Goals() {
   const { snapshot } = useReflection(),
     action = useAction(),
     [draft, setDraft] = useState<SaveGoal>(fresh),
-    [showArchived, setShowArchived] = useState(false);
+    [showArchived, setShowArchived] = useState(false),
+    [formOpen, setFormOpen] = useState(false);
   if (!snapshot) return <LoadState />;
   const source = snapshot.source;
   const types: Record<GoalKind, Goal['linkType'][]> = {
@@ -81,127 +83,164 @@ export default function Goals() {
   const save = async () => {
     await window.workspaceAPI.invoke('goals:save', draft);
     setDraft(fresh());
+    setFormOpen(false);
   };
-  const destination = (g: Goal) =>
-    g.linkType === 'habit'
-      ? `/habits/${g.linkId}`
-      : g.linkType === 'chapter' || g.linkType === 'curriculum'
-        ? '/study'
-        : g.kind === 'tasks'
-          ? '/tasks'
-          : '/focus';
+  const destination = (g: Goal) => {
+    if (g.linkType === 'habit') return `/habits/${g.linkId}`;
+    if (g.linkType === 'curriculum') return `/study/${g.linkId}`;
+    if (g.linkType === 'chapter') {
+      const topic = source.study.topics.find((t) => t.id === g.linkId);
+      return topic ? `/study/${topic.curriculumId}?topic=${topic.id}` : '/study';
+    }
+    return g.kind === 'tasks' ? '/tasks' : '/focus';
+  };
   return (
-    <div className="reflection-page">
-      <PageHeader
-        title="Goals"
-        description="Set a direction. Your existing activity supplies the progress."
-      />
-      <ActionError error={action.error} />
-      <div className="reflection-layout">
-        <div className="reflection-stack">
-          {!snapshot.goalProgress.length && (
-            <Empty
-              icon={<Target />}
-              title="Give your progress a direction"
-              description="Link a habit, focused project, chapter or task target. Tempo computes progress from your recorded activity."
-            />
-          )}
-          {snapshot.goalProgress.map((p) => (
-            <Panel
-              key={p.goal.id}
-              title={privacy && p.goal.kind === 'habit' ? 'Private habit goal' : p.goal.title}
-              description={`${p.goal.start} – ${p.goal.deadline}`}
-            >
-              <div className="reflection-stack">
-                <div className="reflection-actions">
-                  <Badge variant="secondary">
-                    {p.status === 'on-track'
-                      ? 'On track'
-                      : p.status === 'behind'
-                        ? 'Behind'
-                        : 'Complete'}
-                  </Badge>
-                  <span className="reflection-stat">
-                    {Number(p.current.toFixed(2))} / {p.target}{' '}
-                    {p.goal.kind === 'habit'
-                      ? 'weeks'
-                      : p.goal.kind === 'focus'
-                        ? 'hours'
-                        : p.goal.kind === 'chapter'
-                          ? 'topics'
-                          : 'tasks'}
-                  </span>
-                </div>
-                <progress
-                  aria-label={`${privacy && p.goal.kind === 'habit' ? 'Private habit goal' : p.goal.title} progress`}
-                  className="reflection-progress"
-                  max={100}
-                  value={p.percent}
-                />
-                <p className="reflection-caption">{p.detail}</p>
-                <div className="reflection-actions">
-                  <Link className="reflection-widget-link" to={destination(p.goal)}>
-                    Open linked activity
-                  </Link>
-                  <Button variant="ghost" onClick={() => setDraft(p.goal)}>
-                    <Pencil />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={action.busy}
-                    onClick={() =>
-                      void action.run(
-                        () =>
-                          window.workspaceAPI.invoke('goals:archive', {
-                            id: p.goal.id,
-                            archived: true,
-                          }),
-                        'Goal archived',
-                      )
-                    }
-                  >
-                    <Archive />
-                    Archive
-                  </Button>
-                </div>
-              </div>
-            </Panel>
-          ))}
-          <Button variant="ghost" onClick={() => setShowArchived(!showArchived)}>
-            {showArchived ? 'Hide archived goals' : 'Show archived goals'}
-          </Button>
-          {showArchived &&
-            snapshot.goals
-              .filter((g) => g.archived)
-              .map((g) => (
-                <div className="reflection-row" key={g.id}>
-                  <span className="reflection-grow">
-                    {privacy && g.kind === 'habit' ? 'Private habit goal' : g.title}
-                  </span>
-                  <Button
-                    variant="secondary"
-                    disabled={action.busy}
-                    onClick={() =>
-                      void action.run(
-                        () =>
-                          window.workspaceAPI.invoke('goals:archive', {
-                            id: g.id,
-                            archived: false,
-                          }),
-                        'Goal restored',
-                      )
-                    }
-                  >
-                    Restore
-                  </Button>
-                </div>
-              ))}
+    <div className="goals-page">
+      <header className="reflection-document-header">
+        <div>
+          <h1>Your direction.</h1>
+          <p>Connect a goal to the work you already do.</p>
         </div>
-        <Panel
-          title={draft.id ? 'Edit goal' : 'Create a goal'}
-          description="On track compares recorded progress with the elapsed goal period; habit goals compare completed seven-day periods."
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setDraft(fresh());
+            setFormOpen(true);
+          }}
         >
+          <Plus />
+          New goal
+        </Button>
+      </header>
+      {!formOpen && <ActionError error={action.error} />}
+      <div className="goals-list">
+        {!snapshot.goalProgress.length && (
+          <div className="goals-empty">
+            <h2>What would you like to move towards?</h2>
+            <p>
+              A habit, a learning path, a few focused hours. Progress follows your recorded
+              activity.
+            </p>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDraft(fresh());
+                setFormOpen(true);
+              }}
+            >
+              <Plus />
+              Create your first goal
+            </Button>
+          </div>
+        )}
+        {snapshot.goalProgress.map((p) => (
+          <article className="goal-entry" key={p.goal.id}>
+            <div className="goal-entry-heading">
+              <h2>{privacy && p.goal.kind === 'habit' ? 'Private habit goal' : p.goal.title}</h2>
+              <span className={'goal-status ' + p.status}>
+                {p.status === 'on-track'
+                  ? 'On track'
+                  : p.status === 'behind'
+                    ? 'Needs attention'
+                    : 'Complete'}
+              </span>
+            </div>
+            <p className="goal-dates">
+              {p.goal.start} – {p.goal.deadline}
+            </p>
+            <div className="reflection-stack">
+              <div className="reflection-actions">
+                <span className="reflection-stat">
+                  {Number(p.current.toFixed(2))} / {p.target}{' '}
+                  {p.goal.kind === 'habit'
+                    ? 'weeks'
+                    : p.goal.kind === 'focus'
+                      ? 'hours'
+                      : p.goal.kind === 'chapter'
+                        ? 'topics'
+                        : 'tasks'}
+                </span>
+              </div>
+              <progress
+                aria-label={`${privacy && p.goal.kind === 'habit' ? 'Private habit goal' : p.goal.title} progress`}
+                className="reflection-progress"
+                max={100}
+                value={p.percent}
+              />
+              <p className="reflection-caption">{p.detail}</p>
+              <div className="reflection-actions">
+                <Link className="reflection-widget-link" to={destination(p.goal)}>
+                  Open linked activity <ArrowUpRight />
+                </Link>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setDraft(p.goal);
+                    setFormOpen(true);
+                  }}
+                >
+                  <Pencil />
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={action.busy}
+                  onClick={() =>
+                    void action.run(
+                      () =>
+                        window.workspaceAPI.invoke('goals:archive', {
+                          id: p.goal.id,
+                          archived: true,
+                        }),
+                      'Goal archived',
+                    )
+                  }
+                >
+                  <Archive />
+                  Archive
+                </Button>
+              </div>
+            </div>
+          </article>
+        ))}
+        <Button variant="ghost" onClick={() => setShowArchived(!showArchived)}>
+          {showArchived ? 'Hide archived goals' : 'Show archived goals'}
+        </Button>
+        {showArchived &&
+          snapshot.goals
+            .filter((g) => g.archived)
+            .map((g) => (
+              <div className="reflection-row" key={g.id}>
+                <span className="reflection-grow">
+                  {privacy && g.kind === 'habit' ? 'Private habit goal' : g.title}
+                </span>
+                <Button
+                  variant="secondary"
+                  disabled={action.busy}
+                  onClick={() =>
+                    void action.run(
+                      () =>
+                        window.workspaceAPI.invoke('goals:archive', {
+                          id: g.id,
+                          archived: false,
+                        }),
+                      'Goal restored',
+                    )
+                  }
+                >
+                  Restore
+                </Button>
+              </div>
+            ))}
+      </div>
+      {formOpen && (
+        <Modal title={draft.id ? 'Edit goal' : 'Create a goal'} onClose={() => setFormOpen(false)}>
+          <p className="goal-form-description">
+            Choose a direction and a realistic timeframe. Your habits, tasks and focus sessions
+            supply the progress.
+          </p>
+          <ActionError error={action.error} />
           <form
             className="reflection-stack"
             onSubmit={(e) => {
@@ -242,18 +281,18 @@ export default function Goals() {
             </Field>
             {draft.linkType !== 'all' && (
               <Field label="Linked record">
-                <Select
-                  required
+                <SearchPicker
+                  label="Linked goal record"
                   value={draft.linkId}
-                  onChange={(e) => setDraft({ ...draft, linkId: e.target.value })}
-                >
-                  <option value="">Choose {draft.linkType}</option>
-                  {options.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.title}
-                    </option>
-                  ))}
-                </Select>
+                  options={options.map((o) => ({
+                    value: o.id,
+                    label: o.title,
+                    group: draft.linkType,
+                    groupLabel: draft.linkType,
+                  }))}
+                  emptyLabel={'Choose ' + draft.linkType}
+                  onChange={(linkId) => setDraft({ ...draft, linkId })}
+                />
               </Field>
             )}
             {draft.kind !== 'chapter' && (
@@ -271,7 +310,7 @@ export default function Goals() {
                   type="number"
                   min={draft.kind === 'focus' ? 0.01 : 1}
                   max={draft.kind === 'habit' ? 7 : 100000}
-                  step={draft.kind === 'focus' ? 0.25 : 1}
+                  step={draft.kind === 'focus' ? 'any' : 1}
                   value={draft.target}
                   onChange={(e) => setDraft({ ...draft, target: Number(e.target.value) })}
                 />
@@ -320,18 +359,21 @@ export default function Goals() {
               </Field>
             </div>
             <div className="reflection-actions">
-              <Button type="submit" disabled={action.busy}>
+              <Button
+                type="submit"
+                disabled={
+                  action.busy || !draft.title.trim() || (draft.linkType !== 'all' && !draft.linkId)
+                }
+              >
                 Save goal
               </Button>
-              {draft.id && (
-                <Button type="button" variant="secondary" onClick={() => setDraft(fresh())}>
-                  Cancel editing
-                </Button>
-              )}
+              <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
+                Cancel
+              </Button>
             </div>
           </form>
-        </Panel>
-      </div>
+        </Modal>
+      )}
     </div>
   );
 }

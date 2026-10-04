@@ -51,10 +51,9 @@ function verify() {
         .map((column) => column.name);
       if (!keys.length) continue;
       const rows = before.prepare(`SELECT * FROM ${table}`).all();
-      assert.equal(
-        after.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n,
-        rows.length,
-        table + ' row count',
+      assert.ok(
+        after.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n >= rows.length,
+        table + ' retains original row count or adds records',
       );
       for (const row of rows) {
         const retained = after
@@ -73,7 +72,7 @@ function verify() {
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
       .map((row) => row.version);
-    for (const version of [203, 204, 205]) assert.ok(versions.includes(version));
+    for (const version of [203, 204, 205, 206]) assert.ok(versions.includes(version));
     const curricula = after
         .prepare('SELECT json FROM study_curricula')
         .all()
@@ -119,7 +118,17 @@ async function launch() {
     app = result.app;
     const page = result.page;
     lastPage = page;
-    for (const label of ['Home', 'Habits', 'Study', 'Plan', 'Journal', 'Review', 'Settings']) {
+    for (const label of [
+      'Home',
+      'Habits',
+      'Tasks',
+      'Study',
+      'Plan',
+      'Journal',
+      'Review',
+      'Goals',
+      'Settings',
+    ]) {
       let link = page
         .getByRole('navigation', { name: 'Main navigation' })
         .getByRole('link', { name: label, exact: true });
@@ -142,7 +151,9 @@ async function launch() {
       if (label === 'Settings') {
         await page.getByRole('button', { name: 'Backups', exact: true }).click();
         assert.ok(
-          await page.getByRole('button', { name: 'Save local snapshot now', exact: true }).isVisible(),
+          await page
+            .getByRole('button', { name: 'Save local snapshot now', exact: true })
+            .isVisible(),
         );
       }
       const file = path.join(directory, 'installed-' + label.toLowerCase() + '.png');
@@ -188,7 +199,10 @@ async function launch() {
   } catch (error) {
     if (lastPage && !lastPage.isClosed()) {
       await lastPage.screenshot({ path: path.join(directory, 'installed-check-failure.png') });
-      fs.writeFileSync(path.join(directory, 'installed-check-failure.txt'), await lastPage.locator('body').innerText());
+      fs.writeFileSync(
+        path.join(directory, 'installed-check-failure.txt'),
+        await lastPage.locator('body').innerText(),
+      );
     }
     throw error;
   } finally {

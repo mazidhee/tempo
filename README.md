@@ -7,7 +7,9 @@ application identity, user-data location and `habits.db` database.
 The October 3 redesign adds a dedicated Study library, Home study continuity,
 rich local journaling, compact daily habits, separate planning/review pages and
 optional encrypted private GitHub backups. Versioned migrations preserve the
-existing workspace. Current release evidence is in [redesign release](docs/redesign-release.md).
+existing workspace. Tempo 1.6 adds inline autosaving plans, refined task lists,
+full-page journal writing, saved weekly focus charts and progress-first goals.
+Current release evidence is in [daily workspace release](docs/daily-workspace-release.md).
 
 ## Use the workspace
 
@@ -24,9 +26,9 @@ existing workspace. Current release evidence is in [redesign release](docs/redes
   Focus Guard with repair and emergency exit.
 - **Study:** curricula and ordered chapter/topic trees, learned progress,
   linked Focus and a due queue with Again, Hard, Good and Easy grades.
-- **Plan and Journal:** up to three priorities, study selections, evening
-  reflection, optional sleep/energy, dated journal entries and local text search.
-- **Goals and Review:** progress from recorded activity, saved weekly summaries,
+- **Plan and Journal:** flexible inline priorities with autosave, study selections, evening
+  reflection, optional sleep/energy, full-page dated outlines and local text search.
+- **Goals and Review:** progress from recorded activity, saved weekly summaries and focus charts,
   written reflections and configurable reminders.
 - **Statistics and Settings:** date filters, habit/focus charts, focus-break
   history, CSV exports, system/light/dark appearance and complete JSON backups.

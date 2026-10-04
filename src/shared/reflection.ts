@@ -2,6 +2,8 @@ import type { EngineHabit, EngineLog } from './habits';
 import type { Productivity } from './productivity';
 import type { StudySnapshot } from './study';
 export type PriorityKind = 'task' | 'habit' | 'study' | 'free';
+/** Import/input safety bound, rather than a daily planning rule. */
+export const planPriorityLimit = 1000;
 export interface PlanPriority {
   id: string;
   kind: PriorityKind;
@@ -77,6 +79,8 @@ export interface WeeklySummary {
     byCurriculum: Record<string, number>;
     byPreset: Record<string, number>;
     bestDay: string | null;
+    /** Legacy snapshots have no daily detail; future/unobserved days are null. */
+    daily?: { date: string; seconds: number | null }[] | null;
   };
   study: {
     topicsLearned: number;

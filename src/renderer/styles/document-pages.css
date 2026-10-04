@@ -1,13 +1,34 @@
 :root {
   --document-width: 760px;
-  --document-body-size: 17px;
+  --document-body-size: 18px;
   --document-title-size: 40px;
   --cover-height: 220px;
 }
 .journal-page {
-  max-width: var(--document-width);
+  --journal-inset: clamp(24px, 6vw, 96px);
+  --journal-editor-height: max(440px, calc(100vh - 310px));
+  max-width: none;
   margin-inline: auto;
   width: 100%;
+  padding: var(--space-8) var(--journal-inset) var(--space-16);
+  gap: 0;
+}
+.journal-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.journal-page .page-header h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 650;
+  line-height: 1.2;
+}
+.app-shell:has(.journal-page.writing-mode) > [data-side] {
+  display: none;
+}
+.journal-page.writing-mode {
+  --journal-inset: clamp(24px, 9vw, 180px);
 }
 .journal-page .page-header {
   margin-block: 32px 24px;
@@ -32,7 +53,10 @@
   gap: 4px;
   flex-wrap: wrap;
   padding: 8px 0;
-  border-block: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-bottom: 1px solid var(--hairline);
   background: var(--background);
 }
 .journal-toolbar select {
@@ -47,13 +71,18 @@
   color: var(--foreground);
 }
 .journal-document .tiptap {
-  min-height: 420px;
-  padding: 24px 4px;
+  min-height: var(--journal-editor-height, 440px);
+  padding: var(--space-8) var(--space-3);
   font-size: var(--document-body-size);
   outline: none;
+  caret-color: var(--primary);
+  overflow-wrap: anywhere;
+}
+.journal-document .tiptap p {
+  max-width: 75ch;
 }
 .journal-document .tiptap:focus-visible {
-  box-shadow: inset 2px 0 var(--primary);
+  caret-color: var(--primary);
 }
 .journal-document .tiptap p {
   margin: 0 0 16px;
@@ -254,6 +283,12 @@
   .journal-page .page-header {
     margin-top: 20px;
   }
+  .journal-page {
+    --journal-inset: var(--space-4);
+  }
+  .journal-page .page-header h1 {
+    font-size: 32px;
+  }
 }
 
 .plan-evening > summary {
@@ -350,4 +385,75 @@
   overflow: auto;
   white-space: pre-wrap;
   font-size: 12px;
+}
+
+/* The default journal is a quiet writing canvas; modes only change navigation. */
+.journal-datebar input {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-subtle);
+  font-size: 13px;
+  width: 136px;
+}
+.journal-page-actions .btn-ghost {
+  font-size: 13px;
+  color: var(--ink-subtle);
+}
+.journal-toolbar .icon-button {
+  width: 32px;
+  height: 32px;
+  color: var(--ink-subtle);
+}
+.journal-toolbar .icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+.journal-toolbar-status {
+  margin-left: auto;
+  color: var(--ink-subtle);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.journal-document.is-empty
+  .tiptap
+  > ul:first-child
+  > li:first-child
+  > .outline-content
+  > p:first-child::before,
+.journal-document.is-empty .tiptap > p:first-child::before {
+  content: 'Start writing. One thought is enough.';
+  color: var(--ink-subtle);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.journal-document .tiptap:focus-visible {
+  outline: 1px solid transparent;
+}
+.journal-document .tiptap {
+  padding: 28px 0;
+  line-height: 1.85;
+}
+.journal-document .tiptap p {
+  max-width: 70ch;
+}
+.journal-toolbar select {
+  font-size: 13px;
+  width: 112px;
+}
+.journal-save .btn-secondary {
+  background: transparent;
+  border-color: transparent;
+  font-size: 13px;
+  color: var(--ink-subtle);
+}
+@media (max-width: 650px) {
+  .journal-toolbar-status {
+    width: 100%;
+    margin-left: 0;
+    padding: 4px 8px;
+  }
+  .journal-datebar {
+    gap: 4px;
+  }
 }

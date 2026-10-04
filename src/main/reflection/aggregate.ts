@@ -168,6 +168,10 @@ export function weeklySummary(
       byProject,
       byCurriculum,
       byPreset,
+      daily: dateRange(start, end).map((date) => ({
+        date,
+        seconds: date <= observed ? byDay[date] || 0 : null,
+      })),
       bestDay:
         Object.entries(byDay).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ||
         null,

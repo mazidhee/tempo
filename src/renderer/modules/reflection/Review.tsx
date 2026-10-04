@@ -2,10 +2,13 @@ import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/document-pages.css';
-import { NotebookPen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { shiftDay } from '../../../shared/habits';
+import { WeeklyFocusChart } from './WeeklyFocusChart';
+import '../../styles/reflection-documents.css';
 import { localDate } from '../../../shared/productivity';
-import { PageHeader, Empty } from '../../components/ui';
 import { Button } from '../../components/ui/button';
+import { Modal } from '../../components/ui';
 import { Input } from '../../components/ui/input';
 import { useReflection } from './useReflection';
 import { ActionError, Field, LoadState, Select, useAction } from './ui';
@@ -57,60 +60,169 @@ export default function Review() {
     [date, setDate] = useState(localDate()),
     [selected, setSelected] = useState(''),
     [obstacle, setObstacle] = useState(''),
-    [change, setChange] = useState('');
+    [change, setChange] = useState(''),
+    [weekPicker, setWeekPicker] = useState(false);
   const review = snapshot?.reviews.find((r) => r.start === selected);
   useEffect(() => {
     if (snapshot?.reviews.length && !selected) setSelected(snapshot.reviews[0].start);
   }, [snapshot, selected]);
   useEffect(() => {
-    setObstacle(review?.obstacle || '');
-    setChange(review?.change || '');
+    if (!review) return;
+    let draft: { obstacle?: string; change?: string } = {};
+    try {
+      draft = JSON.parse(localStorage.getItem('tempo-review-draft:' + review.start) || '{}');
+    } catch {
+      /* Saved reflection remains available. */
+    }
+    setObstacle(typeof draft.obstacle === 'string' ? draft.obstacle : review.obstacle || '');
+    setChange(typeof draft.change === 'string' ? draft.change : review.change || '');
   }, [review?.start, review?.editedAt, review?.generatedAt]);
   if (!snapshot) return <LoadState />;
+  const writeDraft = (key: 'obstacle' | 'change', value: string) => {
+    if (key === 'obstacle') setObstacle(value);
+    else setChange(value);
+    if (review) {
+      try {
+        localStorage.setItem(
+          'tempo-review-draft:' + review.start,
+          JSON.stringify({ obstacle, change, [key]: value }),
+        );
+      } catch {
+        /* In-memory writing stays available for manual save. */
+      }
+    }
+  };
+  const saveReflections = async () => {
+    if (!review) return;
+    const captured = JSON.stringify({ obstacle, change });
+    const result = await window.workspaceAPI.invoke('review:save', {
+      start: review.start,
+      obstacle,
+      change,
+    });
+    if (localStorage.getItem('tempo-review-draft:' + review.start) === captured)
+      localStorage.removeItem('tempo-review-draft:' + review.start);
+    return result;
+  };
   const generate = async () => {
     const result = await window.workspaceAPI.invoke('review:generate', { date });
     setSelected(result.start);
+    setWeekPicker(false);
   };
+  const refreshActivity = () =>
+    void action.run(async () => {
+      await saveReflections();
+      return window.workspaceAPI.invoke('review:generate', { date: review!.start, refresh: true });
+    }, 'Activity snapshot refreshed');
   return (
-    <div className="reflection-page review-page">
-      <PageHeader
-        title="Weekly review"
-        description="Notice what moved forward and choose one change for next week."
-      />
-      <ActionError error={action.error} />
-      <div className="reflection-actions">
-        <Field label="Saved week">
-          <Select
-            aria-label="Saved review week"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-          >
-            {!snapshot.reviews.length && <option value="">No saved reviews yet</option>}
-            {snapshot.reviews.map((r) => (
-              <option key={r.start} value={r.start}>
-                {r.start} – {r.end}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Week containing">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <Button
-          disabled={action.busy}
-          onClick={() => void action.run(generate, 'Weekly review ready')}
-        >
-          Open week
+    <div className="review-page">
+      <header className="reflection-document-header">
+        <div>
+          <h1>Weekly review.</h1>
+          <p>Make sense of the week, then choose your next step.</p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setWeekPicker(true)}>
+          <CalendarDays />
+          Browse weeks
         </Button>
-      </div>
+      </header>
+      <ActionError error={action.error} />
+      {weekPicker && (
+        <Modal title="Choose a review week" onClose={() => setWeekPicker(false)}>
+          <div className="review-week-controls">
+            <div className="review-saved-week">
+              <Select
+                aria-label="Saved review week"
+                value={selected}
+                onChange={(e) => {
+                  setSelected(e.target.value);
+                  setWeekPicker(false);
+                }}
+              >
+                {!snapshot.reviews.length && <option value="">No saved reviews yet</option>}
+                {snapshot.reviews.map((r) => (
+                  <option key={r.start} value={r.start}>
+                    {r.start} – {r.end}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="review-week-date">
+              <Input
+                aria-label="Week containing"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={action.busy}
+              onClick={() => void action.run(generate, 'Weekly review ready')}
+            >
+              Open week
+            </Button>
+          </div>
+        </Modal>
+      )}
       {!review ? (
-        <Empty
-          icon={<NotebookPen />}
-          title="Make time to look back"
-          description="Open a week to create a saved summary from your records. Completed weeks are also saved automatically after Sunday evening."
-        />
+        <section className="review-empty">
+          <h2>Make a little time to look back.</h2>
+          <p>
+            Browse weeks to choose a week. Tempo gathers your recorded activity into a saved review.
+          </p>
+        </section>
       ) : (
         <>
+          <div className="review-period">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Previous review week"
+              disabled={action.busy}
+              onClick={() =>
+                void action.run(async () => {
+                  const r = await window.workspaceAPI.invoke('review:generate', {
+                    date: shiftDay(review.start, -7),
+                  });
+                  setSelected(r.start);
+                  setDate(r.start);
+                }, 'Previous week opened')
+              }
+            >
+              <ChevronLeft />
+            </Button>
+            <h2>
+              {new Date(review.start + 'T12:00:00').toLocaleDateString(undefined, {
+                month: 'long',
+                day: 'numeric',
+              })}{' '}
+              –{' '}
+              {new Date(review.end + 'T12:00:00').toLocaleDateString(undefined, {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Next review week"
+              disabled={action.busy}
+              onClick={() =>
+                void action.run(async () => {
+                  const r = await window.workspaceAPI.invoke('review:generate', {
+                    date: shiftDay(review.start, 7),
+                  });
+                  setSelected(r.start);
+                  setDate(r.start);
+                }, 'Next week opened')
+              }
+            >
+              <ChevronRight />
+            </Button>
+          </div>
           <div className="review-overview" aria-label="Weekly overview">
             <div>
               <strong>{hours(review.summary.focus.seconds)}</strong>
@@ -129,16 +241,21 @@ export default function Review() {
               <span>Habit completions</span>
             </div>
           </div>
+          <WeeklyFocusChart
+            focus={review.summary.focus}
+            busy={action.busy}
+            onRefresh={refreshActivity}
+          />
           <section className="review-reflections">
             <h2>Take one thing forward</h2>
-            <div className="reflection-grid">
+            <div className="review-writing-grid">
               <Field label="What got in the way?">
                 <textarea
                   className="reflection-textarea"
                   disabled={privacy}
                   value={privacy ? 'Private reflection' : obstacle}
                   maxLength={20000}
-                  onChange={(e) => setObstacle(e.target.value)}
+                  onChange={(e) => writeDraft('obstacle', e.target.value)}
                 />
               </Field>
               <Field label="One change for next week">
@@ -147,23 +264,13 @@ export default function Review() {
                   disabled={privacy}
                   value={privacy ? 'Private reflection' : change}
                   maxLength={20000}
-                  onChange={(e) => setChange(e.target.value)}
+                  onChange={(e) => writeDraft('change', e.target.value)}
                   placeholder="Keep this small and specific."
                 />
               </Field>
               <Button
                 disabled={action.busy}
-                onClick={() =>
-                  void action.run(
-                    () =>
-                      window.workspaceAPI.invoke('review:save', {
-                        start: review.start,
-                        obstacle,
-                        change,
-                      }),
-                    'Review reflections saved',
-                  )
-                }
+                onClick={() => void action.run(saveReflections, 'Review reflections saved')}
               >
                 Save reflections
               </Button>
@@ -180,23 +287,7 @@ export default function Review() {
             as it was when generated.
           </p>
           <div className="reflection-actions">
-            <Button
-              variant="secondary"
-              disabled={action.busy}
-              onClick={() =>
-                void action.run(async () => {
-                  await window.workspaceAPI.invoke('review:save', {
-                    start: review.start,
-                    obstacle,
-                    change,
-                  });
-                  return window.workspaceAPI.invoke('review:generate', {
-                    date: review.start,
-                    refresh: true,
-                  });
-                }, 'Activity snapshot refreshed')
-              }
-            >
+            <Button variant="ghost" disabled={action.busy} onClick={refreshActivity}>
               Refresh activity snapshot
             </Button>
             <span className="reflection-caption">Your written reflections are preserved.</span>

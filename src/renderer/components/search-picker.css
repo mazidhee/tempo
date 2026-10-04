@@ -19,13 +19,20 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-6);
   font-size: var(--type-caption);
   color: var(--ink-subtle);
 }
 .search-picker-filter select {
   flex: 1;
   min-width: 0;
+  width: auto;
+  min-height: var(--control-height);
+  max-width: 260px;
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  font-size: var(--type-caption);
 }
 .search-picker-list {
   max-height: min(320px, 42vh);
@@ -59,7 +66,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-6);
   border-top: 1px solid var(--hairline);
   font-size: var(--type-caption);
   color: var(--ink-subtle);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { localDate } from '../../../shared/productivity';
 import { validDate, shiftDay } from '../../../shared/habits';
 import type { JournalEntry } from '../../../shared/reflection';
@@ -22,6 +22,15 @@ export default function Journal() {
     [error, setError] = useState(''),
     [page, setPage] = useState(0);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [writingMode, setWritingMode] = useState(false);
+  useEffect(() => {
+    if (!writingMode) return;
+    const exit = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setWritingMode(false);
+    };
+    window.addEventListener('keydown', exit);
+    return () => window.removeEventListener('keydown', exit);
+  }, [writingMode]);
   useEffect(() => {
     if (!browse) return;
     let alive = true;
@@ -50,7 +59,7 @@ export default function Journal() {
   if (!snapshot) return <LoadState />;
   const entry = snapshot.journal.find((j) => j.date === date);
   return (
-    <div className="reflection-page journal-page">
+    <div className={`reflection-page journal-page${writingMode ? ' writing-mode' : ''}`}>
       <div className="journal-datebar">
         <div className="row-actions">
           <button
@@ -77,10 +86,20 @@ export default function Journal() {
             Today
           </button>
         </div>
-        <button className="btn-ghost" aria-expanded={browse} onClick={() => setBrowse(!browse)}>
-          <Search />
-          Find a memory
-        </button>
+        <div className="journal-page-actions">
+          <button className="btn-ghost" aria-expanded={browse} onClick={() => setBrowse(!browse)}>
+            <Search />
+            Find a memory
+          </button>
+          <button
+            className="btn-ghost"
+            aria-pressed={writingMode}
+            onClick={() => setWritingMode(!writingMode)}
+          >
+            {writingMode ? <Minimize2 /> : <Maximize2 />}
+            {writingMode ? 'Exit writing mode' : 'Writing mode'}
+          </button>
+        </div>
       </div>
       {browse && (
         <div className="journal-browser">
@@ -152,7 +171,10 @@ export default function Journal() {
           day: 'numeric',
           year: 'numeric',
         })}
-        description="A little space for your thoughts."
+        description={
+          new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' }) +
+          ' · Your own space.'
+        }
       />
       <LogseqJournalFrame key={date} date={date}>
         <JournalWriter date={date} entry={entry} />

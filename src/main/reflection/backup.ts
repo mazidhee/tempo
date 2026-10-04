@@ -51,6 +51,23 @@ function validateReview(value: unknown): WeeklyReview {
   counts(f.byProject);
   counts(f.byCurriculum);
   counts(f.byPreset);
+  if (f.daily !== undefined && f.daily !== null) {
+    const daily = list(f.daily, 7);
+    if (daily.length !== 7) throw new Error('A review trend must cover seven days.');
+    let total = 0;
+    let unobserved = false;
+    daily.forEach((value, i) => {
+      const point = object(value);
+      if (day(point.date) !== shiftDay(start, i)) throw new Error('Invalid review trend date.');
+      if (point.seconds === null) unobserved = true;
+      else {
+        if (unobserved) throw new Error('Review observations must be consecutive.');
+        total += number(point.seconds, 0, Number.MAX_SAFE_INTEGER);
+      }
+    });
+    if (Math.abs(total - (f.seconds as number)) > 0.000001)
+      throw new Error('Review trend total does not match saved focus.');
+  }
   if (f.bestDay !== null) day(f.bestDay);
   const study = object(s.study);
   for (const key of ['topicsLearned', 'reviews', 'retained']) number(study[key], 0, 100000, true);
@@ -150,8 +167,8 @@ export const reflectionBackup = {
     }
     for (const j of value.journal)
       db.prepare(
-          'INSERT OR IGNORE INTO reflection_journal(date,text,document,updated_at) VALUES(?,?,?,?)',
-        ).run(j.date, j.text,j.document ? JSON.stringify(j.document) : null,j.updatedAt);
+        'INSERT OR IGNORE INTO reflection_journal(date,text,document,updated_at) VALUES(?,?,?,?)',
+      ).run(j.date, j.text, j.document ? JSON.stringify(j.document) : null, j.updatedAt);
     for (const g of value.goals) {
       const next = {
         ...g,

@@ -2,7 +2,7 @@
 
 Tempo keeps your workspace on this computer. Production features work offline;
 online backup is optional and only runs when you choose it. The original Habit Tracker database and
-history remain in use. This guide covers the Windows 1.5 study and daily workspace update.
+history remain in use. This guide covers the Windows 1.6 daily workspace update.
 Acceptance evidence and native verification limits are tracked in
 [release readiness](release-readiness.md).
 
@@ -57,38 +57,57 @@ at local midnight. See [habit engine rules](habit-engine.md) for schedules,
 protection limits and permitted recovery.
 
 Tasks supports quick add and a full editor for due dates, priority, project,
-tags and subtasks. Use Today, Upcoming, All or Completed, plus text and priority
-filters. Complete or reopen a task from its row; use its Focus action to start
+tags and subtasks. Use Today, Upcoming, All or Completed (the Logbook), plus text and priority
+filters. Click a task title to edit it; expand its subtask count to check off smaller steps.
+Press Enter in the inline add field to create a task. Quick add in Upcoming schedules it
+for tomorrow; adding in Completed opens All so the new task is visible.
+Complete or reopen a task from its row; use its Focus action to start
 linked work. Replacing unfinished Pomodoro work requires confirmation and does
 not record that phase as completed. Replacing tracked work saves its elapsed
 time before switching to the new task or habit.
 
 ## Plan and reflect
 
-In **Plan**, choose a date and add up to three priorities from tasks, habits,
-Study topics or your own text. **Add study topic** opens a searchable picker:
+In **Plan**, choose a date and add as many priorities as you need from tasks, habits,
+Study topics or your own text. Press Enter to add a priority, click its title to edit,
+and use its row controls to move it up or remove it. **Link existing** connects a record.
+**Add study topic** opens a searchable picker:
 type words from a topic or its parent, filter by curriculum, then select a result.
 Only 30 results appear at a time; use Previous/Next or narrow your search.
 Arrow keys and Enter select a result; Escape closes the picker.
 Only your selected topics appear in today's compact study list. Adding or removing
 a study topic saves the selection automatically. Choose its **Start focus** button
 to launch a linked Pomodoro; an existing active phase opens instead of being replaced.
-Use **Save priorities** to save priority edits. Mark priorities as done when appropriate. Linking a priority does
+Priorities and selected topics save automatically after a short pause; the status shows
+when they are saved locally. **Save now** retries or saves immediately.
+Mark priorities as done when appropriate. Linking a priority does
 not itself complete the underlying habit, task or Study topic.
 
-**Close the day** keeps optional sleep and energy separate from your writing.
+Expand **Evening reflection** to record optional sleep and energy separately from your writing.
 Open **Journal** for a full dated page: headings, bold/italic, lists, quotations and
 code blocks, with optional serif reading typography. Changes save locally after a
 short pause, and **Ctrl/Cmd+S** saves immediately. A local draft protects unfinished
 writing during an interrupted save. Find a memory supports words and date ranges.
 Old journal lines remain intact and searchable. Journal text also appears in Home
 calendar tooltips. Evening saves preserve your rich journal formatting.
+The everyday journal is an open writing canvas with a quiet formatting toolbar,
+live save status and a remembered serif option. Click anywhere in an empty page to
+begin at its first block. **Writing mode** expands the workspace and hides the sidebar;
+press Escape or its button to return. The editor stays a full page without an enclosing card.
 
 In **Review**, choose any day in a week and open that week. Tempo saves a snapshot
 of habits, focus, Study, tasks, plans and journal lines. **Refresh activity
 snapshot** updates the recorded activity while preserving your written
 reflections. Fill in **What got in the way?** and **One change for next week**,
-then **Save reflections**. Patterns are labelled correlations, not causes.
+then **Save reflections**. Choose **Browse weeks** to open another saved week or
+generate a review for any date. The focus line chart shows seven days from the saved
+snapshot. Time is credited to each session's recorded date; observed days without
+focus show zero, and future days remain unobserved. **Daily values** provides a
+readable list alongside the chart. Older reviews with totals only offer **Update
+activity** to create daily detail while preserving your writing. The focus details
+still show time by curriculum, project and preset. Previous/next week controls open
+neighboring weeks. Unfinished reflection drafts
+stay on this device when you change weeks. Patterns are labelled correlations, not causes.
 
 Completed weeks are saved automatically after Sunday evening while Tempo is
 running, or reconciled when it next runs. In **Settings → Reflection reminders**,
@@ -186,10 +205,11 @@ The review queue offers **Again** (1 calendar day), **Hard** (previous interval
 This is the confirmed minimal curriculum/topic/progress/review scope. Review
 grades reflect your recorded assessment; they are not a validated retention test.
 
-In **Goals**, choose habit frequency over a number of weeks, focus hours by a
+In **Goals**, choose **New goal**, then habit frequency over a number of weeks, focus hours by a
 date, chapter/curriculum completion or a task count. Select the linked record
 and dates, then **Save goal**. Progress and on-track status come from recorded
-activity. Archive and restore goals as needed. Statistics provides date-filtered
+activity. Your goal list shows progress first; **View linked activity** opens its source.
+Edit goals from their row, and archive or restore them as needed. Statistics provides date-filtered
 summaries and **Export sessions** for CSV.
 
 ## Explore and correct your time
@@ -298,6 +318,6 @@ New journal days begin with a bullet block, like Logseq. Press Enter for another
 
 Recent daily pages appear below the current journal. Expand one to write directly into that day; only one previous editor is open at a time. All journal edits autosave locally.
 
-Plan drafts stay on this device when switching dates or pages, including unfinished priority text, sleep and energy. Use Save priorities to include priorities in database backups; use Save evening reflection for sleep and energy.
+Plan drafts stay on this device when switching dates or pages, including unfinished priority text, sleep and energy. Saved priorities and selected topics are included in database backups automatically; use Save evening reflection for sleep and energy.
 
 Once a curriculum has a cover, its small corner controls fade back until you hover or use the keyboard. The image icon changes the cover and the cross removes it.
