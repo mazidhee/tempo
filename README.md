@@ -9,7 +9,10 @@ rich local journaling, compact daily habits, separate planning/review pages and
 optional encrypted private GitHub backups. Versioned migrations preserve the
 existing workspace. Tempo 1.6 adds inline autosaving plans, refined task lists,
 full-page journal writing, saved weekly focus charts and progress-first goals.
-Current release evidence is in [daily workspace release](docs/daily-workspace-release.md).
+The 1.8 workspace update adds a compact task board, a scheduled daily queue,
+direct habit check-ins and open Study, Journal and Review layouts. Approved scope
+and preservation requirements are in [workspace design](docs/approved-workspace-design.md).
+The installed 1.6 acceptance record remains in [daily workspace release](docs/daily-workspace-release.md).
 
 ## Use the workspace
 
@@ -19,15 +22,19 @@ Current release evidence is in [daily workspace release](docs/daily-workspace-re
 - **Habits:** Check, Quantity and Avoid habits; daily, weekday, weekly quota and
   anchored interval schedules; notes, stacking, non-negotiables, freezes,
   vacation pauses, detail/history views and archive/restore.
-- **Tasks:** quick add, priorities, due dates, projects, tags, subtasks,
-  completion/reopen and linked Focus. Filter by view, text and priority.
+- **Tasks:** Inbox, Next, Doing and Done board lanes; drag or keyboard moves;
+  scheduled dates/times, priorities, projects, tags, subtasks and linked Focus.
+  Archive, recoverable Trash and per-task Keep remain available.
+- **Work:** searchable project table, milestones, target dates and linked tasks.
 - **Focus:** editable presets, task/habit/Study links, main-process timer,
   restart recovery, tray controls, configurable global shortcuts and optional
   Focus Guard with repair and emergency exit.
 - **Study:** curricula and ordered chapter/topic trees, learned progress,
   linked Focus and a due queue with Again, Hard, Good and Easy grades.
-- **Plan and Journal:** flexible inline priorities with autosave, study selections, evening
-  reflection, optional sleep/energy, full-page dated outlines and local text search.
+- **Plan and Journal:** scheduled tasks flow into the daily focus queue;
+  completion updates the same task on its board. Flexible priorities and study
+  selections autosave. Journal provides an open dated writing canvas and local
+  text search. Earlier evening records remain saved.
 - **Goals and Review:** progress from recorded activity, saved weekly summaries and focus charts,
   written reflections and configurable reminders.
 - **Statistics and Settings:** date filters, habit/focus charts, focus-break

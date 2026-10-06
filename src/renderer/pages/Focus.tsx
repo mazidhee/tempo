@@ -1,3 +1,6 @@
+import '../styles/approved-workspace.css';
+import { tasksForDay } from '../../shared/taskBoard';
+import { useTaskFocus } from '../hooks/useTaskFocus';
 import { useEffect, useState } from 'react';
 import {
   Play,
@@ -43,6 +46,8 @@ const dial = { center: 150, radius: 139, circumference: Math.PI * 278 };
 export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boolean) => void }) {
   const privacy = usePrivacy();
   const { state, update } = useProductivity();
+  const taskFocus = useTaskFocus();
+  const [manageRhythms, setManageRhythms] = useState(false);
   const { snapshot, error, run, busy } = useFocus();
   const now = useClock();
   const { habits } = useHabits();
@@ -68,16 +73,13 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
   const tracking = !!timer.stopwatch;
   const inProgress = timer.startedAt !== null;
   const strict = !!snapshot?.settings.strict && inProgress;
-  const preset = state.presets.find((p) => p.id === timer.presetId) || state.presets[0];
   const remaining = tracking
     ? Math.floor(stopwatchSeconds(timer, now))
     : Math.min(Math.ceil(timer.duration), Math.ceil(secondsLeft(timer, now)));
   const progress = tracking ? 0 : Math.min(1, Math.max(0, 1 - remaining / timer.duration));
   const linked = timer.link ? `${timer.link.type}:${timer.link.id}` : '';
   const links: Link[] = [
-    ...state.tasks
-      .filter(activeTask)
-      .map(taskFocusLink),
+    ...state.tasks.filter(activeTask).map(taskFocusLink),
     ...habits.map((h) => ({ type: 'habit' as const, id: String(h.id), name: h.name })),
     ...study.topics
       .filter((t) => !t.archived)
@@ -123,14 +125,13 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
     ? events.filter((e) => e.runId === latest.id && e.kind === 'attempt')
     : [];
   return (
-    <div className="page focus-page">
+    <div className="page focus-page focus-queue-workspace">
       <PageHeader
         title="Focus"
-        description="Use a focus rhythm or track your time as you work."
         action={
           <div className="focus-actions">
             <FocusEmergency />
-            <Button variant="outline" onClick={() => setZen(!zen)}>
+            <Button variant="ghost" onClick={() => setZen(!zen)}>
               {zen ? <Minimize2 /> : <Maximize2 />}
               {zen ? 'Exit focus mode' : 'Focus mode'}
             </Button>
@@ -141,7 +142,6 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
       <div className="focus-workspace">
         <section className="panel focus-timer-card" aria-label="Focus timer">
           <div className="focus-field focus-link-field">
-            <span>Working on</span>
             <SearchPicker
               label="Choose focus link"
               value={linked}
@@ -175,7 +175,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
             <Button
               variant={!tracking ? 'secondary' : 'ghost'}
               aria-pressed={!tracking}
-              disabled={inProgress}
+              disabled={inProgress || busy}
               onClick={() => configure({ timerMode: 'pomodoro', phase: 'focus' })}
             >
               Pomodoro
@@ -183,7 +183,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
             <Button
               variant={tracking ? 'secondary' : 'ghost'}
               aria-pressed={tracking}
-              disabled={inProgress}
+              disabled={inProgress || busy}
               onClick={() => configure({ timerMode: 'stopwatch', phase: 'focus' })}
             >
               Time tracking
@@ -195,13 +195,40 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
                 <Button
                   variant={timer.phase === p ? 'secondary' : 'ghost'}
                   aria-pressed={timer.phase === p}
-                  disabled={inProgress}
+                  disabled={inProgress || busy}
                   key={p}
                   onClick={() => configure({ phase: p })}
                 >
                   {phases[p]}
                 </Button>
               ))}
+            </div>
+          )}
+          {!tracking && (
+            <div className="focus-presets" role="group" aria-label="Focus presets">
+              {state.presets.map((p) => (
+                <button
+                  key={p.id}
+                  className="btn-ghost"
+                  title={`${p.name} · ${durationLabel(p.short)} short break · ${durationLabel(p.long)} long break`}
+                  aria-label={`${p.name}: ${durationLabel(p.focus)} focus`}
+                  aria-pressed={p.id === timer.presetId}
+                  disabled={inProgress || busy}
+                  onClick={() =>
+                    configure({ presetId: p.id, timerMode: 'pomodoro', phase: 'focus' })
+                  }
+                >
+                  {durationLabel(p.focus)}
+                </button>
+              ))}
+              <button
+                className="icon-button"
+                aria-label="Manage focus presets"
+                aria-expanded={manageRhythms}
+                onClick={() => setManageRhythms((v) => !v)}
+              >
+                <Pencil />
+              </button>
             </div>
           )}
           <div className="focus-ring">
@@ -294,11 +321,7 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
           {strict && (
             <p className="muted small">Strict mode is on. Use Emergency exit to end this phase.</p>
           )}
-          <p className="muted small">
-            {tracking
-              ? 'Counts up. Pauses are excluded. Save and stop adds this time to your history.'
-              : `${timer.completed} completed · long break every ${preset.cycles} sessions`}
-          </p>
+          {!tracking && <p className="muted small">{timer.completed} completed</p>}
           <div className="focus-actions">
             <Shield />
             <span className="muted small">
@@ -307,72 +330,104 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
                 : snapshot?.guard.websitesActive
                   ? 'Websites blocked'
                   : snapshot?.guard.pending
-                    ? 'Applying Guard — timer controls remain available'
+                    ? 'Applying Guard'
                     : snapshot?.settings.enabled
-                      ? 'Guard will activate when a phase starts'
-                      : 'Guard is off — opt in under Settings → Focus'}
+                      ? 'Guard ready'
+                      : 'Guard off'}
               {strict ? ' · Strict mode' : ''}
             </span>
           </div>
-          <p className="muted small">
-            {tracking
-              ? 'Tracked time stays active until you save and stop. Pauses do not add time. Your tracker continues in the tray when the window closes.'
-              : 'Phases save automatically. The next phase waits for you. Your timer continues in the tray when the window closes.'}
-          </p>
         </section>
         <div>
-          <section className="panel focus-rhythms">
+          <section className="focus-task-queue" aria-label="Focus queue">
             <div className="section-heading">
-              <h2>Your rhythms</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Create preset"
-                disabled={inProgress}
-                onClick={() => setEditing(null)}
-              >
-                <Plus />
-              </Button>
+              <h2>Queue</h2>
+              <a className="text-link" href="#/plan">
+                Plan
+              </a>
             </div>
-            {state.presets.map((p) => (
-              <div className="focus-rhythm-row" key={p.id}>
-                <Button
-                  variant={p.id === timer.presetId ? 'secondary' : 'ghost'}
-                  className="focus-rhythm-select"
-                  disabled={inProgress}
-                  onClick={() => configure({ presetId: p.id, timerMode: 'pomodoro' })}
-                >
-                  <strong>{p.name}</strong>
-                  <span className="muted small">
-                    {durationLabel(p.focus)} focus · {durationLabel(p.short)} break
-                  </span>
-                </Button>
-                <div className="focus-actions">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={inProgress}
-                    aria-label={`Edit preset ${p.name}`}
-                    onClick={() => setEditing(p)}
+            {tasksForDay(state.tasks, localDate(), localDate())
+              .filter(activeTask)
+              .map((t) => (
+                <div className="focus-queue-row" key={t.id}>
+                  <div>
+                    <strong>{t.title}</strong>
+                    {t.project && <span className="muted small">{t.project}</span>}
+                    {t.scheduledTime && <time>{t.scheduledTime}</time>}
+                  </div>
+                  <button
+                    className="icon-button"
+                    aria-label={`Focus on ${t.title}`}
+                    disabled={busy || taskFocus.busy || inProgress}
+                    onClick={() => void taskFocus.start(t)}
                   >
-                    <Pencil />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={inProgress || state.presets.length === 1}
-                    aria-label={`Delete preset ${p.name}`}
-                    onClick={() => setDeleting(p)}
-                  >
-                    <Trash2 />
-                  </Button>
+                    <Play />
+                  </button>
                 </div>
-              </div>
-            ))}
-            {inProgress && (
-              <p className="muted small">Stop this phase before changing its rhythm or link.</p>
+              ))}
+            {!tasksForDay(state.tasks, localDate(), localDate()).some(activeTask) && (
+              <p className="workspace-empty">No tasks scheduled</p>
+            )}
+            {taskFocus.error && (
+              <p className="inline-error" role="alert">
+                {taskFocus.error}
+              </p>
             )}
           </section>
+          {manageRhythms && (
+            <section className="panel focus-rhythms">
+              <div className="section-heading">
+                <h2>Your rhythms</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Create preset"
+                  disabled={inProgress || busy}
+                  onClick={() => setEditing(null)}
+                >
+                  <Plus />
+                </Button>
+              </div>
+              {state.presets.map((p) => (
+                <div className="focus-rhythm-row" key={p.id}>
+                  <Button
+                    variant={p.id === timer.presetId ? 'secondary' : 'ghost'}
+                    className="focus-rhythm-select"
+                    disabled={inProgress || busy}
+                    onClick={() => configure({ presetId: p.id, timerMode: 'pomodoro' })}
+                  >
+                    <strong>{p.name}</strong>
+                    <span className="muted small">
+                      {durationLabel(p.focus)} focus · {durationLabel(p.short)} break
+                    </span>
+                  </Button>
+                  <div className="focus-actions">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={inProgress || busy}
+                      aria-label={`Edit preset ${p.name}`}
+                      onClick={() => setEditing(p)}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={inProgress || state.presets.length === 1}
+                      aria-label={`Delete preset ${p.name}`}
+                      onClick={() => setDeleting(p)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {inProgress && (
+                <p className="muted small">Stop this phase before changing its rhythm or link.</p>
+              )}
+            </section>
+          )}
           <section className="panel focus-history">
             <div className="section-heading">
               <h2>Today’s focus</h2>

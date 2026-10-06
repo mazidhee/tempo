@@ -1,3 +1,4 @@
+import '../styles/approved-workspace.css';
 import { useRef, useState } from 'react';
 import { Download, Upload, Monitor, Sun, Moon, ShieldCheck, Keyboard, Check } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
@@ -17,7 +18,7 @@ export default function Settings() {
   const Section = contribution?.component;
   return (
     <div className="page settings-shell">
-      <PageHeader title="Settings" description="Workspace preferences and local data." />
+      <PageHeader title="Settings" />
       <div className="settings-layout">
         <nav aria-label="Settings sections">
           <button

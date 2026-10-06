@@ -70,7 +70,7 @@ export const routeRegistry: WorkspaceRoute[] = [
 ];
 function HabitsLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="legacy-page">
+    <div className="legacy-page habits-workspace">
       <div className="tabs habit-tabs">
         {[
           ['/habits', 'Today'],

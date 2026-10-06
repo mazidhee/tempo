@@ -34,8 +34,7 @@ export function WeeklyFocusChart({
     <section className="review-focus-chart" aria-label="Saved weekly focus trend">
       <div className="review-chart-heading">
         <div>
-          <h2>Your focus, day by day</h2>
-          <p>Small sessions. A week of momentum.</p>
+          <h2>Focus</h2>
         </div>
         <span className="review-chart-unit">Hours</span>
       </div>
@@ -102,7 +101,7 @@ export function WeeklyFocusChart({
             <span>
               {active.length
                 ? `${active.length} focused ${active.length === 1 ? 'day' : 'days'}${best ? ' · Best: ' + weekday(best.date) : ''}`
-                : 'A fresh week. Your first session starts the story.'}
+                : 'No focus sessions recorded'}
             </span>
             <details>
               <summary>Daily values</summary>
@@ -118,9 +117,7 @@ export function WeeklyFocusChart({
               </dl>
             </details>
           </div>
-          <p className="review-chart-provenance">
-            Saved activity, credited to each session’s recorded date. Unobserved days stay open.
-          </p>
+          <p className="review-chart-provenance">Unobserved days stay open.</p>
         </>
       ) : (
         <div className="review-chart-empty">

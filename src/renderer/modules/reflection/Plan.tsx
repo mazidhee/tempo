@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Plus,
-  X,
-  ArrowUp,
-  Pencil,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Timer,
-  Moon,
-} from 'lucide-react';
+import { Plus, X, ArrowUp, Pencil, ChevronLeft, ChevronRight, Check, Timer } from 'lucide-react';
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useStudyFocus } from '../../hooks/useStudyFocus';
 import { localDate } from '../../../shared/productivity';
+import { tasksForDay } from '../../../shared/taskBoard';
+import { useProductivity } from '../../hooks/ProductivityProvider';
+import { useTaskFocus } from '../../hooks/useTaskFocus';
+import '../../styles/approved-workspace.css';
 import { activeTask } from '../../../shared/taskLifecycle';
 import { shiftDay, validDate } from '../../../shared/habits';
 import { planPriorityLimit, type PriorityKind } from '../../../shared/reflection';
@@ -25,44 +19,32 @@ import { studyOptions } from '../../../shared/picker';
 import { useReflection } from './useReflection';
 import { usePlanDraft } from './usePlanDraft';
 import { usePlanAutosave } from './usePlanAutosave';
-import { ActionError, Field, LoadState, Select, useAction } from './ui';
+import { ActionError, LoadState, useAction } from './ui';
 import './daily-plan.css';
 export default function Plan() {
   const privacy = usePrivacy(),
     focus = useStudyFocus(),
     action = useAction();
   const { snapshot } = useReflection();
+  const { state, update } = useProductivity(),
+    taskFocus = useTaskFocus();
   const [date, setDate] = useState(localDate());
   const [editing, setEditing] = useState<string | null>(null),
     [editTitle, setEditTitle] = useState('');
   const saved = snapshot?.plans.find((p) => p.date === date);
   const draft = usePlanDraft(date, saved, !!snapshot);
-  const {
-    priorities,
-    setPriorities,
-    topics,
-    setTopics,
-    title,
-    setTitle,
-    sleep,
-    setSleep,
-    energy,
-    setEnergy,
-    setChoice,
-  } = draft;
+  const { priorities, setPriorities, topics, setTopics, title, setTitle, setChoice } = draft;
   const ready = !!snapshot && draft.date === date;
   const autosave = usePlanAutosave(date, priorities, topics, ready, saved);
   if (!snapshot) return <LoadState />;
   const source = snapshot.source;
   const options = [
-    ...source.productivity.tasks
-      .filter(activeTask)
-      .map((t) => ({
-        value: 'task:' + t.id,
-        label: t.title,
-        group: 'task',
-        groupLabel: t.area === 'work' ? 'Work tasks' : 'Tasks',
-      })),
+    ...state.tasks.filter(activeTask).map((t) => ({
+      value: 'task:' + t.id,
+      label: t.title,
+      group: 'task',
+      groupLabel: t.area === 'work' ? 'Work tasks' : 'Tasks',
+    })),
     ...source.habits
       .filter((h) => !h.is_archived)
       .map((h) => ({
@@ -87,6 +69,13 @@ export default function Plan() {
           ? source.habits.find((h) => String(h.id) === linkId)?.name
           : selected?.label;
     if (!nextTitle) return;
+    if (kind === 'task' && linkId) {
+      update((s) => ({
+        ...s,
+        tasks: s.tasks.map((t) => (t.id === linkId ? { ...t, due: date } : t)),
+      }));
+      return;
+    }
     setPriorities([
       ...priorities,
       {
@@ -121,17 +110,22 @@ export default function Plan() {
       );
     setEditing(null);
   };
-  const closeDay = async () => {
-    await autosave.saveNow();
-    await window.workspaceAPI.invoke('plan:evening', {
-      date,
-      doneIds: priorities.filter((p) => p.done).map((p) => p.id),
-      sleep: sleep === '' ? null : Number(sleep),
-      energy: energy === '' ? null : Number(energy),
-    });
-  };
+  const scheduled = tasksForDay(state.tasks, date, localDate());
+  const linked = state.tasks.filter(
+    (t) =>
+      !t.archivedAt &&
+      !t.trashedAt &&
+      priorities.some((p) => p.kind === 'task' && p.linkId === t.id),
+  );
+  const queue = [...scheduled, ...linked.filter((t) => !scheduled.some((q) => q.id === t.id))];
+  const lead = queue.find((t) => !t.completedAt);
+  const manualPriorities = priorities.filter(
+    (p) =>
+      p.kind !== 'task' ||
+      !state.tasks.some((t) => t.id === p.linkId && !t.archivedAt && !t.trashedAt),
+  );
   return (
-    <div className="daily-plan">
+    <div className="daily-plan workspace-plan">
       <div className="daily-plan-datebar">
         <Input
           aria-label="Plan date"
@@ -166,19 +160,108 @@ export default function Plan() {
         </div>
       </div>
       <header className="daily-plan-header">
-        <h1>{date === localDate() ? 'Make room for today.' : dayTitle}</h1>
-        <p>A clear place to begin. Choose what matters, then take the first step.</p>
+        <h1>{date === localDate() ? 'Today' : dayTitle}</h1>
       </header>
-      <ActionError error={action.error || draft.draftError || autosave.error || focus.error} />
+      <ActionError
+        error={action.error || draft.draftError || autosave.error || focus.error || taskFocus.error}
+      />
+      <section className="plan-task-queue" aria-label="Daily task queue">
+        {lead && (
+          <div className="plan-lead">
+            <div>
+              <span className="plan-lead-time">
+                {lead.scheduledTime || (lead.due < date ? 'Overdue' : 'Up next')}
+              </span>
+              <h2>{lead.title}</h2>
+              {lead.project && <span className="muted">{lead.project}</span>}
+            </div>
+            <Button disabled={taskFocus.busy} onClick={() => void taskFocus.start(lead)}>
+              <Timer />
+              Start focus
+            </Button>
+          </div>
+        )}
+        <div className="daily-plan-section-heading">
+          <h2>Queue</h2>
+          <Link to="/tasks">Open board</Link>
+        </div>
+        {queue.map((t) => (
+          <div className={`plan-queue-row${t.completedAt ? ' is-done' : ''}`} key={t.id}>
+            <button
+              className={`check-button ${t.completedAt ? 'checked' : ''}`}
+              aria-pressed={!!t.completedAt}
+              aria-label={`${t.completedAt ? 'Reopen' : 'Complete'} task ${t.title}`}
+              onClick={() => {
+                const completedAt = t.completedAt ? null : new Date().toISOString();
+                update((s) => ({
+                  ...s,
+                  tasks: s.tasks.map((task) =>
+                    task.id === t.id ? { ...task, completedAt } : task,
+                  ),
+                }));
+                setPriorities(
+                  priorities.map((p) =>
+                    p.kind === 'task' && p.linkId === t.id ? { ...p, done: !!completedAt } : p,
+                  ),
+                );
+              }}
+            >
+              {t.completedAt && <Check />}
+            </button>
+            <div className="queue-task-copy">
+              <strong>{t.title}</strong>
+              {t.project && <small>{t.project}</small>}
+            </div>
+            <input
+              type="time"
+              aria-label={`Time for ${t.title}`}
+              value={t.scheduledTime ?? ''}
+              onChange={(e) =>
+                update((s) => ({
+                  ...s,
+                  tasks: s.tasks.map((task) =>
+                    task.id === t.id ? { ...task, scheduledTime: e.target.value } : task,
+                  ),
+                }))
+              }
+            />
+            {!t.completedAt && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Focus on ${t.title}`}
+                disabled={taskFocus.busy}
+                onClick={() => void taskFocus.start(t)}
+              >
+                <Timer />
+              </Button>
+            )}
+          </div>
+        ))}
+        {!queue.length && <p className="workspace-empty">No tasks scheduled</p>}
+        <SearchPicker
+          label="Schedule a task"
+          value=""
+          options={options.filter(
+            (o) => o.group === 'task' && !queue.some((t) => o.value === 'task:' + t.id),
+          )}
+          emptyLabel="Add from board"
+          className="plan-inline-picker"
+          onChange={(value) => {
+            if (value) add(value);
+          }}
+          disabled={!ready}
+        />
+      </section>
       <section aria-labelledby="plan-priorities-heading">
         <div className="daily-plan-section-heading">
-          <h2 id="plan-priorities-heading">Your priorities</h2>
+          <h2 id="plan-priorities-heading">Priorities</h2>
           <span>
-            {priorities.filter((p) => p.done).length} of {priorities.length} complete
+            {manualPriorities.filter((p) => p.done).length}/{manualPriorities.length} complete
           </span>
         </div>
         <ul className="daily-priority-list">
-          {priorities.map((p, index) => (
+          {manualPriorities.map((p, index) => (
             <li key={p.id} className={p.done ? 'daily-priority done' : 'daily-priority'}>
               <Checkbox
                 id={'priority-' + p.id}
@@ -240,7 +323,14 @@ export default function Plan() {
                     aria-label={'Move ' + label(p) + ' up'}
                     onClick={() => {
                       const next = [...priorities];
-                      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                      const currentIndex = next.findIndex((q) => q.id === p.id);
+                      const previousIndex = next.findIndex(
+                        (q) => q.id === manualPriorities[index - 1].id,
+                      );
+                      [next[previousIndex], next[currentIndex]] = [
+                        next[currentIndex],
+                        next[previousIndex],
+                      ];
                       setPriorities(next);
                     }}
                   >
@@ -259,11 +349,7 @@ export default function Plan() {
             </li>
           ))}
         </ul>
-        {!priorities.length && (
-          <p className="daily-plan-empty">
-            Start with one thing that would make today feel worthwhile.
-          </p>
-        )}
+        {!manualPriorities.length && <p className="daily-plan-empty">No additional priorities</p>}
         <div className="daily-priority-add">
           <Plus aria-hidden="true" />
           <Input
@@ -317,7 +403,7 @@ export default function Plan() {
       </section>
       <section aria-labelledby="plan-study-heading">
         <div className="daily-plan-section-heading">
-          <h2 id="plan-study-heading">A little time to learn</h2>
+          <h2 id="plan-study-heading">Study</h2>
           <SearchPicker
             label="Add study topic"
             value=""
@@ -367,60 +453,9 @@ export default function Plan() {
             </div>
           ))}
         </div>
-        {!topics.length && (
-          <p className="daily-plan-empty">
-            Choose a topic for today. Your full roadmaps stay in <Link to="/study">Study</Link>.
-          </p>
-        )}
+        {!topics.length && <p className="daily-plan-empty">No topics selected</p>}
       </section>
-      <details className="daily-plan-evening">
-        <summary>
-          <span>
-            <Moon />
-            When the day winds down
-          </span>
-          <small>{saved?.evening.completedAt ? 'Reflection saved' : 'Open reflection'}</small>
-        </summary>
-        <div className="daily-plan-evening-content">
-          <p>Review your priorities, then make a little space to reflect.</p>
-          <div className="daily-plan-evening-fields">
-            <Field label="Sleep hours (optional)">
-              <Input
-                type="number"
-                min={0}
-                max={24}
-                step={0.5}
-                value={sleep}
-                onChange={(e) => setSleep(e.target.value)}
-              />
-            </Field>
-            <Field label="Energy (optional)">
-              <Select value={energy} onChange={(e) => setEnergy(e.target.value)}>
-                <option value="">Not recorded</option>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>
-                    {n} / 5
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <div className="daily-plan-evening-footer">
-            <Link to={'/journal?date=' + date}>Write in this day’s journal</Link>
-            <Button
-              size="sm"
-              disabled={action.busy || !ready}
-              onClick={() => void action.run(closeDay, 'Evening reflection saved')}
-            >
-              Save evening reflection
-            </Button>
-          </div>
-          <p className="daily-plan-footnote">
-            Checking a priority updates this plan. Linked tasks and habits keep their own completion
-            history.
-          </p>
-        </div>
-      </details>
+
       <footer className="daily-plan-links">
         <Link to={'/journal?date=' + date}>Open journal</Link>
         <Link to="/goals">Your goals</Link>

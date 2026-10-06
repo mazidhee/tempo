@@ -1,3 +1,4 @@
+import '../styles/approved-workspace.css';
 import { CurriculumCover } from '../components/CurriculumCover';
 import '../styles/document-pages.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -263,7 +264,7 @@ export default function Study() {
         description={
           curriculum
             ? `${progress.learned}/${progress.total} topics learned · ${formatStudyTime(time.curriculumSeconds[curriculum.id] || 0)} recorded`
-            : 'Your learning paths. One place to pick up where you left off.'
+            : undefined
         }
         action={
           <div className="row-actions">
@@ -284,12 +285,12 @@ export default function Study() {
               </>
             ) : (
               <>
-                <button className="btn-secondary" onClick={() => setImporting(true)}>
+                <button className="btn-ghost" onClick={() => setImporting(true)}>
                   <Upload />
                   Import roadmaps
                 </button>
                 <button
-                  className="btn-primary"
+                  className="btn-ghost"
                   onClick={() =>
                     setCurriculumDraft({ title: '', description: '', studyFocus: true })
                   }
@@ -328,9 +329,7 @@ export default function Study() {
               Show archived
             </label>
           </div>
-          <p className="muted study-section-intro">
-            Pin the subjects you’re working on now. Everything else stays ready for later.
-          </p>
+
           <div className="study-library">
             {curricula.filter((c) => isStudyFocus(c)).map(curriculumRow)}
           </div>

@@ -1,3 +1,4 @@
+import './styles/approved-workspace.css';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Search, X, Timer, Eye, EyeOff, Plus, BookOpen } from 'lucide-react';
@@ -172,7 +173,9 @@ export default function App() {
             </div>
           )}
           <main ref={main} id="main-content" className="main-content" tabIndex={-1}>
-            {ready && <RecoveryNotice />}
+            {ready && ['/', '/statistics', '/analytics'].includes(location.pathname) && (
+              <RecoveryNotice />
+            )}
             {!ready ? (
               <div className="empty">
                 <p>

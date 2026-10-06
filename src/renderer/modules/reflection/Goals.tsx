@@ -1,3 +1,4 @@
+import '../../styles/approved-workspace.css';
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -98,8 +99,7 @@ export default function Goals() {
     <div className="goals-page">
       <header className="reflection-document-header">
         <div>
-          <h1>Your direction.</h1>
-          <p>Connect a goal to the work you already do.</p>
+          <h1>Goals</h1>
         </div>
         <Button
           variant="ghost"
@@ -117,11 +117,7 @@ export default function Goals() {
       <div className="goals-list">
         {!snapshot.goalProgress.length && (
           <div className="goals-empty">
-            <h2>What would you like to move towards?</h2>
-            <p>
-              A habit, a learning path, a few focused hours. Progress follows your recorded
-              activity.
-            </p>
+            <h2>No goals yet</h2>
             <Button
               variant="ghost"
               onClick={() => {
@@ -168,10 +164,13 @@ export default function Goals() {
                 max={100}
                 value={p.percent}
               />
-              <p className="reflection-caption">{p.detail}</p>
+              <details className="goal-calculation">
+                <summary>Progress details</summary>
+                <p>{p.detail}</p>
+              </details>
               <div className="reflection-actions">
                 <Link className="reflection-widget-link" to={destination(p.goal)}>
-                  Open linked activity <ArrowUpRight />
+                  Activity <ArrowUpRight />
                 </Link>
                 <Button
                   variant="ghost"
@@ -236,10 +235,6 @@ export default function Goals() {
       </div>
       {formOpen && (
         <Modal title={draft.id ? 'Edit goal' : 'Create a goal'} onClose={() => setFormOpen(false)}>
-          <p className="goal-form-description">
-            Choose a direction and a realistic timeframe. Your habits, tasks and focus sessions
-            supply the progress.
-          </p>
           <ActionError error={action.error} />
           <form
             className="reflection-stack"

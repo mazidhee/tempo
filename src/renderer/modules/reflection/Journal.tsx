@@ -1,3 +1,4 @@
+import '../../styles/approved-workspace.css';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, Maximize2, Minimize2 } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function Journal() {
   const date = validDate(params.get('date') || '') ? params.get('date')! : localDate();
   const { snapshot } = useReflection();
   const { state } = useProductivity();
-  const thought = state.settings.thoughtLibrary?.days.find(v => v.date === date);
+  const thought = state.settings.thoughtLibrary?.days.find((v) => v.date === date);
   const [query, setQuery] = useState(params.get('query') || ''),
     [start, setStart] = useState(''),
     [end, setEnd] = useState(''),
@@ -93,7 +94,7 @@ export default function Journal() {
         <div className="journal-page-actions">
           <button className="btn-ghost" aria-expanded={browse} onClick={() => setBrowse(!browse)}>
             <Search />
-            Find a memory
+            Search journal
           </button>
           <button
             className="btn-ghost"
@@ -175,15 +176,22 @@ export default function Journal() {
           day: 'numeric',
           year: 'numeric',
         })}
-        description={
-          new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' }) +
-          ' · Your own space.'
-        }
+        description={new Date(date + 'T12:00:00').toLocaleDateString(undefined, {
+          weekday: 'long',
+        })}
       />
-      {thought && <details className="journal-thought" key={`thought-${date}`} open={params.get('thought') === '1' ? true : undefined}>
-        <summary>Return to this day’s thought</summary><p>{thought.text}</p><small className="muted">{thought.author}</small>
-        {thought.prompt && <p className="reflection-question">{thought.prompt}</p>}
-      </details>}
+      {thought && (
+        <details
+          className="journal-thought"
+          key={`thought-${date}`}
+          open={params.get('thought') === '1' ? true : undefined}
+        >
+          <summary>Return to this day’s thought</summary>
+          <p>{thought.text}</p>
+          <small className="muted">{thought.author}</small>
+          {thought.prompt && <p className="reflection-question">{thought.prompt}</p>}
+        </details>
+      )}
       <LogseqJournalFrame key={date} date={date}>
         <JournalWriter date={date} entry={entry} />
       </LogseqJournalFrame>

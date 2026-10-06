@@ -1,31 +1,39 @@
-import { useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Check, Timer, Pencil, Trash2, Search, Flag, ChevronDown, Archive, Undo2 } from 'lucide-react';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Check, Timer, Trash2, Search, Archive, Undo2, MoreHorizontal } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
-import { localDate, focusRequest, type Task } from '../../shared/productivity';
-import { shiftDay } from '../../shared/habits';
+import { localDate, type Task } from '../../shared/productivity';
+import { activeTask, taskArea, restoreTask, type TaskArea } from '../../shared/taskLifecycle';
+import { boardLanes, boardLane, moveTask, type BoardLane } from '../../shared/taskBoard';
+import { useTaskFocus } from '../hooks/useTaskFocus';
 import { Modal } from '../components/ui';
-import { Button } from '../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../components/ui/dropdown-menu';
 import '../styles/task-page.css';
-import { activeTask, taskArea, taskFocusLink, restoreTask, type TaskArea } from '../../shared/taskLifecycle';
+import '../styles/approved-workspace.css';
 export default function Tasks() {
-  const { state, update, ready } = useProductivity();
-  const navigate = useNavigate();
+  const { state, update, ready } = useProductivity(),
+    focus = useTaskFocus();
   const [params, setParams] = useSearchParams();
-  const views = ['Today', 'Upcoming', 'All', 'Completed', 'Archived', 'Trash'];
-  const view = views.includes(params.get('view') || '') ? params.get('view')! : 'Today';
-  const [quick, setQuick] = useState('');
-  const area = ['personal', 'work', 'study'].includes(params.get('area') || '') ? params.get('area')! : 'all';
-  const projectId = params.get('project') || '';
-  const setView = (value: string) => { setParams(p => { p.set('view', value); return p; }); };
+  const collection =
+    params.get('view') === 'Trash'
+      ? 'Trash'
+      : params.get('view') === 'Archived'
+        ? 'Archived'
+        : 'Board';
+  const area = params.get('area') || 'all',
+    projectId = params.get('project') || '';
   const [query, setQuery] = useState(''),
-    [priorityFilter, setPriorityFilter] = useState('all');
-  const [editing, setEditing] = useState<Task | null | undefined>(undefined);
-  const [deleting, setDeleting] = useState<Task | null>(null);
-  const today = localDate();
-  const focusPending = useRef(false);
-  const [focusBusy, setFocusBusy] = useState(false),
-    [focusError, setFocusError] = useState('');
+    [priority, setPriority] = useState('all');
+  const [editing, setEditing] = useState<Task | null>(null),
+    [deleting, setDeleting] = useState<Task | null>(null);
+  const [dragged, setDragged] = useState<string | null>(null),
+    [dropLane, setDropLane] = useState<BoardLane | null>(null);
+  const [quick, setQuick] = useState<Partial<Record<BoardLane, string>>>({});
   const save = (task: Task) => {
     update((s) => ({
       ...s,
@@ -33,363 +41,316 @@ export default function Tasks() {
         ? s.tasks.map((t) => (t.id === task.id ? task : t))
         : [...s.tasks, task],
     }));
-    setEditing(undefined);
+    setEditing(null);
   };
-  const create = (title: string): Task => ({
+  const create = (title = '', lane: BoardLane = 'inbox'): Task => ({
     id: crypto.randomUUID(),
     title: title.trim(),
-    due: view === 'Today' ? today : view === 'Upcoming' ? shiftDay(today, 1) : '',
-    priority: priorityFilter === 'all' ? 'medium' : (priorityFilter as Task['priority']),
+    due: '',
+    priority: 'medium',
+    project: '',
     tags: [],
     subtasks: [],
     createdAt: new Date().toISOString(),
-    completedAt: null,
-    area: area === 'all' ? 'personal' : area as TaskArea,
-    workProjectId: area === 'work' && projectId ? projectId : undefined,
-    project: area === 'work' && projectId ? state.settings.workProjects?.find(p => p.id === projectId)?.title ?? '' : '',
+    completedAt: lane === 'done' ? new Date().toISOString() : null,
+    boardStatus: lane === 'done' ? 'next' : lane,
+    area: (area === 'all' ? 'personal' : area) as TaskArea,
+    ...(area === 'work' && projectId
+      ? {
+          workProjectId: projectId,
+          project: state.settings.workProjects?.find((p) => p.id === projectId)?.title ?? '',
+        }
+      : {}),
   });
   const tasks = state.tasks
     .filter(
       (t) =>
-        (view === 'Trash' ? !!t.trashedAt : view === 'Archived' ? !!t.archivedAt && !t.trashedAt :
-          view === 'Completed' ? !!t.completedAt && !t.archivedAt && !t.trashedAt : activeTask(t)) &&
+        (collection === 'Trash'
+          ? !!t.trashedAt
+          : collection === 'Archived'
+            ? !!t.archivedAt && !t.trashedAt
+            : !t.archivedAt && !t.trashedAt) &&
         (area === 'all' || taskArea(t) === area) &&
         (!projectId || t.workProjectId === projectId) &&
-        (view !== 'Today' || (!!t.due && t.due <= today)) &&
-        (view !== 'Upcoming' || t.due > today) &&
-        (priorityFilter === 'all' || t.priority === priorityFilter) &&
+        (priority === 'all' || t.priority === priority) &&
         `${t.title} ${t.project} ${t.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()),
     )
-    .sort((a, b) =>
-      view === 'Completed'
-        ? (b.completedAt || '').localeCompare(a.completedAt || '')
-        : (a.due || '9999').localeCompare(b.due || '9999') ||
-          ['high', 'medium', 'low'].indexOf(a.priority) -
-            ['high', 'medium', 'low'].indexOf(b.priority),
+    .sort(
+      (a, b) =>
+        (a.due || '9999').localeCompare(b.due || '9999') ||
+        (a.scheduledTime || '99').localeCompare(b.scheduledTime || '99'),
     );
-  const dateLabel = (date: string) =>
-    !date
-      ? 'No date'
-      : date === today
-        ? 'Today'
-        : date === shiftDay(today, 1)
-          ? 'Tomorrow'
-          : new Date(date + 'T12:00:00').toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-            });
-  const groupLabel = (t: Task) =>
-    view === 'Today'
-      ? t.due < today
-        ? 'Overdue'
-        : 'Today'
-      : view === 'Upcoming'
-        ? dateLabel(t.due)
-        : view === 'Completed'
-          ? dateLabel((t.completedAt || '').slice(0, 10))
-          : t.project || (taskArea(t) === 'work' ? 'Work' : taskArea(t) === 'study' ? 'Study' : 'Personal');
-  const groups = new Map<string, Task[]>();
-  for (const task of tasks) {
-    const key = groupLabel(task);
-    groups.set(key, [...(groups.get(key) || []), task]);
-  }
-  const focus = async (task: Task) => {
-    if (focusPending.current) return;
-    const link = taskFocusLink(task);
-    const request = focusRequest(state.timer, link);
-    if (request === 'resume') {
-      navigate('/focus');
-      return;
-    }
-    if (
-      request === 'confirm' &&
-      !window.confirm(
-        state.timer.stopwatch
-          ? 'Save the current tracked time and switch to this task?'
-          : 'Replace the current focus session? Unfinished time will not be logged.',
-      )
-    )
-      return;
-    focusPending.current = true;
-    setFocusBusy(true);
-    setFocusError('');
-    try {
-      if (state.timer.startedAt !== null)
-        await window.workspaceAPI.invoke('focus:command', { action: 'stop' });
-      await window.workspaceAPI.invoke('focus:command', {
-        action: 'configure',
-        phase: 'focus',
-        timerMode: 'pomodoro',
-        link,
-      });
-      await window.workspaceAPI.invoke('focus:command', { action: 'start' });
-      navigate('/focus');
-    } catch (e) {
-      setFocusError('Could not start focus. ' + (e as Error).message);
-    } finally {
-      focusPending.current = false;
-      setFocusBusy(false);
-    }
-  };
-  return (
-    <div className="tasks-page">
-      <header className="tasks-page-header">
-        <div>
-          <h1>{view === 'All' ? 'All tasks' : view === 'Completed' ? 'Logbook' : view}</h1>
-          <p>
-            {view === 'Today'
-              ? 'A little clarity for the day ahead.'
-              : view === 'Upcoming'
-                ? 'Make space for what comes next.'
-                : view === 'Completed'
-                  ? 'The small steps that moved you forward.'
-                  : 'Everything you are working towards.'}
-          </p>
+  const move = (task: Task, lane: BoardLane) => save(moveTask(task, lane));
+  const card = (task: Task) => (
+    <article
+      key={task.id}
+      className={`board-card${task.completedAt ? ' is-done' : ''}${dragged === task.id ? ' is-dragging' : ''}`}
+      draggable={collection === 'Board'}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', task.id);
+        e.dataTransfer.effectAllowed = 'move';
+        setDragged(task.id);
+      }}
+      onDragEnd={() => {
+        setDragged(null);
+        setDropLane(null);
+      }}
+      data-task-id={task.id}
+    >
+      <div className="board-card-heading">
+        {collection === 'Board' && (
+          <button
+            className={`check-button ${task.completedAt ? 'checked' : ''}`}
+            aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} task ${task.title}`}
+            aria-pressed={!!task.completedAt}
+            onClick={() => move(task, task.completedAt ? (task.boardStatus ?? 'next') : 'done')}
+          >
+            {task.completedAt && <Check />}
+          </button>
+        )}
+        <button className="board-card-title" onClick={() => setEditing(task)}>
+          {task.title}
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="icon-button" aria-label={`Options for ${task.title}`}>
+              <MoreHorizontal />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setEditing(task)}>Edit task</DropdownMenuItem>
+            {collection === 'Board' && (
+              <DropdownMenuItem
+                onSelect={() => save({ ...task, archivedAt: new Date().toISOString() })}
+              >
+                <Archive />
+                Archive
+              </DropdownMenuItem>
+            )}
+            {collection === 'Archived' && (
+              <DropdownMenuItem onSelect={() => save({ ...task, archivedAt: null, keep: true })}>
+                <Undo2 />
+                Restore
+              </DropdownMenuItem>
+            )}
+            {collection === 'Trash' && (
+              <DropdownMenuItem onSelect={() => save(restoreTask(task))}>
+                <Undo2 />
+                Restore
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={() => save({ ...task, keep: !task.keep })}>
+              {task.keep ? 'Allow automatic cleanup' : 'Keep task'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDeleting(task)}>
+              <Trash2 />
+              {task.trashedAt ? 'Delete permanently…' : 'Move to Trash…'}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {(task.project || task.due || task.priority === 'high' || task.subtasks.length > 0) && (
+        <div className="board-card-meta">
+          {task.project && <span>{task.project}</span>}
+          {task.due && (
+            <span className={!task.completedAt && task.due < localDate() ? 'overdue' : ''}>
+              {task.due === localDate()
+                ? 'Today'
+                : new Date(task.due + 'T12:00:00').toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+              {task.scheduledTime && ' · ' + task.scheduledTime}
+            </span>
+          )}
+          {task.priority === 'high' && <span className="board-urgent">Urgent</span>}
+          {!!task.subtasks.length && (
+            <span>
+              {task.subtasks.filter((s) => s.done).length}/{task.subtasks.length}
+            </span>
+          )}
         </div>
-        <Button variant="ghost" size="sm" disabled={!ready} onClick={() => setEditing(null)}>
+      )}
+      {collection === 'Board' && (
+        <div className="board-card-controls">
+          <select
+            aria-label={`Move ${task.title}`}
+            value={boardLane(task)}
+            onChange={(e) => move(task, e.target.value as BoardLane)}
+          >
+            {boardLanes.map((l) => (
+              <option key={l} value={l}>
+                {l === 'next' ? 'Next' : l[0].toUpperCase() + l.slice(1)}
+              </option>
+            ))}
+          </select>
+          {activeTask(task) && (
+            <button
+              className="icon-button"
+              disabled={focus.busy}
+              aria-label={`Focus on ${task.title}`}
+              onClick={() => void focus.start(task)}
+            >
+              <Timer />
+            </button>
+          )}
+        </div>
+      )}
+    </article>
+  );
+  return (
+    <div className="tasks-page workspace-board">
+      <header className="workspace-header">
+        <h1>Tasks</h1>
+        <button className="btn-ghost" disabled={!ready} onClick={() => setEditing(create())}>
           <Plus />
           New task
-        </Button>
+        </button>
       </header>
-      {focusError && (
-        <p className="inline-error" role="alert">
-          {focusError}
-        </p>
-      )}
-      <div className="tasks-viewbar">
-        <div className="tasks-views" aria-label="Task views">
-          {views.map((v) => (
-            <button
-              key={v}
-              aria-pressed={view === v}
-              className={view === v ? 'selected' : ''}
-              onClick={() => setView(v)}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-        <span className="tasks-count">
-          {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-        </span>
-      </div>
-      <div className="tasks-filters">
-        <select aria-label="Task area" value={area} onChange={e => setParams(p => { p.set('area', e.target.value); p.delete('project'); return p; })}>
-          <option value="all">All areas</option><option value="personal">Personal</option><option value="work">Work</option><option value="study">Study</option>
-        </select>
-        <label className="tasks-search">
+      <div className="workspace-toolbar">
+        <label className="workspace-search">
           <Search aria-hidden="true" />
           <input
             type="search"
             aria-label="Search tasks"
-            placeholder="Search tasks, projects, tags"
+            placeholder="Search tasks"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
         <select
-          aria-label="Filter task priority"
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
+          aria-label="Task area"
+          value={area}
+          onChange={(e) =>
+            setParams((p) => {
+              p.set('area', e.target.value);
+              p.delete('project');
+              return p;
+            })
+          }
+        >
+          <option value="all">All areas</option>
+          <option value="personal">Personal</option>
+          <option value="work">Work</option>
+          <option value="study">Study</option>
+        </select>
+        <select
+          aria-label="Task priority"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
         >
           <option value="all">All priorities</option>
-          <option value="high">High priority</option>
-          <option value="medium">Medium priority</option>
-          <option value="low">Low priority</option>
+          <option value="high">Urgent</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
+        <select
+          aria-label="Task collection"
+          value={collection}
+          onChange={(e) =>
+            setParams((p) => {
+              p.set('view', e.target.value);
+              return p;
+            })
+          }
+        >
+          <option>Board</option>
+          <option>Archived</option>
+          <option>Trash</option>
+        </select>
+        {projectId && (
+          <button
+            className="btn-ghost"
+            onClick={() =>
+              setParams((p) => {
+                p.delete('project');
+                return p;
+              })
+            }
+          >
+            Clear project
+          </button>
+        )}
       </div>
-      {projectId && <p className="tasks-footnote">Project: {state.settings.workProjects?.find(p => p.id === projectId)?.title || 'Saved project'} · <Link to="/work">Back to Work</Link></p>}
-      {view === 'Trash' && <p className="tasks-footnote">Restore tasks whenever you need them. Trash is never emptied automatically.</p>}
-      <div className="tasks-lists">
-        {[...groups].map(([heading, items]) => (
-          <section className="tasks-group" key={heading} aria-label={heading + ' tasks'}>
-            <h2>{heading}</h2>
-            <ul>
-              {items.map((task) => (
-                <li className="task-list-item" key={task.id}>
-                  <button
-                    disabled={!ready || !!task.trashedAt || !!task.archivedAt}
-                    className={`check-button ${task.completedAt ? 'checked' : ''}`}
-                    aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
-                    aria-pressed={!!task.completedAt}
-                    onClick={() =>
-                      save({
-                        ...task,
-                        completedAt: task.completedAt ? null : new Date().toISOString(),
-                      })
-                    }
-                  >
-                    {task.completedAt && <Check />}
-                  </button>
-                  <div className="task-list-content">
-                    <button
-                      className={task.completedAt ? 'task-title done-text' : 'task-title'}
-                      onClick={() => setEditing(task)}
-                    >
-                      {task.title}
-                    </button>
-                    <div className="task-list-meta">
-                      {task.due && (
-                        <span className={task.due < today && !task.completedAt ? 'overdue' : ''}>
-                          {dateLabel(task.due)}
-                        </span>
-                      )}
-                      {task.project && view !== 'All' && <span>{task.project}</span>}
-                      <span className="task-list-priority">
-                        {task.priority === 'high' && <Flag aria-hidden="true" />}
-                        {task.priority} priority
-                      </span>
-                      {task.tags.map((tag) => (
-                        <span key={tag}>#{tag}</span>
-                      ))}
-                      <span>{taskArea(task) === 'work' ? 'Work' : taskArea(task) === 'study' ? 'Study' : 'Personal'}</span>
-                      {task.keep && <span>Keep</span>}
-                    </div>
-                    {!!task.subtasks.length && (
-                      <details className="task-steps">
-                        <summary>
-                          <ChevronDown />
-                          {task.subtasks.filter((s) => s.done).length} / {task.subtasks.length}{' '}
-                          steps
-                        </summary>
-                        <div>
-                          {task.subtasks.map((sub) => (
-                            <label key={sub.id}>
-                              <input
-                                type="checkbox"
-                                checked={sub.done}
-                                onChange={() =>
-                                  save({
-                                    ...task,
-                                    subtasks: task.subtasks.map((s) =>
-                                      s.id === sub.id ? { ...s, done: !s.done } : s,
-                                    ),
-                                  })
-                                }
-                              />
-                              <span className={sub.done ? 'done-text' : ''}>{sub.title}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                  <div className="task-list-actions">
-                    {activeTask(task) && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={!ready || focusBusy}
-                        aria-label={`Start focus session for ${task.title}`}
-                        onClick={() => void focus(task)}
-                      >
-                        <Timer />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Edit ${task.title}`}
-                      onClick={() => setEditing(task)}
-                    >
-                      <Pencil />
-                    </Button>
-                    {task.trashedAt || task.archivedAt ? <Button variant="ghost" size="icon" aria-label={`Restore ${task.title}`} onClick={() => save(task.trashedAt ? restoreTask(task) : { ...task, archivedAt: null, keep: true })}><Undo2 /></Button>
-                      : <Button variant="ghost" size="icon" aria-label={`Archive ${task.title}`} onClick={() => save({ ...task, archivedAt: new Date().toISOString() })}><Archive /></Button>}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`${task.trashedAt ? 'Delete permanently' : 'Move to Trash'} ${task.title}`}
-                      onClick={() => setDeleting(task)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-      {!tasks.length && (
-        <div className="tasks-empty">
-          <h2>
-            {query || priorityFilter !== 'all'
-              ? 'No matching tasks'
-              : view === 'Completed'
-                ? 'Your progress belongs here.'
-                : 'A little breathing room.'}
-          </h2>
-          <p>
-            {query || priorityFilter !== 'all'
-              ? 'Try another title, project, tag or priority.'
-              : view === 'Completed'
-                ? 'Completed tasks will appear in your logbook.'
-                : 'Write a task below, or use New task to add the details.'}
-          </p>
-          {(query || priorityFilter !== 'all') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setQuery('');
-                setPriorityFilter('all');
+      {focus.error && (
+        <p className="inline-error" role="alert">
+          {focus.error}
+        </p>
+      )}
+      {!ready ? (
+        <p role="status">Loading tasks…</p>
+      ) : collection !== 'Board' ? (
+        <div className="task-saved-list">
+          {tasks.map(card)}
+          {!tasks.length && <p className="workspace-empty">No {collection.toLowerCase()} tasks</p>}
+        </div>
+      ) : (
+        <div className="task-board">
+          {boardLanes.map((lane) => (
+            <section
+              key={lane}
+              className={`board-lane${dropLane === lane ? ' drop-target' : ''}`}
+              aria-label={lane + ' tasks'}
+              onDragOver={(e) => {
+                if (dragged) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  setDropLane(lane);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const task = state.tasks.find((t) => t.id === dragged);
+                if (task && !task.archivedAt && !task.trashedAt) move(task, lane);
+                setDragged(null);
+                setDropLane(null);
               }}
             >
-              Clear filters
-            </Button>
-          )}
+              <header>
+                <h2>{lane === 'next' ? 'Next' : lane[0].toUpperCase() + lane.slice(1)}</h2>
+                <span>{tasks.filter((t) => boardLane(t) === lane).length}</span>
+              </header>
+              <div className="board-lane-items">
+                {tasks.filter((t) => boardLane(t) === lane).map(card)}
+              </div>
+              {lane !== 'done' && (
+                <form
+                  className="board-add"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (quick[lane]?.trim()) {
+                      save(create(quick[lane], lane));
+                      setQuick((q) => ({ ...q, [lane]: '' }));
+                    }
+                  }}
+                >
+                  <Plus />
+                  <input
+                    aria-label={`Add ${lane} task`}
+                    maxLength={500}
+                    placeholder="Add task"
+                    value={quick[lane] ?? ''}
+                    onChange={(e) => setQuick((q) => ({ ...q, [lane]: e.target.value }))}
+                  />
+                  <button className="btn-ghost" disabled={!quick[lane]?.trim()}>
+                    Add
+                  </button>
+                </form>
+              )}
+            </section>
+          ))}
         </div>
       )}
-      {!['Completed', 'Archived', 'Trash'].includes(view) && (
-        <form
-          className="tasks-quick-add"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (quick.trim()) {
-              save(create(quick));
-              setQuick('');
-            }
-          }}
-        >
-          <Plus aria-hidden="true" />
-          <input
-            aria-label="Quick add task"
-            maxLength={500}
-            placeholder="Add a task…"
-            value={quick}
-            onChange={(e) => setQuick(e.target.value)}
-            disabled={!ready}
-          />
-          <Button variant="ghost" size="sm" disabled={!ready || !quick.trim()}>
-            Add task
-          </Button>
-        </form>
-      )}
-      <p className="tasks-footnote">
-        {view === 'Today'
-          ? 'Today includes overdue tasks. Undated tasks live in All.'
-          : view === 'Upcoming'
-            ? 'Quick-added tasks are scheduled for tomorrow. Open a task to choose another date.'
-            : view === 'All'
-              ? 'Open a task to set its date, project, tags and next steps.'
-              : 'Reopen a completed task whenever you need it.'}
-      </p>
-      {editing !== undefined && (
-        <TaskForm
-          task={editing || create('')}
-          onSave={(task) => {
-            const isNew = !state.tasks.some((t) => t.id === task.id);
-            save(task);
-            if (isNew && view === 'Completed') setView('All');
-          }}
-          onClose={() => setEditing(undefined)}
-        />
-      )}
+      {editing && <TaskForm task={editing} onSave={save} onClose={() => setEditing(null)} />}
       {deleting && (
-        <Modal title={deleting.trashedAt ? 'Delete task permanently?' : 'Move task to Trash?'} onClose={() => setDeleting(null)}>
-          <p className="muted">
-            {deleting.trashedAt ? `“${deleting.title}” will be permanently removed, including its task completion record. Focus sessions remain saved. This cannot be undone.` : `“${deleting.title}” can be restored from Trash. Its completion record and focus history stay saved.`}
+        <Modal
+          title={deleting.trashedAt ? 'Delete task permanently?' : 'Move task to Trash?'}
+          onClose={() => setDeleting(null)}
+        >
+          <p>
+            {deleting.trashedAt
+              ? 'The task and its completion record will be removed permanently. Focus history remains.'
+              : 'You can restore this task from Trash.'}
           </p>
           <div className="modal-actions">
             <button className="btn-secondary" onClick={() => setDeleting(null)}>
@@ -398,7 +359,14 @@ export default function Tasks() {
             <button
               className="btn-primary"
               onClick={() => {
-                update((s) => ({ ...s, tasks: deleting.trashedAt ? s.tasks.filter(t => t.id !== deleting.id) : s.tasks.map(t => t.id === deleting.id ? { ...t, trashedAt: new Date().toISOString() } : t) }));
+                update((s) => ({
+                  ...s,
+                  tasks: deleting.trashedAt
+                    ? s.tasks.filter((t) => t.id !== deleting.id)
+                    : s.tasks.map((t) =>
+                        t.id === deleting.id ? { ...t, trashedAt: new Date().toISOString() } : t,
+                      ),
+                }));
                 setDeleting(null);
               }}
             >
@@ -477,23 +445,94 @@ function TaskForm({
             </select>
           </label>
         </div>
+        <div className="form-grid">
+          <label>
+            Board column
+            <select
+              className="input"
+              aria-label="Board column"
+              value={boardLane(draft)}
+              onChange={(e) => setDraft(moveTask(draft, e.target.value as BoardLane))}
+            >
+              {boardLanes.map((l) => (
+                <option value={l} key={l}>
+                  {l[0].toUpperCase() + l.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Scheduled time
+            <input
+              className="input"
+              aria-label="Scheduled time"
+              type="time"
+              value={draft.scheduledTime ?? ''}
+              onChange={(e) => setDraft({ ...draft, scheduledTime: e.target.value })}
+            />
+          </label>
+        </div>
         <label>
           Project
           <input
             className="input"
             placeholder="e.g. Personal, University"
             value={draft.project}
-            onChange={(e) => setDraft({ ...draft, project: e.target.value, workProjectId: undefined })}
+            onChange={(e) =>
+              setDraft({ ...draft, project: e.target.value, workProjectId: undefined })
+            }
           />
         </label>
-        <label>Area<select className="input" aria-label="Task form area" value={draft.area ?? 'personal'} onChange={e => setDraft({ ...draft, area: e.target.value as TaskArea, workProjectId: undefined })}>
-          <option value="personal">Personal</option><option value="work">Work</option><option value="study">Study</option>
-        </select></label>
-        {draft.area === 'work' && <label>Work project<select className="input" aria-label="Work project" value={draft.workProjectId ?? ''} onChange={e => {
-          const project = state.settings.workProjects?.find(p => p.id === e.target.value);
-          setDraft({ ...draft, workProjectId: project?.id, project: project?.title ?? draft.project });
-        }}><option value="">No work project</option>{state.settings.workProjects?.filter(p => !p.archived || p.id === draft.workProjectId).map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>}
-        <label className="row-actions"><input type="checkbox" checked={draft.keep ?? false} onChange={e => setDraft({ ...draft, keep: e.target.checked })} />Keep this task · exempt from automatic cleanup</label>
+        <label>
+          Area
+          <select
+            className="input"
+            aria-label="Task form area"
+            value={draft.area ?? 'personal'}
+            onChange={(e) =>
+              setDraft({ ...draft, area: e.target.value as TaskArea, workProjectId: undefined })
+            }
+          >
+            <option value="personal">Personal</option>
+            <option value="work">Work</option>
+            <option value="study">Study</option>
+          </select>
+        </label>
+        {draft.area === 'work' && (
+          <label>
+            Work project
+            <select
+              className="input"
+              aria-label="Work project"
+              value={draft.workProjectId ?? ''}
+              onChange={(e) => {
+                const project = state.settings.workProjects?.find((p) => p.id === e.target.value);
+                setDraft({
+                  ...draft,
+                  workProjectId: project?.id,
+                  project: project?.title ?? draft.project,
+                });
+              }}
+            >
+              <option value="">No work project</option>
+              {state.settings.workProjects
+                ?.filter((p) => !p.archived || p.id === draft.workProjectId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
+        <label className="row-actions">
+          <input
+            type="checkbox"
+            checked={draft.keep ?? false}
+            onChange={(e) => setDraft({ ...draft, keep: e.target.checked })}
+          />
+          Keep this task · exempt from automatic cleanup
+        </label>
         <label>
           Tags <span className="muted">(comma separated)</span>
           <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} />

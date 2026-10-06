@@ -5,6 +5,8 @@ export interface Task {
   trashedAt?: string | null;
   keep?: boolean;
   workProjectId?: string;
+  boardStatus?: 'inbox' | 'next' | 'doing';
+  scheduledTime?: string;
   id: string;
   title: string;
   due: string;
@@ -264,7 +266,13 @@ export function validProductivity(value: unknown): value is Productivity {
         (t.area === undefined || ['personal', 'work', 'study'].includes(t.area)) &&
         (t.keep === undefined || typeof t.keep === 'boolean') &&
         (t.workProjectId === undefined || text(t.workProjectId)) &&
-        [t.archivedAt, t.trashedAt].every(v => v === undefined || v === null || (text(v) && Number.isFinite(Date.parse(v!)))),
+        (t.boardStatus === undefined || ['inbox', 'next', 'doing'].includes(t.boardStatus)) &&
+        (t.scheduledTime === undefined ||
+          (text(t.scheduledTime) &&
+            (!t.scheduledTime || /^([01]\d|2[0-3]):[0-5]\d$/.test(t.scheduledTime)))) &&
+        [t.archivedAt, t.trashedAt].every(
+          (v) => v === undefined || v === null || (text(v) && Number.isFinite(Date.parse(v!))),
+        ),
     ) &&
     Array.isArray(s.presets) &&
     s.presets.length > 0 &&
@@ -324,7 +332,10 @@ export function validProductivity(value: unknown): value is Productivity {
     (s.settings.thoughtLibrary === undefined || validThoughtLibrary(s.settings.thoughtLibrary)) &&
     (s.settings.taskCleanup === undefined || typeof s.settings.taskCleanup === 'boolean') &&
     (s.settings.workProjects === undefined || validWorkProjects(s.settings.workProjects)) &&
-    (s.settings.taskRetentionDays === undefined || (Number.isInteger(s.settings.taskRetentionDays) && s.settings.taskRetentionDays >= 1 && s.settings.taskRetentionDays <= 365)) &&
+    (s.settings.taskRetentionDays === undefined ||
+      (Number.isInteger(s.settings.taskRetentionDays) &&
+        s.settings.taskRetentionDays >= 1 &&
+        s.settings.taskRetentionDays <= 365)) &&
     ['system', 'light', 'dark'].includes(s.settings.theme) &&
     ['sound', 'notifications', 'reminder'].every(
       (k) => typeof s.settings[k as keyof Productivity['settings']] === 'boolean',

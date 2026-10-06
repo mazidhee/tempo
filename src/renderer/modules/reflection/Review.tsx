@@ -1,3 +1,4 @@
+import '../../styles/approved-workspace.css';
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -118,8 +119,7 @@ export default function Review() {
     <div className="review-page">
       <header className="reflection-document-header">
         <div>
-          <h1>Weekly review.</h1>
-          <p>Make sense of the week, then choose your next step.</p>
+          <h1>Weekly review</h1>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setWeekPicker(true)}>
           <CalendarDays />
@@ -168,10 +168,8 @@ export default function Review() {
       )}
       {!review ? (
         <section className="review-empty">
-          <h2>Make a little time to look back.</h2>
-          <p>
-            Browse weeks to choose a week. Tempo gathers your recorded activity into a saved review.
-          </p>
+          <h2>No review selected</h2>
+          <p>Choose a week to open its report.</p>
         </section>
       ) : (
         <>
@@ -247,7 +245,7 @@ export default function Review() {
             onRefresh={refreshActivity}
           />
           <section className="review-reflections">
-            <h2>Take one thing forward</h2>
+            <h2>Reflections</h2>
             <div className="review-writing-grid">
               <Field label="What got in the way?">
                 <textarea
