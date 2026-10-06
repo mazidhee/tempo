@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tempo — five layouts per screen</title><link rel="stylesheet" href="studio.css"></head>
+<body>
+<header class="studio"><strong>Tempo design studio</strong><span>75 concepts · fictional data</span><div><button id="choices">My choices <span id="choice-count">0</span></button><button id="theme">Light</button><button id="reset">Reset demo</button></div></header>
+<div class="options"><div id="directions" role="group" aria-label="Layout options"></div><button id="pick">Choose this layout</button></div>
+<div class="concept-note"><span id="concept-name"></span><span id="concept-note"></span></div>
+<div class="app">
+<aside class="sidebar"><a class="brand" href="#home" aria-label="Tempo Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4"/></svg>Tempo</a><nav id="navigation" aria-label="Prototype screens"></nav><div class="profile"><span>D</span><div>Divine<small>Local workspace</small></div></div></aside>
+<main id="main"><header class="app-top"><button class="mobile-nav" id="mobile-nav" aria-label="Toggle navigation"></button><span id="breadcrumb"></span><label class="search-field" id="global-search"><span id="search-icon"></span><input id="search" placeholder="Search Tempo" aria-label="Search Tempo"><kbd>Ctrl K</kbd></label></header><div id="content"></div></main>
+</div>
+<dialog id="choice-dialog"><div class="dialog-head"><h2>Your layouts</h2><button data-action="close-choices" aria-label="Close choices">Close</button></div><div id="choice-list"></div><button id="copy-choices">Copy choices</button><p id="copy-status" role="status"></p></dialog>
+<div id="toast" role="status"></div>
+<script src="studio.js"></script>
+</body></html>

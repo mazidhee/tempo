@@ -1,4 +1,13 @@
-# Latest installed checkpoint — October 4, 2026
+# Current checkpoint — October 6, 2026
+
+1.7 implementation `6309c8e` is saved; 128 tests passed. The owner rejected its
+UI composition and requested five options per screen before further app edits.
+The new Design and UX target is 9.9/10 with owner approval. See
+[design round two](design-round-two.md). The prototype uses fictional data only.
+The owner reported completing their own Rehab import; leave it intact.
+The final 1.7 installed owner-data acceptance is not complete and not claimed.
+
+# Previous installed checkpoint — October 4, 2026
 
 Tempo **1.6.0 is installed**, with the existing desktop shortcut intact. Daily
 Plan A supports expanded inline priorities; Tasks and search use calm lists;

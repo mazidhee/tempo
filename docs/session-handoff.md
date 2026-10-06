@@ -1,4 +1,26 @@
-# Latest installed checkpoint — October 4, 2026
+# Current work — October 6, 2026
+
+The owner rejected the 1.7 UI composition and requested five mockups per screen
+before further app changes. The new requirement is Design and UX each 9.9/10,
+with owner selection required; the older 9.5 verdict does not approve this round.
+See [design round two](design-round-two.md). The preview is available through
+`node scripts/tempo-prototype-server.cjs` at `http://127.0.0.1:5220/`.
+
+The options studio has 75 compositions, 225 responsive checks and ten interaction
+checks. Fresh independent review cleared the corrected artifact for owner
+selection only; see [options review](design-round-two-review.md). No selection
+has been received yet. Use My choices → Copy choices; do not implement a default.
+
+1.7 implementation checkpoint `6309c8e` passed 128 tests and isolated source and
+package workflow checks. An earlier 1.7 installer was applied, but the final
+two-launch owner-data gate was not completed. Do not announce it as passed.
+The owner reported importing the Rehab CSV themselves: do not run the pending
+owner import script. No Outlook or meetings integration; original waveform stays.
+The next app implementation waits for the new screen selections. Preserve all
+owner records and keep changes in Git. The 1.6 release tag remains a code rollback
+reference, not permission to replace the owner's database with an older snapshot.
+
+# Previous installed checkpoint — October 4, 2026
 
 Tempo **1.6.0 is installed**, with the existing desktop shortcut intact. Daily
 Plan A supports expanded inline priorities; Tasks and search use calm lists;

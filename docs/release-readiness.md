@@ -1,4 +1,12 @@
-# Latest installed checkpoint — October 4, 2026
+# Current design gate — October 6, 2026
+
+The owner rejected the 1.7 composition. Five options per screen are now required
+before further UI implementation; Design and UX target is 9.9/10 plus owner
+approval. [Design round two](design-round-two.md) records the current scope.
+The previous source/package verdicts are historical evidence, not approval for
+this new design round. The final 1.7 installed owner-data gate remains incomplete.
+
+# Previous installed checkpoint — October 4, 2026
 
 Tempo **1.6.0 is installed**, with the existing desktop shortcut intact. Daily
 Plan A supports expanded inline priorities; Tasks and search use calm lists;
