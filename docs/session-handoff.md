@@ -1,24 +1,41 @@
 # Current work — October 6, 2026
 
-The owner rejected the 1.7 UI composition and requested five mockups per screen
-before further app changes. The new requirement is Design and UX each 9.9/10,
-with owner selection required; the older 9.5 verdict does not approve this round.
-See [design round two](design-round-two.md). The preview is available through
-`node scripts/tempo-prototype-server.cjs` at `http://127.0.0.1:5220/`.
+Tempo **1.8.0** implements the owner's thirteen selections from the 75-layout
+studio: Tasks E, Plan E, Habits A, History B, Recovery A, Work E, Focus A, Search D,
+Goals A, Settings B, Study A, Journal A and Review A. The owner then selected
+**Focus controls B — Bottom dock** in the five-option preview at
+`http://127.0.0.1:5221/`. Work keeps the incumbent sans heading at weight 600.
+See [approved direction](approved-workspace-design.md) and
+[implemented design record](approved-workspace-documentation.md).
 
-The options studio has 75 compositions, 225 responsive checks and ten interaction
-checks. Fresh independent review cleared the corrected artifact for owner
-selection only; see [options review](design-round-two-review.md). No selection
-has been received yet. Use My choices → Copy choices; do not implement a default.
+The bounded review resolves Plan time readability, truthful Study continuation
+and Settings navigation; its estimates are **Design 9.5 / UX 9.5**. The fresh
+[Work/Focus review](focus-dock-review.md) returns `ship`: Work **9.5/9.5**, Focus
+**9.5/9.4**. These are source/capture judgments; the owner's requested **9.9/10
+each is not established**. The canonical packet has 78 screenshots across thirteen
+surfaces, two themes and three widths, plus six contact sheets. The latest checked
+exact-package result, `.review/approved-workspace-1791325794898/results.json`, has
+**11/11 passing workflow groups**, second-launch retention, no page errors and
+no overflow in 72 measured route captures. Search is visually captured but not
+width-measured in that JSON. See [bounded verdict](approved-workspace-review.md)
+for the distinction between functional results and the recapture-only packet.
 
-1.7 implementation checkpoint `6309c8e` passed 128 tests and isolated source and
-package workflow checks. An earlier 1.7 installer was applied, but the final
-two-launch owner-data gate was not completed. Do not announce it as passed.
-The owner reported importing the Rehab CSV themselves: do not run the pending
-owner import script. No Outlook or meetings integration; original waveform stays.
-The next app implementation waits for the new screen selections. Preserve all
-owner records and keep changes in Git. The 1.6 release tag remains a code rollback
-reference, not permission to replace the owner's database with an older snapshot.
+**Tempo 1.8.0 is installed; separate owner-data acceptance passed.** After the
+owner confirmed a full quit, a fresh consistent backup was taken. Both installed
+launches preserved every original record and exact preference, all 66 imported
+events and 1,823 active topics; SQLite integrity and offline rendering passed.
+The installed ASAR equals the reviewed package. See [release record](approved-workspace-release.md).
+
+Source checkpoint `fe4521b` precedes the final correction/release checkpoint;
+use tag `tempo-1.8.0` for the installed version. Preserve Home, sidebar order/top Search,
+waveform, detailed Statistics and every owner record/control. Study counts/time/
+progress/current topic remain required. The owner imported the Rehab CSV already:
+do not run the pending import script, reimport or restore an older snapshot.
+No Outlook or meetings integration. The 1.6 tag is a code rollback reference only.
+
+Root `DESIGN.md` remains the incumbent authority. Its historical specimen format
+and the missing `.impeccable/design.json` are reported preexisting drift, left
+unchanged by the scoped documentation pass.
 
 # Previous installed checkpoint — October 4, 2026
 

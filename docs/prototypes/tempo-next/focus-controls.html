@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tempo — Focus controls</title>
+    <link rel="stylesheet" href="focus-controls.css" />
+  </head>
+  <body>
+    <header class="studio">
+      <strong>Focus controls</strong>
+      <nav aria-label="Five arrangements" id="options"></nav>
+      <button id="theme">Light</button>
+    </header>
+    <div class="shell">
+      <aside>
+        <a class="brand" href="#"
+          ><svg viewBox="0 0 24 24"><path d="M3 10v4m4-7v10m5-14v18m5-14v10m4-7v4" /></svg>Tempo</a
+        ><button class="sidebar-search">Search <kbd>Ctrl K</kbd></button>
+        <nav>
+          <span>Home</span><span>Plan</span><span>Habits</span><span>Tasks</span><span>Work</span
+          ><span class="active">Focus</span><span>Study</span><span>Statistics</span
+          ><span>Goals</span><span>Journal</span><span>Review</span><span>Settings</span>
+        </nav>
+      </aside>
+      <main>
+        <header class="appbar">Workspace <span>/ Focus</span></header>
+        <div class="page">
+          <header class="pagehead">
+            <h1>Focus</h1>
+            <button class="quiet" id="fullscreen">Focus mode ↗</button>
+          </header>
+          <div class="workspace">
+            <section id="timer" aria-label="Focus timer"></section>
+            <section class="queue">
+              <div class="queuehead">
+                <h2>Queue</h2>
+                <button class="quiet">Plan ↗</button>
+              </div>
+              <button class="task" data-task="Check pipeline data quality">
+                <strong>Check pipeline data quality</strong
+                ><small>Warehouse migration · 10:30 AM</small><span>▷</span></button
+              ><button class="task" data-task="Prepare source documentation">
+                <strong>Prepare source documentation</strong><small>Reporting · 2:00 PM</small
+                ><span>▷</span></button
+              ><button class="task" data-task="Plan next week’s reading">
+                <strong>Plan next week’s reading</strong><small>Personal</small><span>▷</span>
+              </button>
+            </section>
+          </div>
+          <p class="demo">Interactive mockup · fictional tasks</p>
+        </div>
+      </main>
+    </div>
+    <script src="focus-controls.js"></script>
+  </body>
+</html>

@@ -345,6 +345,18 @@ async function withApp(fn) {
             async () => (await prod(p)).timer.duration === 900,
             '15-minute timer not applied',
           );
+          await p.getByLabel('Timer phase', { exact: true }).selectOption('short');
+          await until(
+            async () => (await prod(p)).timer.phase === 'short',
+            'Short break not applied',
+          );
+          await p.getByLabel('Timer phase', { exact: true }).selectOption('long');
+          await until(async () => (await prod(p)).timer.phase === 'long', 'Long break not applied');
+          await p.getByLabel('Timer phase', { exact: true }).selectOption('focus');
+          await p.getByRole('button', { name: 'Time tracking', exact: true }).click();
+          await until(async () => !!(await prod(p)).timer.stopwatch, 'Tracking not applied');
+          await p.getByRole('button', { name: 'Pomodoro', exact: true }).click();
+          await until(async () => !(await prod(p)).timer.stopwatch, 'Pomodoro not restored');
           await p.getByRole('button', { name: 'Start focus', exact: true }).click();
           await p.getByRole('button', { name: 'Pause', exact: true }).waitFor();
           assert.equal(
@@ -353,6 +365,7 @@ async function withApp(fn) {
               .isDisabled(),
             true,
           );
+          assert.equal(await p.getByLabel('Timer phase', { exact: true }).isDisabled(), true);
           await invoke(p, 'focus:command', { action: 'stop' });
         },
       );
@@ -407,6 +420,13 @@ async function withApp(fn) {
         'Work: project table opens project with original milestones and scoped task board',
         async () => {
           await route(p, '/work');
+          const type = await p.locator('.work-header h1').evaluate((el) => ({
+            family: getComputedStyle(el).fontFamily,
+            bodyFamily: getComputedStyle(document.documentElement).fontFamily,
+            weight: getComputedStyle(el).fontWeight,
+          }));
+          assert.equal(type.family, type.bodyFamily);
+          assert.equal(type.weight, '600');
           await p.getByRole('button', { name: 'Warehouse migration', exact: true }).click();
           await p
             .getByRole('button', {
@@ -495,7 +515,7 @@ async function withApp(fn) {
     );
   });
   fs.writeFileSync(
-    path.join(evidence, 'results.json'),
+    path.join(evidence, process.env.REVIEW_RECAPTURE ? 'recapture-results.json' : 'results.json'),
     JSON.stringify({ results, captures, errors }, null, 2),
   );
   console.log(

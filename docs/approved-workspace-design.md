@@ -6,6 +6,11 @@ Recovery A dated list; Work E project table; Focus A timer and queue; Search D q
 switcher; Goals A progress list; Settings B open preferences; Study A curriculum
 library; Journal A open canvas; Review A weekly report.
 
+The owner subsequently selected Focus controls B (Bottom dock): task and timer
+above, visible saved duration presets below the main controls, mode and phase
+controls in a compact footer. Work headings use the incumbent sans family and
+600 weight, matching the other page headings. The timer-and-queue structure stays.
+
 Home is explicitly excluded. Preserve the installed sidebar order, search at its
 top, waveform logo, detailed Statistics functionality, and every existing Settings
 control. History and Recovery belong inside Habits, never in the main sidebar.

@@ -171,66 +171,6 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
               }
             />
           </div>
-          <div className="focus-phase-tabs" role="group" aria-label="Timer mode">
-            <Button
-              variant={!tracking ? 'secondary' : 'ghost'}
-              aria-pressed={!tracking}
-              disabled={inProgress || busy}
-              onClick={() => configure({ timerMode: 'pomodoro', phase: 'focus' })}
-            >
-              Pomodoro
-            </Button>
-            <Button
-              variant={tracking ? 'secondary' : 'ghost'}
-              aria-pressed={tracking}
-              disabled={inProgress || busy}
-              onClick={() => configure({ timerMode: 'stopwatch', phase: 'focus' })}
-            >
-              Time tracking
-            </Button>
-          </div>
-          {!tracking && (
-            <div className="focus-phase-tabs" role="group" aria-label="Timer phase">
-              {(Object.keys(phases) as Phase[]).map((p) => (
-                <Button
-                  variant={timer.phase === p ? 'secondary' : 'ghost'}
-                  aria-pressed={timer.phase === p}
-                  disabled={inProgress || busy}
-                  key={p}
-                  onClick={() => configure({ phase: p })}
-                >
-                  {phases[p]}
-                </Button>
-              ))}
-            </div>
-          )}
-          {!tracking && (
-            <div className="focus-presets" role="group" aria-label="Focus presets">
-              {state.presets.map((p) => (
-                <button
-                  key={p.id}
-                  className="btn-ghost"
-                  title={`${p.name} · ${durationLabel(p.short)} short break · ${durationLabel(p.long)} long break`}
-                  aria-label={`${p.name}: ${durationLabel(p.focus)} focus`}
-                  aria-pressed={p.id === timer.presetId}
-                  disabled={inProgress || busy}
-                  onClick={() =>
-                    configure({ presetId: p.id, timerMode: 'pomodoro', phase: 'focus' })
-                  }
-                >
-                  {durationLabel(p.focus)}
-                </button>
-              ))}
-              <button
-                className="icon-button"
-                aria-label="Manage focus presets"
-                aria-expanded={manageRhythms}
-                onClick={() => setManageRhythms((v) => !v)}
-              >
-                <Pencil />
-              </button>
-            </div>
-          )}
           <div className="focus-ring">
             <svg viewBox="0 0 300 300" aria-hidden="true">
               <circle
@@ -317,6 +257,68 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
             >
               <SkipForward />
             </Button>
+          </div>
+          {!tracking && (
+            <div className="focus-presets" role="group" aria-label="Focus presets">
+              {state.presets.map((p) => (
+                <button
+                  key={p.id}
+                  className="btn-ghost"
+                  title={`${p.name} · ${durationLabel(p.short)} short break · ${durationLabel(p.long)} long break`}
+                  aria-label={`${p.name}: ${durationLabel(p.focus)} focus`}
+                  aria-pressed={p.id === timer.presetId}
+                  disabled={inProgress || busy}
+                  onClick={() =>
+                    configure({ presetId: p.id, timerMode: 'pomodoro', phase: 'focus' })
+                  }
+                >
+                  {durationLabel(p.focus)}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="focus-control-dock">
+            <div className="focus-phase-tabs" role="group" aria-label="Timer mode">
+              <Button
+                variant={!tracking ? 'secondary' : 'ghost'}
+                aria-pressed={!tracking}
+                disabled={inProgress || busy}
+                onClick={() => configure({ timerMode: 'pomodoro', phase: 'focus' })}
+              >
+                Pomodoro
+              </Button>
+              <Button
+                variant={tracking ? 'secondary' : 'ghost'}
+                aria-pressed={tracking}
+                disabled={inProgress || busy}
+                onClick={() => configure({ timerMode: 'stopwatch', phase: 'focus' })}
+              >
+                Time tracking
+              </Button>
+            </div>
+            {!tracking && (
+              <select
+                className="focus-phase-select"
+                aria-label="Timer phase"
+                value={timer.phase}
+                disabled={inProgress || busy}
+                onChange={(e) => configure({ phase: e.target.value as Phase })}
+              >
+                {(Object.keys(phases) as Phase[]).map((p) => (
+                  <option key={p} value={p}>
+                    {phases[p]}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              className="btn-ghost focus-preset-edit"
+              aria-label="Manage focus presets"
+              aria-expanded={manageRhythms}
+              onClick={() => setManageRhythms((v) => !v)}
+            >
+              <Pencil /> Edit presets
+            </button>
           </div>
           {strict && (
             <p className="muted small">Strict mode is on. Use Emergency exit to end this phase.</p>

@@ -1,0 +1,510 @@
+{
+  "results": [],
+  "captures": [
+    {
+      "filename": "tasks-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "plan-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "habits-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "history-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "recovery-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "work-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "focus-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "study-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "goals-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "journal-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "review-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "settings-dark-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "tasks-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "plan-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "habits-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "history-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "recovery-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "work-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "focus-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "study-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "goals-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "journal-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "review-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "settings-dark-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "tasks-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "plan-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "habits-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "history-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "recovery-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "work-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "focus-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "study-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "goals-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "journal-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "review-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "settings-dark-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "tasks-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "plan-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "habits-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "history-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "recovery-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "work-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "focus-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "study-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "goals-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1216,
+      "mainScroll": 1216
+    },
+    {
+      "filename": "journal-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "review-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "settings-light-1440.png",
+      "width": 1440,
+      "document": 1440,
+      "main": 1206,
+      "mainScroll": 1206
+    },
+    {
+      "filename": "tasks-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "plan-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "habits-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "history-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "recovery-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "work-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "focus-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "study-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "goals-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 676,
+      "mainScroll": 676
+    },
+    {
+      "filename": "journal-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "review-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "settings-light-900.png",
+      "width": 900,
+      "document": 900,
+      "main": 666,
+      "mainScroll": 666
+    },
+    {
+      "filename": "tasks-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "plan-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "habits-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "history-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "recovery-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "work-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "focus-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "study-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "goals-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 600,
+      "mainScroll": 600
+    },
+    {
+      "filename": "journal-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "review-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    },
+    {
+      "filename": "settings-light-600.png",
+      "width": 600,
+      "document": 600,
+      "main": 590,
+      "mainScroll": 590
+    }
+  ],
+  "errors": []
+}

@@ -224,6 +224,9 @@ export default function Study() {
   const curriculumRow = (c: Curriculum) => {
     const p = curriculumProgress(snapshot, c.id),
       next = studyContinuation(snapshot, c, state.sessions, state.timer);
+    const remaining =
+      next.topic ??
+      snapshot.topics.find((t) => t.curriculumId === c.id && !t.archived && !t.learnedAt);
     return (
       <Link className="study-library-row" key={c.id} to={`/study/${c.id}`}>
         <BookOpen />
@@ -235,9 +238,9 @@ export default function Study() {
             recorded
           </p>
           <p className="muted study-library-next">
-            {next.topic
-              ? `Continue: ${next.topic.title}`
-              : next.complete
+            {remaining
+              ? `Continue: ${remaining.title}`
+              : p.total > 0 && p.learned === p.total
                 ? 'Learning path complete'
                 : 'Add your first topic'}
           </p>
