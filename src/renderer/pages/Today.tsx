@@ -83,7 +83,7 @@ export default function Today() {
           {error || actionError}
         </p>
       )}
-      <section className="panel non-negotiable-summary">
+      {!!pinned.length && <section className="panel non-negotiable-summary">
         <div className="section-heading">
           <h2>
             Non-negotiables {done}/{pinned.length}
@@ -103,7 +103,8 @@ export default function Today() {
         >
           <i style={{ width: `${pinned.length ? (done / pinned.length) * 100 : 0}%` }} />
         </div>
-      </section>
+      </section>}
+      {!pinned.length && <p className="muted small">{due.filter(h=>isComplete(h,logFor(logs,h,today))).length}/{due.filter(h=>logFor(logs,h,today)?.outcome!=='freeze').length} due habits done</p>}
       <div className="tabs">
         <button className={!showAll ? 'selected' : ''} onClick={() => setAll(false)}>
           Scheduled today

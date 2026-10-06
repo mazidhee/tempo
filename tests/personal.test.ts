@@ -21,7 +21,7 @@ import {
 import { studyTimeTotals } from '../src/shared/study';
 import { studyTimeTree, timeSlices, manualSession } from '../src/shared/time';
 import { accents, accentTokens, validAvatar } from '../src/shared/appearance';
-import { dayPart, greetingFor } from '../src/shared/greetings';
+import { dayPart, greetingFor, greetingSeedFor } from '../src/shared/greetings';
 const outline =
   '# SWE\n## Python\n### Core language\n- [x] Variables\n- [ ] Types\n  - [ ] Lists\n## Resources\nOrdinary prose\n```md\n- [x] Fake instruction\n```';
 function fixture() {
@@ -309,4 +309,19 @@ test('personal greetings are stable per seed and simple greetings respect day/ni
     new Set(Array.from({ length: 50 }, (_, seed) => greetingFor(9, 'Divine', seed / 50).title))
       .size > 20,
   );
+});
+
+test('Home greeting survives navigation and changes only at a day or period boundary', () => {
+  const morning = greetingSeedFor('2026-10-06', 9);
+  assert.equal(morning, greetingSeedFor('2026-10-06', 11));
+  assert.deepEqual(
+    greetingFor(9, 'Divine', morning),
+    greetingFor(11, 'Divine', greetingSeedFor('2026-10-06', 11)),
+  );
+  assert.notEqual(morning, greetingSeedFor('2026-10-06', 12));
+  assert.notEqual(greetingSeedFor('2026-10-06', 23), greetingSeedFor('2026-10-07', 0));
+  for (let day = 1; day <= 31; day++) {
+    const seed = greetingSeedFor(`2026-10-${String(day).padStart(2, '0')}`, 9);
+    assert.ok(seed >= 0 && seed < 1);
+  }
 });

@@ -5,11 +5,12 @@ import {
   DropdownMenuItem,
 } from './ui/dropdown-menu';
 import { Link } from 'react-router-dom';
-import { Archive, Pencil, Pin, Ellipsis } from 'lucide-react';
+import { Archive, Pencil, Pin, Ellipsis, Trash2 } from 'lucide-react';
 import type { Habit, HabitLog } from '../types';
 import { isDue, freezesRemaining, isPaused, periodSummary } from '../../shared/habits';
 import HabitAction from './HabitAction';
 import DeleteHabitButton from './DeleteHabitButton';
+import HabitStreak from './HabitStreak';
 export default function HabitCard({
   habit,
   logs,
@@ -48,14 +49,14 @@ export default function HabitCard({
           </p>
         </div>
         <div className="habit-manage">
-          <DeleteHabitButton id={habit.id} name={habit.name} compact />
-          <DropdownMenu>
+          <DeleteHabitButton id={habit.id} name={habit.name} renderTrigger={open=><DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="icon-button" aria-label="Habit options">
                 <Ellipsis />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>{habit.freeze_cap===0 ? 'Strict · no freezes' : `${freezesRemaining(habit,logs,today)} freezes left this month`}</DropdownMenuItem>
               <DropdownMenuItem onSelect={onEdit}>
                 <Pencil />
                 Edit habit
@@ -64,14 +65,16 @@ export default function HabitCard({
                 <Archive />
                 Archive habit
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={open}><Trash2 />Delete habit…</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu>} />
         </div>
       </div>
+      <HabitStreak habit={habit} logs={logs} today={today} />
       {due ? (
         <HabitAction habit={habit} logs={logs} date={today} today={today} onChange={onChange} />
       ) : (
-        <p className="muted small">
+        <p className="muted small habit-neutral">
           {isPaused(habit, today)
             ? 'Paused · a neutral day'
             : habit.schedule_type === 'weekly_target'
@@ -79,14 +82,7 @@ export default function HabitCard({
               : 'Not due today'}
         </p>
       )}
-      <div className="habit-card-footer">
-        <span className="muted small">
-          {habit.freeze_cap === 0
-            ? 'Strict · no freezes'
-            : `${freezesRemaining(habit, logs, today)} freezes left this month`}
-        </span>
-        {log?.note && <span className="habit-name muted small">{log.note}</span>}
-      </div>
+      {log?.note && <div className="habit-card-footer"><span className="habit-name muted small">{log.note}</span></div>}
     </article>
   );
 }

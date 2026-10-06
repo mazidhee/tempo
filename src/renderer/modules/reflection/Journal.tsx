@@ -10,10 +10,14 @@ import { LogseqJournalFrame } from '../../components/LogseqJournalFrame';
 import { useReflection } from './useReflection';
 import { ActionError, Field, LoadState } from './ui';
 import '../../styles/document-pages.css';
+import '../../styles/daily-thought.css';
+import { useProductivity } from '../../hooks/ProductivityProvider';
 export default function Journal() {
   const [params, setParams] = useSearchParams();
   const date = validDate(params.get('date') || '') ? params.get('date')! : localDate();
   const { snapshot } = useReflection();
+  const { state } = useProductivity();
+  const thought = state.settings.thoughtLibrary?.days.find(v => v.date === date);
   const [query, setQuery] = useState(params.get('query') || ''),
     [start, setStart] = useState(''),
     [end, setEnd] = useState(''),
@@ -176,6 +180,10 @@ export default function Journal() {
           ' · Your own space.'
         }
       />
+      {thought && <details className="journal-thought" key={`thought-${date}`} open={params.get('thought') === '1' ? true : undefined}>
+        <summary>Return to this day’s thought</summary><p>{thought.text}</p><small className="muted">{thought.author}</small>
+        {thought.prompt && <p className="reflection-question">{thought.prompt}</p>}
+      </details>}
       <LogseqJournalFrame key={date} date={date}>
         <JournalWriter date={date} entry={entry} />
       </LogseqJournalFrame>

@@ -14,6 +14,7 @@ import {
 import { usePrivacy } from '../../hooks/PrivacyContext';
 import { useStudyFocus } from '../../hooks/useStudyFocus';
 import { localDate } from '../../../shared/productivity';
+import { activeTask } from '../../../shared/taskLifecycle';
 import { shiftDay, validDate } from '../../../shared/habits';
 import { planPriorityLimit, type PriorityKind } from '../../../shared/reflection';
 import { Button } from '../../components/ui/button';
@@ -55,12 +56,12 @@ export default function Plan() {
   const source = snapshot.source;
   const options = [
     ...source.productivity.tasks
-      .filter((t) => !t.completedAt)
+      .filter(activeTask)
       .map((t) => ({
         value: 'task:' + t.id,
         label: t.title,
         group: 'task',
-        groupLabel: 'Tasks',
+        groupLabel: t.area === 'work' ? 'Work tasks' : 'Tasks',
       })),
     ...source.habits
       .filter((h) => !h.is_archived)

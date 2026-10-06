@@ -1,0 +1,15 @@
+.habit-event-history { margin-block: 40px; border-top: 1px solid var(--border); padding-top: 24px; }
+.habit-event-history > p { max-width: 70ch; line-height: 1.7; font-size: 13px; margin-block: 12px 20px; }
+.habit-event-chart { height: 220px; width: 100%; min-width: 0; }
+.habit-event-list, .habit-event-import { border-top: 1px solid var(--border); padding-block: 18px; }
+.habit-event-history summary { cursor: pointer; font-size: 13px; }
+.habit-event-import > summary { display: flex; gap: 8px; align-items: center; }
+.habit-event-import summary svg { width: 16px; height: 16px; }
+.habit-event-import p { max-width: 70ch; line-height: 1.7; margin-block: 16px; }
+.habit-event-import label { display: grid; gap: 8px; margin-block: 18px; font-size: 12px; }
+.habit-event-import input, .habit-event-import textarea { max-width: 100%; }
+.habit-event-list ol { list-style: none; padding: 0; max-height: 420px; overflow: auto; }
+.habit-event-list li { padding-block: 14px; border-bottom: 1px solid var(--border); }
+.habit-event-list time { font-size: 12px; font-variant-numeric: tabular-nums; }
+.habit-event-list li details { margin-top: 8px; }
+.habit-event-list li p { overflow-wrap: anywhere; white-space: pre-wrap; font-size: 13px; max-width: 70ch; line-height: 1.7; }

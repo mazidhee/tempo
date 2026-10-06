@@ -1,6 +1,8 @@
 import { ipcMain, dialog } from 'electron';
 import { writeFileSync } from 'fs';
 import { localDate } from '../../shared/productivity';
+import { importHabitEvents } from '../database/habitEventMigration';
+import { getDb } from '../database/db';
 import {
   getAllHabits,
   addHabit,
@@ -51,6 +53,7 @@ export function registerIpcHandlers(): void {
       editHabit(data),
   );
   ipcMain.handle('habits:snapshot', () => habitSnapshot());
+  ipcMain.handle('habits:importEvents', (_event, id:number,csv:string) => importHabitEvents(getDb(),id,csv));
   ipcMain.handle('logs:record', (_event, data: HabitRecord) => recordHabit(data));
   ipcMain.handle(
     'pauses:add',

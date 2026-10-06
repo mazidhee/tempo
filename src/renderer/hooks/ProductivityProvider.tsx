@@ -36,6 +36,7 @@ export function ProductivityProvider({ children }: { children: React.ReactNode }
       if (!ready) return;
       const previous = ref.current;
       const next = fn(previous);
+      if (next === previous) return;
       ref.current = next;
       setState(next);
       pendingWrites.current++;

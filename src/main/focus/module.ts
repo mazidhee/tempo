@@ -18,6 +18,7 @@ import {
   type FocusSettings,
 } from '../../shared/focus';
 import { FocusStore } from './store';
+import { cleanUpTasks } from '../../shared/taskLifecycle';
 import { FocusGuard } from './guard';
 import { FileHostsAdapter, SystemHostsAdapter } from './hosts';
 import { NoProcessAdapter, SystemProcessAdapter } from './processes';
@@ -64,6 +65,7 @@ export function registerFocus(context: ModuleContext) {
   let shortcutConfiguration = '';
   let queue: Promise<unknown> = Promise.resolve(),
     lastPoll = 0;
+  let lastCleanup = 0;
   let nativeQueue: Promise<unknown> = Promise.resolve(),
     nativePending = 0,
     syncScheduled = false;
@@ -340,6 +342,12 @@ export function registerFocus(context: ModuleContext) {
     if (disposed) return;
     void enqueue(async () => {
       if (disposed || context.isQuitting()) return;
+      let cleaned = false;
+      if (Date.now() - lastCleanup >= 60000) {
+        lastCleanup = Date.now();
+        const current = store.productivity(), next = cleanUpTasks(current, lastCleanup);
+        if (next !== current) { store.save(next); cleaned = true; }
+      }
       if (JSON.stringify(store.settings().shortcuts) !== shortcutConfiguration)
         shortcuts(store.settings());
       const ended = store.complete();
@@ -349,7 +357,7 @@ export function registerFocus(context: ModuleContext) {
           sync();
         }
       } finally {
-        if (ended) emit();
+        if (ended || cleaned) emit();
         else updateTray();
       }
     }).catch(() => emit());

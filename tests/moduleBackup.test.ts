@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Database from '../src/main/database/sqlite';
+import { migrateProductivity } from '../src/main/database/migrations';
 import { runModuleMigrations } from '../src/main/database/migrationRegistry';
 import {
   exportModuleData,
@@ -14,6 +15,7 @@ function fixture() {
   db.exec(
     'PRAGMA foreign_keys=ON; CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,applied_at TEXT)',
   );
+  migrateProductivity(db);
   runModuleMigrations(db, false);
   return { db, store: new StudyStore(db) };
 }

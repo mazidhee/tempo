@@ -1,5 +1,10 @@
 export type Phase = 'focus' | 'short' | 'long';
 export interface Task {
+  area?: 'personal' | 'work' | 'study';
+  archivedAt?: string | null;
+  trashedAt?: string | null;
+  keep?: boolean;
+  workProjectId?: string;
   id: string;
   title: string;
   due: string;
@@ -19,6 +24,8 @@ export interface Preset {
   cycles: number;
 }
 export interface Link {
+  area?: 'personal' | 'work' | 'study';
+  workProjectId?: string;
   type: 'task' | 'habit' | 'study';
   id: string;
   name: string;
@@ -61,7 +68,11 @@ export interface Productivity {
     accent?: AccentId;
     themePalette?: ThemePalette;
     avatar?: string | null;
-    greetingStyle?: 'mixed' | 'simple';
+    greetingStyle?: 'mixed' | 'simple' | 'stoic';
+    thoughtLibrary?: ThoughtLibrary;
+    taskCleanup?: boolean;
+    taskRetentionDays?: number;
+    workProjects?: WorkProject[];
     name: string;
     theme: 'system' | 'light' | 'dark';
     sound: boolean;
@@ -113,6 +124,10 @@ export function defaultProductivity(): Productivity {
       themePalette: 'default',
       avatar: null,
       greetingStyle: 'mixed',
+      thoughtLibrary: defaultThoughtLibrary(),
+      taskCleanup: true,
+      taskRetentionDays: 30,
+      workProjects: [],
     },
   };
 }
@@ -223,6 +238,8 @@ export function validProductivity(value: unknown): value is Productivity {
       ['task', 'habit', 'study'].includes(l.type) &&
       text(l.id) &&
       text(l.name) &&
+      (l.area === undefined || ['personal', 'work', 'study'].includes(l.area)) &&
+      (l.workProjectId === undefined || text(l.workProjectId)) &&
       (l.project === undefined || text(l.project)) &&
       (l.curriculumId === undefined || text(l.curriculumId)));
   return (
@@ -243,7 +260,11 @@ export function validProductivity(value: unknown): value is Productivity {
         Array.isArray(t.subtasks) &&
         t.subtasks.every((x) => x && text(x.id) && text(x.title) && typeof x.done === 'boolean') &&
         text(t.createdAt) &&
-        (t.completedAt === null || text(t.completedAt)),
+        (t.completedAt === null || text(t.completedAt)) &&
+        (t.area === undefined || ['personal', 'work', 'study'].includes(t.area)) &&
+        (t.keep === undefined || typeof t.keep === 'boolean') &&
+        (t.workProjectId === undefined || text(t.workProjectId)) &&
+        [t.archivedAt, t.trashedAt].every(v => v === undefined || v === null || (text(v) && Number.isFinite(Date.parse(v!)))),
     ) &&
     Array.isArray(s.presets) &&
     s.presets.length > 0 &&
@@ -299,7 +320,11 @@ export function validProductivity(value: unknown): value is Productivity {
     (s.settings.themePalette === undefined || validThemePalette(s.settings.themePalette)) &&
     (s.settings.avatar === undefined || validAvatar(s.settings.avatar)) &&
     (s.settings.greetingStyle === undefined ||
-      ['mixed', 'simple'].includes(s.settings.greetingStyle)) &&
+      ['mixed', 'simple', 'stoic'].includes(s.settings.greetingStyle)) &&
+    (s.settings.thoughtLibrary === undefined || validThoughtLibrary(s.settings.thoughtLibrary)) &&
+    (s.settings.taskCleanup === undefined || typeof s.settings.taskCleanup === 'boolean') &&
+    (s.settings.workProjects === undefined || validWorkProjects(s.settings.workProjects)) &&
+    (s.settings.taskRetentionDays === undefined || (Number.isInteger(s.settings.taskRetentionDays) && s.settings.taskRetentionDays >= 1 && s.settings.taskRetentionDays <= 365)) &&
     ['system', 'light', 'dark'].includes(s.settings.theme) &&
     ['sound', 'notifications', 'reminder'].every(
       (k) => typeof s.settings[k as keyof Productivity['settings']] === 'boolean',
@@ -313,3 +338,5 @@ import {
   type AccentId,
   type ThemePalette,
 } from './appearance';
+import { defaultThoughtLibrary, validThoughtLibrary, type ThoughtLibrary } from './thoughts';
+import { validWorkProjects, type WorkProject } from './work';

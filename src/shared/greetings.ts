@@ -13,6 +13,13 @@ export const dayPart = (hour: number): DayPart =>
         : hour < 21
           ? 'evening'
           : 'night';
+/** One choice per local day and time-of-day period, including after a restart. */
+export function greetingSeedFor(date: string, hour: number): number {
+  const key = `${date}:${dayPart(hour)}`;
+  let hash = 2166136261;
+  for (const character of key) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+  return (hash >>> 0) / 4294967296;
+}
 const friendly = [
   ['Small steps count', 'Pick one thing worth your attention.'],
   ['Make a little room for progress', 'You can start small and still move forward.'],

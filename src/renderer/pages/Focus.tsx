@@ -36,6 +36,7 @@ import { useFocus } from '../modules/focus/useFocus';
 import { GuardNotice } from '../modules/focus/GuardNotice';
 import { SearchPicker } from '../components/SearchPicker';
 import { studyOptions } from '../../shared/picker';
+import { activeTask, taskFocusLink } from '../../shared/taskLifecycle';
 import '../modules/focus/focus.css';
 const phases: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
 const dial = { center: 150, radius: 139, circumference: Math.PI * 278 };
@@ -75,8 +76,8 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
   const linked = timer.link ? `${timer.link.type}:${timer.link.id}` : '';
   const links: Link[] = [
     ...state.tasks
-      .filter((t) => !t.completedAt)
-      .map((t) => ({ type: 'task' as const, id: t.id, name: t.title, project: t.project })),
+      .filter(activeTask)
+      .map(taskFocusLink),
     ...habits.map((h) => ({ type: 'habit' as const, id: String(h.id), name: h.name })),
     ...study.topics
       .filter((t) => !t.archived)

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMinuteClock } from './useClock';
 import { localDate } from '../../shared/productivity';
 import type { Habit, HabitLog } from '../types';
+import type { HabitEvent } from '../../shared/habitEvents';
 export const habitDataChanged = () => {
   window.dispatchEvent(new Event('habit-data-changed'));
   window.dispatchEvent(new Event('workspace-data-changed'));
@@ -9,7 +10,7 @@ export const habitDataChanged = () => {
 export function useHabitData() {
   const now = useMinuteClock();
   const today = localDate(new Date(now));
-  const [data, setData] = useState<{ habits: Habit[]; logs: HabitLog[] }>({ habits: [], logs: [] });
+  const [data, setData] = useState<{ habits: Habit[]; logs: HabitLog[]; events:HabitEvent[] }>({ habits: [], logs: [],events:[] });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const refresh = useCallback(async () => {

@@ -14,6 +14,7 @@ const api = {
   editHabit: (data: import('../shared/habitValidation').HabitInput & { id: number }) =>
     ipcRenderer.invoke('habits:edit', data),
   getHabitSnapshot: () => ipcRenderer.invoke('habits:snapshot'),
+  importHabitEvents: (id:number,csv:string) => ipcRenderer.invoke('habits:importEvents',id,csv),
   recordHabit: (data: import('./database/db').HabitRecord) =>
     ipcRenderer.invoke('logs:record', data),
   addPause: (data: { habitId: number; start_date: string; end_date: string; reason: string }) =>

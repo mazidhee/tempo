@@ -191,6 +191,7 @@ export async function deleteHabit(id: number) {
     d.prepare('UPDATE habits SET after_habit_id=NULL WHERE after_habit_id=?').run(id);
     d.prepare('DELETE FROM habit_pauses WHERE habit_id=?').run(id);
     d.prepare('DELETE FROM habit_logs WHERE habit_id = ?').run(id);
+    d.prepare('DELETE FROM habit_events WHERE habit_id = ?').run(id);
     d.prepare('DELETE FROM habits WHERE id = ?').run(id);
   })();
   return { id, deleted: true };
@@ -364,7 +365,7 @@ export function removePause(id: number) {
   return { success: true };
 }
 export function habitSnapshot() {
-  return { habits: getAllHabits(true), logs: getDb().prepare('SELECT * FROM habit_logs').all() };
+  return { habits: getAllHabits(true), logs: getDb().prepare('SELECT * FROM habit_logs').all(), events: getDb().prepare('SELECT * FROM habit_events ORDER BY occurred_at DESC').all() };
 }
 
 export function addNote(habitId: number, logDate: string, note: string) {

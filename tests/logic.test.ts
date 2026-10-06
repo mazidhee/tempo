@@ -4,6 +4,8 @@ import './study.test';
 import './moduleBackup.test';
 import './personal.test';
 import './redesign.test';
+import './workspace.test';
+import './habitEvents.test';
 import assert from 'node:assert/strict';
 import {
   defaultProductivity,

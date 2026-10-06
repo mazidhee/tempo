@@ -7,6 +7,7 @@ import { usePrivacy } from '../hooks/PrivacyContext';
 import { localDate, type Link, type Session } from '../../shared/productivity';
 import { shiftDay } from '../../shared/habits';
 import { sessionStart, formatStudyTime } from '../../shared/time';
+import { activeTask, taskFocusLink } from '../../shared/taskLifecycle';
 import { Modal } from './ui';
 import StudySunburst from './StudySunburst';
 const monday = (day: string) => shiftDay(day, -((new Date(day + 'T12:00:00').getDay() + 6) % 7));
@@ -92,12 +93,7 @@ export default function TimeExplorer({ initialCurriculum = '' }: { initialCurric
   }, [week, layout, curriculum, from, until, state.sessions]);
   const links = useMemo<Link[]>(
     () => [
-      ...state.tasks.map((task) => ({
-        type: 'task' as const,
-        id: task.id,
-        name: task.title,
-        project: task.project,
-      })),
+      ...state.tasks.filter(activeTask).map(taskFocusLink),
       ...habits.map((habit) => ({
         type: 'habit' as const,
         id: String(habit.id),

@@ -1,4 +1,5 @@
 .habit-checkin {
+  container: habit-checkin / inline-size;
   max-width: 960px;
   margin-inline: auto;
   width: 100%;
@@ -12,20 +13,20 @@
   border-bottom: 1px solid var(--border);
 }
 .habit-checkin .habit-section {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
 }
 .habit-checkin .habit-section-toggle {
-  padding: 14px 18px;
-  background: var(--surface-1);
+  padding: 14px 0;
+  background: transparent;
 }
 .habit-checkin .habit-daily-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 110px minmax(0, 300px) 32px;
   gap: 8px 20px;
   margin: 0;
-  padding: 16px 18px;
+  padding: 20px 0;
   border: 0;
   border-top: 1px solid var(--border);
   border-radius: 0;
@@ -35,17 +36,19 @@
   display: contents;
 }
 .habit-daily-row .habit-card-heading > div:first-child {
+  min-width: 0;
   grid-column: 1;
   grid-row: 1;
   align-self: center;
 }
 .habit-daily-row .habit-manage {
-  grid-column: 2;
-  grid-row: 2;
+  grid-column: 4;
+  grid-row: 1;
+  align-self: center;
   justify-content: flex-end;
 }
 .habit-daily-row .habit-actions {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   margin: 0;
   justify-content: flex-end;
@@ -56,6 +59,41 @@
   margin: 0;
   align-self: center;
 }
+.habit-expanded-slip {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin: 10px 0 0;
+  max-width: 70ch;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.habit-streak {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: center;
+  text-decoration: none;
+  color: var(--accent-text);
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  min-width: 0;
+}
+.streak-count { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.streak-count svg { width: 20px; height: 26px; }
+.streak-count strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.habit-streak small { font-size: 10px; color: var(--muted); }
+.habit-recent-dots { display: flex; justify-content: center; gap: 5px; margin-top: 4px; }
+.habit-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+.habit-dot.done { background: var(--accent); }
+.habit-dot.freeze { background: transparent; border: 1px solid var(--accent); border-radius: 1px; }
+.habit-dot.not_due, .habit-dot.paused { opacity: .35; }
+.habit-dot.missed, .habit-dot.slip { background: transparent; border: 1px solid var(--muted); }
+.streak-checkin .streak-count { animation: streak-checkin 420ms cubic-bezier(.16,1,.3,1); }
+@keyframes streak-checkin { 0% { transform: scale(.9); } 45% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .streak-checkin .streak-count { animation: none; } }
 .habit-daily-row .pinned-label {
   padding: 0;
   background: none;
@@ -66,7 +104,13 @@
 }
 .habit-daily-row .btn-ghost {
   padding-inline: 8px;
+  font-size: 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
 }
+.habit-daily-row .btn-ghost svg { width: 16px; height: 16px; }
+.habit-daily-row .habit-neutral { grid-column: 3; grid-row: 1; align-self: center; }
 .habit-checkin .recovery-panel {
   border-top: 1px solid var(--border);
   padding: 16px 0;
@@ -86,24 +130,28 @@
 .habit-checkin .recovery-row small {
   display: block;
 }
-@media (max-width: 650px) {
+@container habit-checkin (max-width: 760px) {
   .habit-checkin .habit-daily-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 110px;
     gap: 10px;
   }
   .habit-daily-row .habit-actions {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
     justify-content: flex-start;
+    padding-right: 44px;
   }
+  .habit-daily-row .habit-streak { grid-column: 2; grid-row: 1; }
   .habit-daily-row .habit-card-footer {
     grid-column: 1;
     grid-row: 3;
-    padding-right: 90px;
   }
+  .habit-daily-row .habit-expanded-slip { grid-row: 4; }
   .habit-daily-row .habit-manage {
-    grid-column: 1;
-    grid-row: 3;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
     justify-self: end;
   }
+  .habit-daily-row .habit-neutral { grid-column: 1 / -1; grid-row: 2; padding-right: 44px; }
 }

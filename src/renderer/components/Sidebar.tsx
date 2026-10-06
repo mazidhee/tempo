@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Command, AudioLines, PanelLeft } from 'lucide-react';
+import { Command, PanelLeft, AudioLines } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { navigation } from '../registry/navigation';
 import {

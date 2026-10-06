@@ -3,6 +3,8 @@ import { FocusSettings } from '../modules/focus/FocusSettings';
 import { ReflectionNotifications } from '../modules/reflection/settings';
 import UserGuide from '../components/UserGuide';
 import BackupSettings from '../components/BackupSettings';
+import ThoughtSettings from '../components/ThoughtSettings';
+import TaskSettings from '../components/TaskSettings';
 export interface SettingsSection {
   id: string;
   label: string;
@@ -10,6 +12,8 @@ export interface SettingsSection {
   component: ComponentType;
 }
 export const settingsSections: SettingsSection[] = [
+  { id: 'thoughts', label: 'Daily thoughts', order: 12, component: ThoughtSettings },
+  { id: 'tasks', label: 'Task cleanup', order: 18, component: TaskSettings },
   {id:'backups',label:'Backups',order:15,component:BackupSettings},
   { id: 'guide', label: 'User guide', order: 10, component: UserGuide },
   { id: 'focus', label: 'Focus', order: 20, component: FocusSettings },

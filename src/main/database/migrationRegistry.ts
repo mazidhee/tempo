@@ -8,6 +8,8 @@ import { continuityMigration } from '../study/continuityMigration';
 import { documentMigration } from '../reflection/documentMigration';
 import { outlineMigration } from '../reflection/outlineMigration';
 import { trendMigration } from '../reflection/trendMigration';
+import { thoughtMigration, taskWorkspaceMigration, workProjectMigration } from './personalWorkspaceMigration';
+import { habitEventMigration } from './habitEventMigration';
 export interface Migration {
   version: number;
   name: string;
@@ -23,6 +25,10 @@ export const migrations: Migration[] = [
   documentMigration,
   outlineMigration,
   trendMigration,
+  thoughtMigration,
+  taskWorkspaceMigration,
+  workProjectMigration,
+  habitEventMigration,
 ];
 /** A batch gets one consistent safety snapshot; every migration is atomic. */
 export function runModuleMigrations(db: Database, backup = true) {

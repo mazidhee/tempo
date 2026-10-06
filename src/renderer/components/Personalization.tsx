@@ -131,14 +131,15 @@ export default function Personalization() {
           aria-label="Home greetings"
           aria-describedby="greeting-help"
           value={settings.greetingStyle ?? 'mixed'}
-          onChange={(e) => set('greetingStyle', e.target.value as 'mixed' | 'simple')}
+          onChange={(e) => set('greetingStyle', e.target.value as 'mixed' | 'simple' | 'stoic')}
         >
           <option value="mixed">Varied and personal</option>
           <option value="simple">Simple time-of-day greeting</option>
+          <option value="stoic">Daily Stoic and personal thought</option>
         </select>
         <span id="greeting-help" className="muted small greeting-help">
           Varied greetings mix humour, encouragement and occasional language greetings with a short
-          translation.
+          translation. They stay fixed for the morning, afternoon or evening. Daily thoughts change at local midnight; edit them in Daily thoughts.
         </span>
       </label>
     </>

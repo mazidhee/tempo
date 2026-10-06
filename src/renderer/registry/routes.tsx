@@ -14,6 +14,7 @@ const Plan = lazy(() => import('../modules/reflection/Plan'));
 const Journal = lazy(() => import('../modules/reflection/Journal'));
 const Goals = lazy(() => import('../modules/reflection/Goals'));
 const Review = lazy(() => import('../modules/reflection/Review'));
+const Work = lazy(() => import('../pages/Work'));
 export interface RouteContext {
   zen: boolean;
   setZen: (value: boolean) => void;
@@ -60,6 +61,7 @@ export const routeRegistry: WorkspaceRoute[] = [
   { path: '/study/:curriculumId', render: () => <Study /> },
   { path: '/habits/:id', render: () => <HabitDetail /> },
   { path: '/tasks', render: () => <Tasks /> },
+  { path: '/work', render: () => <Work /> },
   { path: '/focus', render: (context) => <Focus {...context} /> },
   { path: '/statistics', render: () => <Statistics /> },
   { path: '/analytics', render: () => <Statistics /> },

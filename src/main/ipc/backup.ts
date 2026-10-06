@@ -1,5 +1,7 @@
 import type { SQLInputValue } from 'node:sqlite';
 import type Database from '../database/sqlite';
+import { mergeThoughtLibraries } from '../../shared/thoughts';
+import { mergeWorkProjects } from '../../shared/work';
 import {
   validProductivity,
   localDate,
@@ -9,6 +11,7 @@ import {
 } from '../../shared/productivity';
 import { normalizeHabit, engineFields } from '../../shared/habitValidation';
 import { validDate } from '../../shared/habits';
+import { validOccurrence, type HabitEvent } from '../../shared/habitEvents';
 import {
   exportModuleData,
   validateModuleData,
@@ -30,6 +33,7 @@ export function exportBackup(db: Database) {
     habits: db.prepare('SELECT * FROM habits').all(),
     logs: db.prepare('SELECT * FROM habit_logs').all(),
     pauses: db.prepare('SELECT * FROM habit_pauses').all(),
+    habitEvents: db.prepare("SELECT name FROM sqlite_master WHERE name='habit_events'").get() ? db.prepare('SELECT * FROM habit_events').all() : [],
     productivity: JSON.parse(
       (db.prepare('SELECT json FROM productivity_state WHERE id=1').get() as { json: string }).json,
     ),
@@ -44,6 +48,7 @@ export async function importBackup(db: Database, input: unknown) {
     pauses?: any[];
     productivity: Productivity;
     modules?: unknown;
+    habitEvents?: HabitEvent[];
   };
   if (
     !data ||
@@ -83,6 +88,9 @@ export async function importBackup(db: Database, input: unknown) {
       schedule_type: data.version === 1 ? 'daily' : h.schedule_type,
     }),
   );
+  const events=data.habitEvents ?? [];
+  if(!Array.isArray(events) || events.length>100000 || events.some(e=>!e || !ids.has(e.habit_id) || !validOccurrence(e.occurred_at) || typeof e.note!=='string' || e.note.length>10000 || typeof e.source!=='string' || e.source.length>120 || !Number.isFinite(Date.parse(e.imported_at))))
+    throw Error('Invalid habit event history. Nothing was changed.');
   const pauses = data.pauses || [];
   if (
     !Array.isArray(pauses) ||
@@ -193,6 +201,7 @@ export async function importBackup(db: Database, input: unknown) {
         l.freeze_note ?? null,
         l.freeze_at ?? null,
       );
+    for(const e of events)db.prepare('INSERT OR IGNORE INTO habit_events(habit_id,occurred_at,note,source,imported_at) VALUES(?,?,?,?,?)').run(map.get(e.habit_id)!,e.occurred_at,e.note,e.source,e.imported_at);
     for (const p of pauses) {
       const existing = db
         .prepare('SELECT id FROM habit_pauses WHERE habit_id=? AND start_date<=? AND end_date>=?')
@@ -237,7 +246,9 @@ export async function importBackup(db: Database, input: unknown) {
       ...old,
       tasks: merge(old.tasks, imported.tasks),
       presets: pristine ? imported.presets : merge(old.presets, imported.presets),
-      settings: pristine ? imported.settings : old.settings,
+      settings: pristine ? imported.settings : { ...old.settings,
+        thoughtLibrary: mergeThoughtLibraries(old.settings.thoughtLibrary, imported.settings.thoughtLibrary),
+        workProjects: mergeWorkProjects(old.settings.workProjects, imported.settings.workProjects) },
       timer: pristine
         ? newTimer(
             imported.presets.find((p) => p.id === imported.timer.presetId) ?? imported.presets[0],
@@ -245,6 +256,7 @@ export async function importBackup(db: Database, input: unknown) {
         : old.timer,
       sessions: merge(old.sessions, imported.sessions.map(relink)),
     };
+    if (!validProductivity(next)) throw new Error('The combined backup exceeds supported library limits or contains invalid records. Nothing was changed.');
     db.prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(next));
   })();
   return { success: true, backupPath };

@@ -1,0 +1,41 @@
+.work-page { width: calc(100% - var(--space-16)); max-width: 940px; margin: var(--space-12) auto; }
+.work-page .btn-ghost { display: inline-flex; align-items: center; gap: 8px; }
+.work-page .btn-ghost svg { width: 16px; height: 16px; flex-shrink: 0; }
+.work-back { margin-bottom: 24px; }
+.work-header { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin-bottom: 28px; }
+.work-header > div { min-width: 0; }
+.work-header h1 { font-size: 40px; line-height: 1.2; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.work-header p { color: var(--muted); margin-top: 14px; line-height: 1.7; max-width: 65ch; overflow-wrap: anywhere; }
+.work-header > button, .work-header > .row-actions { flex-shrink: 0; }
+.milestone-title { text-align: left; font-weight: 600; overflow-wrap: anywhere; }
+.work-context { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; color: var(--muted); font-size: 13px; padding-block: 20px; border-block: 1px solid var(--border); margin-bottom: 48px; }
+.work-page h2 { font-size: 18px; }
+.work-page .section-heading { margin-bottom: 18px; }
+.work-project-form { margin-block: 20px 48px; max-width: 680px; }
+.work-projects, .work-milestones ul, .work-next-tasks { list-style: none; padding: 0; }
+.work-projects > li { border-top: 1px solid var(--border); }
+.work-projects > li > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; text-align: left; padding: 28px 4px; }
+.work-projects > li > button > div { min-width: 0; }
+.work-projects h3 { font-size: 20px; overflow-wrap: anywhere; }
+.work-projects p { color: var(--muted); margin: 8px 0 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.work-projects small { color: var(--muted); font-size: 12px; }
+.work-projects > li > button:hover { background: var(--surface-1); }
+.work-empty { padding: 48px 0; }
+.work-empty p { color: var(--muted); max-width: 58ch; line-height: 1.8; margin-top: 12px; }
+.work-milestones { margin-bottom: 56px; }
+.work-milestones li, .work-next-tasks li { display: flex; align-items: start; gap: 16px; padding-block: 20px; border-bottom: 1px solid var(--border); }
+.work-milestones li > div { min-width: 0; overflow-wrap: anywhere; }
+.work-milestones small { display: block; margin-top: 6px; font-size: 12px; }
+.work-milestone-add { display: flex; gap: 12px; align-items: center; padding-top: 20px; }
+.work-milestone-add > input:first-of-type { flex: 1; min-width: 0; }
+.work-milestone-add input { background: transparent; color: var(--text); border: 0; padding: 8px; }
+.work-milestone-add input[type=date] { width: 130px; font-size: 12px; }
+.work-next-tasks a { overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .work-page { width: calc(100% - 40px); margin-block: 32px; }
+  .work-header { flex-wrap: wrap; }
+  .work-header h1 { font-size: 32px; }
+  .work-milestone-add { flex-wrap: wrap; }
+  .work-milestone-add > input:first-of-type { flex-basis: calc(100% - 44px); }
+  .work-context { gap: 16px; }
+}

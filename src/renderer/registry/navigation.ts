@@ -10,6 +10,7 @@ import {
   Target,
   NotebookPen,
   Settings2,
+  BriefcaseBusiness,
   type LucideIcon,
 } from 'lucide-react';
 export interface NavigationEntry {
@@ -25,6 +26,7 @@ export const navigationRegistry: NavigationEntry[] = [
   { id: 'plan', to: '/plan', label: 'Plan', icon: CalendarCheck, enabled: true },
   { id: 'habits', to: '/habits', label: 'Habits', icon: CircleCheck },
   { id: 'tasks', to: '/tasks', label: 'Tasks', icon: ListTodo },
+  { id: 'work', to: '/work', label: 'Work', icon: BriefcaseBusiness },
   { id: 'focus', to: '/focus', label: 'Focus', icon: Timer },
   { id: 'study', to: '/study', label: 'Study', icon: BookOpen },
   { id: 'statistics', to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },

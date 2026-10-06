@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Modal } from './ui';
 import { habitDataChanged } from '../hooks/useHabitData';
@@ -8,11 +8,13 @@ export default function DeleteHabitButton({
   name,
   onDeleted,
   compact = false,
+  renderTrigger,
 }: {
   id: number;
   name: string;
   onDeleted?: () => void;
   compact?: boolean;
+  renderTrigger?: (open:()=>void)=>ReactNode;
 }) {
   const [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
@@ -21,7 +23,7 @@ export default function DeleteHabitButton({
     privacy = usePrivacy();
   return (
     <>
-      <button
+      {renderTrigger ? renderTrigger(()=>{setError('');setOpen(true);}) : <button
         className={compact ? 'icon-button' : 'btn-secondary'}
         aria-label="Delete habit"
         title="Delete habit"
@@ -32,7 +34,7 @@ export default function DeleteHabitButton({
       >
         <Trash2 />
         {!compact && 'Delete habit'}
-      </button>
+      </button>}
       {open && (
         <Modal
           title="Delete this habit?"

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Check, Snowflake, MessageSquare } from 'lucide-react';
 import { isComplete, progress, canFreeze, type FreezeReason } from '../../shared/habits';
 import type { Habit, HabitLog } from '../types';
@@ -28,6 +28,8 @@ export default function HabitAction({
   const [reason, setReason] = useState<FreezeReason>('rest');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+  const [showSlip, setShowSlip] = useState(false);
+  const slipId = useId();
   const [busy, setBusy] = useState(false),
     working = useRef(false);
   const complete = isComplete(habit, log),
@@ -50,14 +52,14 @@ export default function HabitAction({
   };
   const open = (value: typeof dialog) => {
     setError('');
-    setNote(value === 'note' ? log?.note || '' : '');
+    setNote(value === 'note' ? log?.note || '' : value === 'slip' ? log?.slip_reason || '' : '');
     setAmount('');
     setQuantityAction('quantity');
     setDialog(value);
   };
   const frozen = log?.outcome === 'freeze',
     slipped = log?.outcome === 'slip';
-  return (
+  return (<>
     <div className={`habit-actions ${compact ? 'compact' : ''}`}>
       {frozen ? (
         <>
@@ -119,9 +121,10 @@ export default function HabitAction({
       ) : habit.habit_type === 'avoid' ? (
         <>
           {slipped ? (
-            <span className="slip-label">
-              Slip logged<span className="habit-name"> · {log.slip_reason}</span>
-            </span>
+            <button className="btn-ghost" aria-label={`Slip logged · ${showSlip ? 'Hide reason' : 'View reason'}`} aria-expanded={showSlip} aria-controls={slipId}
+              onClick={() => setShowSlip(!showSlip)}>
+              {showSlip ? 'Hide reason' : 'Slip logged'}
+            </button>
           ) : (
             <button
               className={complete ? 'btn-secondary' : 'btn-primary'}
@@ -138,8 +141,8 @@ export default function HabitAction({
             </button>
           )}
           {!locked && (
-            <button className="btn-secondary" disabled={busy} onClick={() => open('slip')}>
-              {slipped ? 'Edit slip reason' : 'Slip'}
+            <button className="btn-secondary" aria-label={slipped ? 'Edit slip reason' : 'Slip'} disabled={busy} onClick={() => open('slip')}>
+              {slipped ? 'Edit reason' : 'Slip'}
             </button>
           )}
         </>
@@ -312,5 +315,9 @@ export default function HabitAction({
         </Modal>
       )}
     </div>
+    {slipped && <p id={slipId} hidden={!showSlip} className="habit-expanded-slip habit-name">
+      {log.slip_reason || 'No reason recorded.'}
+    </p>}
+    </>
   );
 }

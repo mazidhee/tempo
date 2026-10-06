@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tempo — habit directions</title><link rel="stylesheet" href="preview.css"></head>
+<body>
+<header class="preview-bar"><strong>Tempo design studio</strong><span>Interactive concepts · fictional data</span><button id="theme">Light theme</button></header>
+<div class="workspace"><aside class="sidebar"><div class="brand"><span id="brand-mark"></span>Tempo</div><nav><button data-page="habits" class="active">Habits</button><button data-page="thoughts">Home options</button><button data-page="library">My thoughts · Settings</button><button data-page="logos">Logo options</button><button data-page="references">Inspiration</button></nav><p>This preview does not read or change your saved data.</p></aside>
+<main>
+<section id="habits" class="page"><div class="heading"><div><h1>Small things, steadily.</h1><p>Tuesday, October 6 · Your habits, at a glance.</p></div><button class="primary" id="new-habit">+ New habit</button></div>
+<div class="direction-tabs" aria-label="Habit layout"><button data-layout="a" class="active">A · Daily rhythm</button><button data-layout="b">B · Week workspace</button><button data-layout="c">C · One at a time</button></div>
+<p id="layout-description" class="direction-note"></p>
+<div id="habit-content"></div>
+<details class="recovery"><summary>Recovery · 2 recent misses</summary><p>Protection is available when you need it. A freeze preserves continuity without adding to the streak.</p><button id="freeze">Cover yesterday’s reading</button></details>
+<p class="quiet">Try completing a habit, adding water, or opening the slip note. The streak animation responds to a check-in; it does not pulse continuously.</p>
+</section>
+<section id="thoughts" class="page" hidden>
+<div class="thought-design-tabs" aria-label="Home thought design"><button data-thought-design="a" class="active">A · Open canvas</button><button data-thought-design="b">B · Reading page</button><button data-thought-design="c">C · Quiet margin</button><button data-thought-design="d">D · Familiar greeting</button><button data-thought-design="e">E · One word</button></div>
+<p class="direction-note" id="thought-design-description"></p>
+<div id="home-thought-design"></div>
+<section class="home-year-preview"><div class="year-heading"><h2>Your year</h2><span>View insights ↗</span></div><div class="year-grid" aria-label="Illustrative year calendar"></div><p class="quiet">Calendar shown for scale · fictional completions</p></section>
+<div class="home-next-preview"><div><h2>Continue studying</h2><p>Python → Functions</p><span>Pick up where you left off.</span></div><button>Start focus</button></div>
+<p class="quiet">The library lives in Settings. Home shows just the day’s thought and a quiet link to its Journal.</p>
+<div id="reflection" hidden><h2>Evening reflection</h2><p>How did I direct my attention towards what I could choose today?</p><textarea aria-label="Preview journal reflection" placeholder="Begin wherever you are…"></textarea><p class="quiet">A preview of the connection to your dated Journal. Nothing here is saved to Tempo.</p></div>
+</section>
+<section id="library" class="page" hidden><div class="heading"><div><h1>Your thought library.</h1><p>Settings · add your words to the daily rotation.</p></div></div>
+<div class="thought-columns"><div><h2>Your thought library</h2><p class="muted">Your words can join the rotation. Pause an entry to leave it out.</p><div id="thought-list"></div></div><form id="thought-form"><h2>Add your own</h2><label>Thought<textarea id="thought-text" required placeholder="Something you want to remember…" maxlength="2000"></textarea></label><label>Attribution <span class="muted">optional</span><input id="thought-author" placeholder="My own words"></label><label>Evening reflection <span class="muted">optional</span><input id="thought-prompt" placeholder="How did I put this into practice today?"></label><button class="primary" type="submit">Add to rotation</button><p class="quiet">Editing the library affects future days. Today’s selected thought stays fixed.</p></form></div>
+</section>
+<section id="logos" class="page" hidden><div class="heading"><div><h1>A quieter signature.</h1><p>Three original vector directions. Choose a mark to preview it in the sidebar.</p></div></div><div id="logo-options"></div><p class="quiet">These are new directions, not borrowed logos. The selected mark can use your existing accent in every theme.</p></section>
+<section id="references" class="page" hidden><div class="heading"><div><h1>Useful references.</h1><p>The interaction ideas behind these concepts.</p></div></div><div class="reference"><h2>Things 3 · a calm daily list</h2><p>Clear rows, small secondary actions and generous separation. Direction A brings that restraint to check-ins.</p><a href="https://culturedcode.com/things/" target="_blank" rel="noreferrer">Explore Things’ official design ↗</a></div><div class="reference"><h2>Streaks · progress you can recognise</h2><p>A visible streak and direct completion control. Tempo keeps its own schedule, freeze and weekly-target definitions.</p><a href="https://streaksapp.com/" target="_blank" rel="noreferrer">Explore Streaks’ official interface ↗</a></div><div class="reference"><h2>Habitify · list and calendar perspectives</h2><p>A weekly view is useful for patterns; a daily list is useful for action. Direction B combines them without competing navigation.</p><a href="https://intercom.help/habitify-app/en/articles/11203298-track-progress-of-habits-on-website-desktop-app" target="_blank" rel="noreferrer">See Habitify’s official grid/list guide ↗</a></div></section>
+<div id="status" role="status" aria-live="polite"></div>
+</main></div><script src="preview.js"></script></body></html>

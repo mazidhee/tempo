@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
@@ -24,10 +24,13 @@ import Heatmap from '../components/Heatmap';
 import { HomeWidgets, homeWidgets, type HomeSlot } from '../registry/home';
 import { PageHeader, durationLabel } from '../components/ui';
 import { useReflection } from '../modules/reflection/useReflection';
-import { greetingFor } from '../../shared/greetings';
+import { greetingFor, greetingSeedFor } from '../../shared/greetings';
 import ContinueStudy from '../components/ContinueStudy';
+import HomeThought from '../components/HomeThought';
+import { defaultThoughtLibrary, selectDailyThought } from '../../shared/thoughts';
+import { activeTask } from '../../shared/taskLifecycle';
 export default function Home({ journal: suppliedJournal }: { journal?: Record<string, string> }) {
-  const { state, update } = useProductivity();
+  const { state, update, ready } = useProductivity();
   const { snapshot } = useReflection();
   const journal = useMemo(
     () =>
@@ -38,16 +41,25 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
   const { active: habits, habits: allHabits, logs } = useHabitData();
   const navigate = useNavigate();
   const today = localDate(new Date(now));
+  const thought = state.settings.thoughtLibrary?.days.find(v => v.date === today);
+  useEffect(() => {
+    if (!ready || state.settings.greetingStyle !== 'stoic' || thought) return;
+    update(s => {
+      const library = s.settings.thoughtLibrary ?? defaultThoughtLibrary();
+      const next = selectDailyThought(library, today);
+      return next === library ? s : { ...s, settings: { ...s.settings, thoughtLibrary: next } };
+    });
+  }, [ready, state.settings.greetingStyle, state.settings.thoughtLibrary, thought, today, update]);
   const details = useMemo(() => collectiveYear(allHabits, logs, today), [allHabits, logs, today]);
   const hour = new Date(now).getHours();
-  const greetingSeed = useState(() => Math.random())[0];
+  const greetingSeed = greetingSeedFor(today, hour);
   const greeting = greetingFor(
     hour,
     state.settings.name,
     greetingSeed,
     state.settings.greetingStyle === 'simple',
   );
-  const due = state.tasks.filter((t) => !t.completedAt && t.due && t.due <= today);
+  const due = state.tasks.filter((t) => activeTask(t) && t.due && t.due <= today);
   const todaysHabits = habits.filter((h) => isDue(h, today, logs));
   const dueHabits = todaysHabits.filter((h) => logFor(logs, h, today)?.outcome !== 'freeze');
   const done = dueHabits.filter((h) => isComplete(h, logFor(logs, h, today))).length;
@@ -82,7 +94,7 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
   };
   return (
     <div className="page home-page">
-      <PageHeader
+      {state.settings.greetingStyle === 'stoic' ? <HomeThought thought={thought} date={today} onFocus={() => startFocus()} /> : <PageHeader
         title={greeting.title}
         description={greeting.detail}
         action={
@@ -91,7 +103,7 @@ export default function Home({ journal: suppliedJournal }: { journal?: Record<st
             Start focusing
           </button>
         }
-      />
+      />}
       <section className="panel activity-panel">
         <div className="section-heading">
           <div>

@@ -1,17 +1,23 @@
 import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Check, Timer, Pencil, Trash2, Search, Flag, ChevronDown } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Check, Timer, Pencil, Trash2, Search, Flag, ChevronDown, Archive, Undo2 } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { localDate, focusRequest, type Task } from '../../shared/productivity';
 import { shiftDay } from '../../shared/habits';
 import { Modal } from '../components/ui';
 import { Button } from '../components/ui/button';
 import '../styles/task-page.css';
+import { activeTask, taskArea, taskFocusLink, restoreTask, type TaskArea } from '../../shared/taskLifecycle';
 export default function Tasks() {
   const { state, update, ready } = useProductivity();
   const navigate = useNavigate();
-  const [view, setView] = useState('Today'),
-    [quick, setQuick] = useState('');
+  const [params, setParams] = useSearchParams();
+  const views = ['Today', 'Upcoming', 'All', 'Completed', 'Archived', 'Trash'];
+  const view = views.includes(params.get('view') || '') ? params.get('view')! : 'Today';
+  const [quick, setQuick] = useState('');
+  const area = ['personal', 'work', 'study'].includes(params.get('area') || '') ? params.get('area')! : 'all';
+  const projectId = params.get('project') || '';
+  const setView = (value: string) => { setParams(p => { p.set('view', value); return p; }); };
   const [query, setQuery] = useState(''),
     [priorityFilter, setPriorityFilter] = useState('all');
   const [editing, setEditing] = useState<Task | null | undefined>(undefined);
@@ -34,16 +40,21 @@ export default function Tasks() {
     title: title.trim(),
     due: view === 'Today' ? today : view === 'Upcoming' ? shiftDay(today, 1) : '',
     priority: priorityFilter === 'all' ? 'medium' : (priorityFilter as Task['priority']),
-    project: '',
     tags: [],
     subtasks: [],
     createdAt: new Date().toISOString(),
     completedAt: null,
+    area: area === 'all' ? 'personal' : area as TaskArea,
+    workProjectId: area === 'work' && projectId ? projectId : undefined,
+    project: area === 'work' && projectId ? state.settings.workProjects?.find(p => p.id === projectId)?.title ?? '' : '',
   });
   const tasks = state.tasks
     .filter(
       (t) =>
-        (view === 'Completed' ? !!t.completedAt : !t.completedAt) &&
+        (view === 'Trash' ? !!t.trashedAt : view === 'Archived' ? !!t.archivedAt && !t.trashedAt :
+          view === 'Completed' ? !!t.completedAt && !t.archivedAt && !t.trashedAt : activeTask(t)) &&
+        (area === 'all' || taskArea(t) === area) &&
+        (!projectId || t.workProjectId === projectId) &&
         (view !== 'Today' || (!!t.due && t.due <= today)) &&
         (view !== 'Upcoming' || t.due > today) &&
         (priorityFilter === 'all' || t.priority === priorityFilter) &&
@@ -76,7 +87,7 @@ export default function Tasks() {
         ? dateLabel(t.due)
         : view === 'Completed'
           ? dateLabel((t.completedAt || '').slice(0, 10))
-          : t.project || 'Personal';
+          : t.project || (taskArea(t) === 'work' ? 'Work' : taskArea(t) === 'study' ? 'Study' : 'Personal');
   const groups = new Map<string, Task[]>();
   for (const task of tasks) {
     const key = groupLabel(task);
@@ -84,7 +95,7 @@ export default function Tasks() {
   }
   const focus = async (task: Task) => {
     if (focusPending.current) return;
-    const link = { type: 'task' as const, id: task.id, name: task.title, project: task.project };
+    const link = taskFocusLink(task);
     const request = focusRequest(state.timer, link);
     if (request === 'resume') {
       navigate('/focus');
@@ -147,7 +158,7 @@ export default function Tasks() {
       )}
       <div className="tasks-viewbar">
         <div className="tasks-views" aria-label="Task views">
-          {['Today', 'Upcoming', 'All', 'Completed'].map((v) => (
+          {views.map((v) => (
             <button
               key={v}
               aria-pressed={view === v}
@@ -163,6 +174,9 @@ export default function Tasks() {
         </span>
       </div>
       <div className="tasks-filters">
+        <select aria-label="Task area" value={area} onChange={e => setParams(p => { p.set('area', e.target.value); p.delete('project'); return p; })}>
+          <option value="all">All areas</option><option value="personal">Personal</option><option value="work">Work</option><option value="study">Study</option>
+        </select>
         <label className="tasks-search">
           <Search aria-hidden="true" />
           <input
@@ -184,6 +198,8 @@ export default function Tasks() {
           <option value="low">Low priority</option>
         </select>
       </div>
+      {projectId && <p className="tasks-footnote">Project: {state.settings.workProjects?.find(p => p.id === projectId)?.title || 'Saved project'} · <Link to="/work">Back to Work</Link></p>}
+      {view === 'Trash' && <p className="tasks-footnote">Restore tasks whenever you need them. Trash is never emptied automatically.</p>}
       <div className="tasks-lists">
         {[...groups].map(([heading, items]) => (
           <section className="tasks-group" key={heading} aria-label={heading + ' tasks'}>
@@ -192,7 +208,7 @@ export default function Tasks() {
               {items.map((task) => (
                 <li className="task-list-item" key={task.id}>
                   <button
-                    disabled={!ready}
+                    disabled={!ready || !!task.trashedAt || !!task.archivedAt}
                     className={`check-button ${task.completedAt ? 'checked' : ''}`}
                     aria-label={`${task.completedAt ? 'Reopen' : 'Complete'} ${task.title}`}
                     aria-pressed={!!task.completedAt}
@@ -226,6 +242,8 @@ export default function Tasks() {
                       {task.tags.map((tag) => (
                         <span key={tag}>#{tag}</span>
                       ))}
+                      <span>{taskArea(task) === 'work' ? 'Work' : taskArea(task) === 'study' ? 'Study' : 'Personal'}</span>
+                      {task.keep && <span>Keep</span>}
                     </div>
                     {!!task.subtasks.length && (
                       <details className="task-steps">
@@ -257,7 +275,7 @@ export default function Tasks() {
                     )}
                   </div>
                   <div className="task-list-actions">
-                    {!task.completedAt && (
+                    {activeTask(task) && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -276,10 +294,12 @@ export default function Tasks() {
                     >
                       <Pencil />
                     </Button>
+                    {task.trashedAt || task.archivedAt ? <Button variant="ghost" size="icon" aria-label={`Restore ${task.title}`} onClick={() => save(task.trashedAt ? restoreTask(task) : { ...task, archivedAt: null, keep: true })}><Undo2 /></Button>
+                      : <Button variant="ghost" size="icon" aria-label={`Archive ${task.title}`} onClick={() => save({ ...task, archivedAt: new Date().toISOString() })}><Archive /></Button>}
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`Delete ${task.title}`}
+                      aria-label={`${task.trashedAt ? 'Delete permanently' : 'Move to Trash'} ${task.title}`}
                       onClick={() => setDeleting(task)}
                     >
                       <Trash2 />
@@ -321,7 +341,7 @@ export default function Tasks() {
           )}
         </div>
       )}
-      {view !== 'Completed' && (
+      {!['Completed', 'Archived', 'Trash'].includes(view) && (
         <form
           className="tasks-quick-add"
           onSubmit={(e) => {
@@ -367,10 +387,9 @@ export default function Tasks() {
         />
       )}
       {deleting && (
-        <Modal title="Delete task?" onClose={() => setDeleting(null)}>
+        <Modal title={deleting.trashedAt ? 'Delete task permanently?' : 'Move task to Trash?'} onClose={() => setDeleting(null)}>
           <p className="muted">
-            “{deleting.title}” will be removed. Its completed focus sessions stay in your
-            statistics.
+            {deleting.trashedAt ? `“${deleting.title}” will be permanently removed, including its task completion record. Focus sessions remain saved. This cannot be undone.` : `“${deleting.title}” can be restored from Trash. Its completion record and focus history stay saved.`}
           </p>
           <div className="modal-actions">
             <button className="btn-secondary" onClick={() => setDeleting(null)}>
@@ -379,11 +398,11 @@ export default function Tasks() {
             <button
               className="btn-primary"
               onClick={() => {
-                update((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== deleting.id) }));
+                update((s) => ({ ...s, tasks: deleting.trashedAt ? s.tasks.filter(t => t.id !== deleting.id) : s.tasks.map(t => t.id === deleting.id ? { ...t, trashedAt: new Date().toISOString() } : t) }));
                 setDeleting(null);
               }}
             >
-              Delete task
+              {deleting.trashedAt ? 'Delete permanently' : 'Move to Trash'}
             </button>
           </div>
         </Modal>
@@ -401,6 +420,7 @@ function TaskForm({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(task);
+  const { state } = useProductivity();
   const [tags, setTags] = useState(task.tags.join(', '));
   const [sub, setSub] = useState('');
   return (
@@ -463,9 +483,17 @@ function TaskForm({
             className="input"
             placeholder="e.g. Personal, University"
             value={draft.project}
-            onChange={(e) => setDraft({ ...draft, project: e.target.value })}
+            onChange={(e) => setDraft({ ...draft, project: e.target.value, workProjectId: undefined })}
           />
         </label>
+        <label>Area<select className="input" aria-label="Task form area" value={draft.area ?? 'personal'} onChange={e => setDraft({ ...draft, area: e.target.value as TaskArea, workProjectId: undefined })}>
+          <option value="personal">Personal</option><option value="work">Work</option><option value="study">Study</option>
+        </select></label>
+        {draft.area === 'work' && <label>Work project<select className="input" aria-label="Work project" value={draft.workProjectId ?? ''} onChange={e => {
+          const project = state.settings.workProjects?.find(p => p.id === e.target.value);
+          setDraft({ ...draft, workProjectId: project?.id, project: project?.title ?? draft.project });
+        }}><option value="">No work project</option>{state.settings.workProjects?.filter(p => !p.archived || p.id === draft.workProjectId).map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></label>}
+        <label className="row-actions"><input type="checkbox" checked={draft.keep ?? false} onChange={e => setDraft({ ...draft, keep: e.target.checked })} />Keep this task · exempt from automatic cleanup</label>
         <label>
           Tags <span className="muted">(comma separated)</span>
           <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} />

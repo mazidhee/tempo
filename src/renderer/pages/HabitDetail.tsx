@@ -18,6 +18,7 @@ import HabitAction from '../components/HabitAction';
 import HabitForm from '../components/HabitForm';
 import { PageHeader } from '../components/ui';
 import DeleteHabitButton from '../components/DeleteHabitButton';
+import HabitEventHistory from '../components/HabitEventHistory';
 export default function HabitDetail({
   habitId,
   embedded = false,
@@ -30,7 +31,7 @@ export default function HabitDetail({
   const { id: routeId } = useParams();
   const navigate = useNavigate();
   const id = habitId ?? routeId;
-  const { habits, logs, today, mutate, loading, error } = useHabitData();
+  const { habits, logs, events, today, mutate, loading, error } = useHabitData();
   const habit = habits.find((h) => h.id === Number(id));
   const [editing, setEditing] = useState(false),
     [pauseStart, setPauseStart] = useState(today),
@@ -246,6 +247,7 @@ export default function HabitDetail({
           </div>
         ))}
       </section>
+      {habit.habit_type==='avoid' && <HabitEventHistory key={habit.id} habitId={habit.id} events={events.filter(e=>e.habit_id===habit.id)} />}
       <section className="panel">
         <h2>Missed reasons & protection</h2>
         {missed.length ? (

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Database from '../src/main/database/sqlite';
+import { migrateProductivity } from '../src/main/database/migrations';
 import { StudyStore } from '../src/main/study/store';
 import { runModuleMigrations, migrations } from '../src/main/database/migrationRegistry';
 import { nextStudyReview, curriculumProgress } from '../src/shared/study';
@@ -9,6 +10,7 @@ function fixture() {
   db.exec(
     "PRAGMA foreign_keys=ON; CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,applied_at TEXT); CREATE TABLE legacy(id INTEGER PRIMARY KEY, value TEXT); INSERT INTO legacy VALUES(17,'original log');",
   );
+  migrateProductivity(db);
   runModuleMigrations(db);
   return { db, store: new StudyStore(db) };
 }
