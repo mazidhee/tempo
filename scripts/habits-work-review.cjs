@@ -11,7 +11,7 @@ async function withApp(name, callback) {
   fs.mkdirSync(directory, {recursive:true});
   const env = {...process.env, HABIT_TRACKER_DATA_DIR:directory};
   delete env.ELECTRON_RUN_AS_NODE;delete env.VITE_DEV_SERVER_URL;
-  const app=await _electron.launch({executablePath:path.resolve('node_modules/electron/dist/electron.exe'),args:['.'],env,timeout:25000});
+  const app=await _electron.launch({executablePath:process.env.TEMPO_REVIEW_EXE||path.resolve('node_modules/electron/dist/electron.exe'),args:process.env.TEMPO_REVIEW_EXE?[]:['.'],env,timeout:25000});
   try{
     const page=await app.firstWindow();page.setDefaultTimeout(7000);await page.waitForLoadState('domcontentloaded');await page.waitForTimeout(500);
     const errors=[];page.on('pageerror',e=>errors.push(e.message));

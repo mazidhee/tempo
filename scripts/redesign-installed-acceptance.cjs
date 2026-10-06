@@ -72,7 +72,7 @@ function verify() {
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
       .map((row) => row.version);
-    for (const version of [203, 204, 205, 206]) assert.ok(versions.includes(version));
+    for (const version of [203, 204, 205, 206, 207, 208, 209, 210]) assert.ok(versions.includes(version));
     const curricula = after
         .prepare('SELECT json FROM study_curricula')
         .all()
@@ -122,6 +122,7 @@ async function launch() {
       'Home',
       'Habits',
       'Tasks',
+      'Work',
       'Study',
       'Plan',
       'Journal',
@@ -150,11 +151,9 @@ async function launch() {
       }
       if (label === 'Settings') {
         await page.getByRole('button', { name: 'Backups', exact: true }).click();
-        assert.ok(
-          await page
-            .getByRole('button', { name: 'Save local snapshot now', exact: true })
-            .isVisible(),
-        );
+        const saveSnapshot = page.getByRole('button', { name: 'Save local snapshot now', exact: true });
+        await saveSnapshot.waitFor({ state: 'visible' });
+        assert.ok(await saveSnapshot.isVisible());
       }
       const file = path.join(directory, 'installed-' + label.toLowerCase() + '.png');
       await page.screenshot({ path: file });

@@ -2,7 +2,8 @@
 
 Tempo keeps your workspace on this computer. Production features work offline;
 online backup is optional and only runs when you choose it. The original Habit Tracker database and
-history remain in use. This guide covers the Windows 1.6 daily workspace update.
+history remain in use. This guide covers the Windows 1.7 source update, including
+the existing daily workspace. Final 1.7 release and installed acceptance are pending.
 Acceptance evidence and native verification limits are tracked in
 [release readiness](release-readiness.md).
 
@@ -14,7 +15,7 @@ choose **Save and stop**. Your time appears beside the topic and all its parents
 Use **Statistics → Time explorer** to see the calendar and study-time sunburst.
 The entire guide is available in **Settings → User guide**, with a `.md` download.
 
-Use the sidebar for Home, Plan, Habits, Tasks, Focus, Study, Statistics, Goals,
+Use the sidebar for Home, Plan, Habits, Tasks, Work, Focus, Study, Statistics, Goals,
 Journal, Review and Settings. Each has its own page; contextual links connect your records. At narrow window sizes,
 use the sidebar button to open navigation. Dense calendars and tables may scroll
 inside their panels.
@@ -40,11 +41,16 @@ sensitive displayed content; it does not encrypt the database or exported files.
 
 ## Check habits and manage tasks
 
-Home shows the annual calendar directly below your greeting. Hover or use the
+Home shows the annual calendar below your greeting or daily thought. Hover or use the
 calendar's keyboard controls to inspect a day. Completed work uses your chosen accent
 ramp; freeze days are hatched, and days without due activity remain neutral.
 
 Habits opens to Today. Check habits complete with one click; notes have their own button.
+Each daily row shows a flame and current streak, using weeks for weekly targets
+and due occurrences for other schedules. Select the streak or habit name for
+details. Avoid slip reasons begin concealed: choose **View reason** to expand
+the text below the row or **Edit reason** to correct it. Check-in notes appear
+in the footer. Reduced-motion settings disable the streak's brief animation.
 Time-of-day sections expand independently. Recovery is collapsed below the daily list.
 Weekly and History are separate views. Open a habit for details or use its options
 to edit/archive. Delete is available on the row and detail page, with confirmation
@@ -57,7 +63,8 @@ at local midnight. See [habit engine rules](habit-engine.md) for schedules,
 protection limits and permitted recovery.
 
 Tasks supports quick add and a full editor for due dates, priority, project,
-tags and subtasks. Use Today, Upcoming, All or Completed (the Logbook), plus text and priority
+tags and subtasks. Use Today, Upcoming, All or Completed (the Logbook), plus Archived,
+Trash, area, text and priority
 filters. Click a task title to edit it; expand its subtask count to check off smaller steps.
 Press Enter in the inline add field to create a task. Quick add in Upcoming schedules it
 for tomorrow; adding in Completed opens All so the new task is visible.
@@ -65,6 +72,71 @@ Complete or reopen a task from its row; use its Focus action to start
 linked work. Replacing unfinished Pomodoro work requires confirmation and does
 not record that phase as completed. Replacing tracked work saves its elapsed
 time before switching to the new task or habit.
+
+## Choose a daily thought
+
+Open **Settings → Daily thoughts** and set **Home display** to **Daily Stoic and
+personal thought**. Home then shows one centred thought, its attribution and
+**Reflect on this tonight**. The other display options retain varied or simple
+greetings. The included Stoic entries are labelled paraphrases inspired by source
+ideas; you can add your own words or a quotation with its attribution.
+
+Choose **Add a thought**, enter its text, attribution and optional evening
+reflection question, then **Save thought**. Use each entry's arrows to move it
+up/down, its pencil to edit, or Pause/Resume to change its rotation status. If
+all entries are paused, Home offers a link back to Settings.
+
+Once Home selects a thought for a local date, that day's text and question stay
+saved even if you edit or reorder the library. The next local day selects from
+the active entries. **Reflect on this tonight** opens that dated Journal page
+and its thought panel; your existing writing stays intact. Write your reflection
+in the journal as usual. Library changes affect future selections.
+
+## Organize Work
+
+Open **Work → New project**, give it a name and optional purpose, then **Create
+project**. Add milestones with optional target dates. Check one when reached;
+select its title to edit or click its check to reopen it. **Edit** changes the
+project name/purpose. **Archive project** hides it from the main list; **Show
+archived** lets you open it and choose **Restore project**.
+
+From a project, choose **Add or manage tasks**. This opens Tasks with that Work
+project selected; new tasks there inherit the project. You can also open a task's
+editor, set **Area** to Work and choose its **Work project**. Personal and Study
+remain available as task areas. Start focus from a work task's timer action.
+The Work page shows saved linked focus time, open tasks and reached milestones;
+use **Plan today** to continue planning in the shared workspace.
+
+## Keep and restore tasks
+
+Completed or archived tasks move to recoverable Trash after 30 days by default.
+Open **Settings → Task cleanup** to turn automatic cleanup off or choose another
+retention period. If you archive an already completed task, retention counts
+from the later action. Open a task and enable **Keep this task** to exempt it.
+
+The delete action first asks to **Move to Trash**. Open **Tasks → Trash** and use
+the restore arrow to recover it; restored tasks get Keep automatically. A task
+that was completed stays completed, and one that was archived stays in Archived
+until you restore it there too. Restoring from Archived also sets Keep. Saved
+focus sessions remain available throughout. Trash is never emptied automatically.
+**Delete permanently** in Trash requires a separate confirmation and removes
+the task, including its completion record; saved focus sessions remain.
+
+## Import an Avoid habit's event history
+
+Open the existing Avoid habit's detail page and expand **Recorded events → Import
+slip history**. Choose a CSV smaller than 5 MB or paste its contents. It needs
+**Category, Event, Occurrence and Note** columns; only **Habits / Relapsed** rows
+are selected. Occurrence uses local `YYYY-MM-DD HH:mm:ss` timestamps. Check the
+preview, then choose **Import into this habit**. Invalid selected rows stop the
+import; unrelated rows are skipped. An identical entry is skipped on reimport.
+
+Every distinct event retains its timestamp and note, including several on one
+day. The monthly line chart counts imported events. Zero or missing activity
+does not prove a clean day, and importing does not change daily check-ins or
+streaks. Expand **View timestamped history**, then **View note** for a long note.
+**Show more** reveals older entries. JSON backups include this history, the
+thought library and dated selections, task lifecycle and Work projects/milestones.
 
 ## Plan and reflect
 

@@ -6,7 +6,7 @@ const evidence=path.resolve('.review',`habits-work-navigation-${Date.now()}`);
 fs.mkdirSync(evidence,{recursive:true});
 const env={...process.env,HABIT_TRACKER_DATA_DIR:evidence};delete env.ELECTRON_RUN_AS_NODE;delete env.VITE_DEV_SERVER_URL;
 (async()=>{
- const app=await _electron.launch({executablePath:path.resolve('node_modules/electron/dist/electron.exe'),args:['.'],env,timeout:25000});
+ const app=await _electron.launch({executablePath:process.env.TEMPO_REVIEW_EXE||path.resolve('node_modules/electron/dist/electron.exe'),args:process.env.TEMPO_REVIEW_EXE?[]:['.'],env,timeout:25000});
  try{
   const p=await app.firstWindow();p.setDefaultTimeout(7000);await p.waitForLoadState('domcontentloaded');await p.waitForTimeout(500);
   await p.evaluate(()=>{location.hash='#/tasks?view=All'});await p.getByRole('heading',{name:'All tasks',exact:true}).waitFor();
