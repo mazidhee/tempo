@@ -1,4 +1,52 @@
-# Current work — October 6, 2026
+# Current work — October 8, 2026
+
+The installed app remains **Tempo 1.8.0**, tag `tempo-1.8.0`. Current work is an
+isolated knowledge-workspace selection preview at `http://127.0.0.1:5222/`.
+Build with `node scripts/knowledge-preview-build.cjs`, serve with
+`node scripts/knowledge-preview-server.cjs`. No production app code or owner
+database has changed in this preview work.
+
+Latest owner correction: **do not change installed Home**. Owner approved
+**A Classic workspace** and asks for more Notion-like care throughout. Notes
+must open at an organised nested folder library, support creating notes, and
+use Markdown files in production. Graph must be **only a collapsible right
+panel**, with records as nodes and actual relationships as edges. Main sidebar
+must be owner-reorderable. Remove standalone Review; keep Statistics exclusively for charts and metrics. Saved review records stay retained. Original logo,
+detailed Statistics, Study counts/time/progress/current topic and owner records
+remain protected. No AI. Rehab import already performed by owner; never reimport.
+
+Five revised Notes choices: A Classic workspace, B Folder table, C Compact
+navigator, D Tabbed notebook, E Visual library. They use real Tiptap editing,
+exact vendored Yoopta MIT toolbar CSS, nested folder paths, browser preview
+retention, Markdown serialization/export preview, and accessible sidebar order.
+Graph has ~100 typed fictional records with declared relationships, settling
+local force layout, pan/zoom/filters/search, note navigation and record inspection.
+Sidebar Graph/Review entries removed; Statistics reflection blocks removed at the owner’s request.
+Prototype waveform is hand-drawn, not established byte-identical to production.
+
+Browser checks: new note in selected folder, slash heading insertion, reload
+retention, Markdown frontmatter/heading/paragraph output, nested compact folder
+drawer, sidebar up/down ordering and reload retention, empty/keyboard search,
+graph opening the right note/project, and reflection retention after navigation.
+All five Notes desktop-light and 390px captures have no horizontal overflow.
+No browser console errors. Actual Markdown download was not confirmed by the
+in-app browser; generated export content is confirmed. Native filesystem Markdown
+storage, SQLite graph integration and any migration/release acceptance are **pending**.
+No numeric 9.9 design/UX claim is established.
+
+See [preview direction](knowledge-preview-direction.md),
+[source audit](knowledge-workspace-source-audit.md) and
+[prototype README](prototypes/knowledge-next/README.md). Capture evidence is local
+under `.review/knowledge-options/revision-*`. Keep this checkpoint in version
+control. Get the owner's concrete visual choice before implementing changed app
+screens, as requested; don't replace production `DESIGN.md` with unapproved options.
+
+The fresh [selection review](knowledge-preview-review.md) is **PASS** after fixing
+C's clipped navigator labels and recapturing the sidebar-order controls. A new
+five-choice question is pending for the revised Notes layouts. This pass does
+not establish a 9.9 design score or production readiness.
+
+# Installed release — October 6, 2026
 
 Tempo **1.8.0** implements the owner's thirteen selections from the 75-layout
 studio: Tasks E, Plan E, Habits A, History B, Recovery A, Work E, Focus A, Search D,
@@ -285,3 +333,5 @@ planned modules integrated, independent review completed, and the same reviewed
 revision installed on Windows with retained data, backup restoration, timer/
 restart/Guard cleanup, accessibility, offline and performance checks. A Phase 1
 installer alone is not the completed app.
+
+October 8 correction: A Classic workspace is approved. Remove reflection prompts from Statistics; preserve saved review data. New request: a tiny always-on-top Focus timer with pause/resume outside Tempo; five visual control options must precede implementation.

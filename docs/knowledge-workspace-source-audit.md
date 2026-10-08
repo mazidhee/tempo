@@ -10,7 +10,12 @@ owner data were not changed for this audit.
 - The graph initially includes notes, study topics and work projects. Other
   record types are optional.
 - No AI features are requested.
-- Keep the current Home, original logo and sidebar conventions protected.
+- Latest owner correction: retain the installed Home completely. A is preferred
+  as the workspace foundation. Notes opens at an organised folder tree; Markdown
+  storage is required for production. Graph belongs only in a collapsible right
+  panel, with typed database records as nodes and actual relationships as edges.
+  Sidebar order is owner-configurable. Fold Review into Statistics while
+  retaining saved reviews. Keep the waveform logo.
 - Show five working visual options before implementing a changed screen.
 
 ## Source inspection and reuse boundaries
@@ -24,7 +29,10 @@ This is a bounded inspection, not an audit of every file in these repositories.
 | AFFiNE | `2d4f191e679a1eb95f96fe12b95060deb35668ae` (canary) | Strong candidate for shared frontend controls and token architecture. |
 | Docmost | `d3a0c9bfdf3710161fe66e8de28a8d23104d54f5` (main) | Strong candidate for Tiptap editing components and document layout. |
 | Anytype desktop | `d965ea28b46588fbad3aefe10e1c43e3ea921852` (develop) | Graph behaviour and object-linking reference; conditional code reuse. |
-| Outline | `d4603413621b3612c2a32ff529fdb7b5f4e3ba43` (main) | Reading layout and navigation reference; conditional code reuse. |
+| Outline | `d4603413621b3612c2a32ff529fdb7b5f4e3ba43` (main) | Reading layout and navigation reference; assess private-use grant separately from redistribution. |
+| Yoopta | `070349b1cd703d05548e2db94c98b4e9622d4f07` (master) | Exact MIT toolbar stylesheet and variables vendored in the isolated preview. Slate editor migration remains unimplemented. |
+| Notesnook | `1a405554e55d3452fd6d2c9e1bea3bd6c9c15669` (master) | GPL-3.0-or-later editor/navigation candidate; inspected package and sidebar-scroller wrapper. |
+| BlockNote | `be20d8b6ea9aaa8b23ae0c84397a09fe6f6b5a12` (main) | Core/react MPL-2.0; XL packages GPL-3.0. Strong block-editor candidate, not yet installed. |
 
 ### AFFiNE: common controls
 
@@ -55,9 +63,12 @@ It uses React, D3, canvas and a worker, with application-specific storage,
 settings and previews. This supports the feasibility of the requested graph in
 TypeScript; it is not a portable widget without its dependencies. The client uses
 Any Source Available License 1.0, including use and redistribution restrictions.
-Personal-use permission does not establish compatibility with distribution of
-a combined AGPL application. Prefer an independently implemented graph using a
-permissively licensed graph library until that integration is resolved.
+The owner clarified that this is a private personal build, with no intended
+distribution. Assess that permitted private use on its own terms; do not make a
+distribution compatibility question a blanket prohibition on private changes.
+Keep original notices and separately licensed source identifiable. The preview
+graph is independently authored, with explicit fictional links, not Anytype's
+worker imported into Tempo.
 [Anytype licence](https://github.com/anyproto/anytype-ts/blob/d965ea28b46588fbad3aefe10e1c43e3ea921852/LICENSE.md).
 
 ### Outline: document reading space
@@ -68,7 +79,35 @@ responsive padding and a shared document-width helper. Treat that structural
 principle as a design reference. Current Outline uses Business Source License
 1.1, with an additional use grant and a future Apache change date. Its licence
 explicitly distinguishes itself from an open-source licence. It cannot simply
-be relabelled AGPL. [Outline licence](https://github.com/outline/outline/blob/main/LICENSE).
+be relabelled AGPL. Its additional use grant permits personal local use; that
+differs from distributing a combined product. No Outline source has been
+vendored in this preview. [Outline licence](https://github.com/outline/outline/blob/main/LICENSE).
+
+### Yoopta, Notesnook and BlockNote
+
+Read Yoopta's MIT licence, shared UI variables and floating-toolbar stylesheet.
+The latter two are copied unchanged under
+`docs/prototypes/knowledge-next/vendor/yoopta/`, with the original MIT notice.
+The React control bindings are Tempo-authored and use the already installed
+Tiptap editor; this is literal stylesheet reuse, not a Yoopta-engine installation.
+Yoopta's official README describes a Slate-based editor and block plugins.
+[Source](https://github.com/yoopta-editor/Yoopta-Editor/tree/070349b1cd703d05548e2db94c98b4e9622d4f07/packages/core/ui/src).
+
+Notesnook's editor package declares GPL-3.0-or-later, React >=18 peers and
+Tiptap 2.6.6 dependencies. Tempo currently uses Tiptap 3.31.4, so an unchanged
+editor substitution is not verified. Its inspected sidebar-scroller delegates
+to Notesnook's own ScrollContainer with a narrow track and suppressed horizontal
+scroll. This is a small wrapper inspection, not a full design-code audit.
+[Editor package](https://github.com/streetwriters/notesnook/blob/1a405554e55d3452fd6d2c9e1bea3bd6c9c15669/packages/editor/package.json).
+
+BlockNote core and React packages declare MPL-2.0. The repository licence
+excludes `packages/xl-*`, which use GPL-3.0 with a commercial alternative.
+The core supplies block-based editing on ProseMirror/Tiptap and is a strong
+candidate for the requested Notion-like behaviour without AI. Existing Tempo
+documents still require explicit conversion/round-trip and local-save checks
+before changing engines; sharing an underlying framework is not drop-in data
+compatibility. No BlockNote package was installed for the preview.
+[Licence boundary](https://github.com/TypeCellOS/BlockNote/blob/be20d8b6ea9aaa8b23ae0c84397a09fe6f6b5a12/LICENSE.txt).
 
 ## Proposed visual direction
 
@@ -81,7 +120,8 @@ Build one coherent set of inputs, menus, icon buttons, tooltips, focus states,
 spacing and typography. Match hover, keyboard focus, selected and disabled states
 as carefully as the resting screenshot. Add controls should remain quiet; search
 needs a real input container. Avoid explanatory filler and permanently exposed
-formatting bars. Home must retain its current rendering if shared tokens change.
+formatting bars. Home and sidebar are now eligible for the owner's chosen
+replacement design. No production token or Home change is made at preview stage.
 
 Literal reuse is appropriate for licensed, isolated components. Each imported
 file needs its original notice, fixed source revision and a record of changes.
@@ -126,3 +166,5 @@ manual references, backlinks or graph layout.
 
 Editor engine choice, exact imported file set, dependency compatibility and the
 final composition remain unverified. No new design score is claimed.
+
+October 8 correction: A Classic workspace is approved. Remove reflection prompts from Statistics; preserve saved review data. New request: a tiny always-on-top Focus timer with pause/resume outside Tempo; five visual control options must precede implementation.

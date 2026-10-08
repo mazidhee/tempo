@@ -1,3 +1,18 @@
 {
-  "buildPath": "code"
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "files": [
+          "docs/prototypes/knowledge-next/index.html"
+        ],
+        "createdAt": "2026-10-08T14:12:15.683Z",
+        "reason": "Agent: preserve Tempo's existing Inter typography consistently across the owner-requested Notion-family workspace preview"
+      }
+    ]
+  }
 }
