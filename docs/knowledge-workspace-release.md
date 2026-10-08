@@ -1,7 +1,6 @@
 # Tempo 1.9.0 — knowledge workspace
 
-October 8, 2026. Source implementation and release preparation. Installed owner
-acceptance remains pending; do not claim this version is installed yet.
+October 8, 2026. Installed Tempo 1.9.0 passed two-launch owner-data acceptance.
 
 Notes A is a folder-first library with a wide rich-text canvas, slash commands,
 tags and explicit record links. Notes are retained in SQLite and mirrored as
@@ -33,11 +32,20 @@ and spaces through drafts, reopening, Markdown and backup export. The independen
 reviewer's sole material finding F1 is resolved (ship verdict on that fix only).
 All 18 refreshed required captures are valid; documentation is complete.
 
-Installer: `release/desktop/Habit Tracker Setup 1.9.0.exe`. Fresh owner backup and
-two-launch installed acceptance remain pending. The owner confirmed closure, but
-Windows still showed the installed app running in the tray; no install or owner
-mutation has occurred. Quit from the tray before continuing. Source checkpoint
-and release preparation are not installed acceptance.
+Installer: `release/desktop/Habit Tracker Setup 1.9.0.exe`. After actual tray quit,
+a fresh consistent safety copy was saved under
+`.review/owner-upgrade-1791484959978/before-upgrade.db`. Silent installation
+completed, and `redesign-acceptance.json` in that directory records two successful
+launches of the installed executable using the original profile. The installed
+ASAR matches the tested package SHA256
+`f35cf1ac833bd3118a2e46d2db654ab2ce997c034d56cc4eaaee3b21c7ab3bdf`.
+
+Every original primary-keyed row and its existing fields/JSON values matched the
+safety copy after both launches, with SQLite integrity OK, migration 211 present
+and no renderer errors. Offline owner pages render, including the Notes library.
+This verifies retention of the existing records; native timer controls were
+exercised on the exact package with fictional data to avoid creating owner sessions.
+The acceptance check quit the app cleanly. Source checkpoint: `3dc7197`.
 
 No new editor dependency or competitor engine was added. Exact Yoopta MIT toolbar
 CSS and its notice are retained. No AI, network account or owner-data import.

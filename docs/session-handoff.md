@@ -3,11 +3,11 @@
 ## Production continuation checkpoint
 
 Tempo **1.9.0** source implements approved **Notes A Classic workspace** and
-**floating Focus timer E Session card**. Installed app remains 1.8.0 until the
-new package and installed-owner acceptance finish. See
+**floating Focus timer E Session card**. Installed app is now **1.9.0**, with
+fresh backup and two-launch installed-owner acceptance passed. See
 [production direction](knowledge-workspace-direction.md) and
 [release status](knowledge-workspace-release.md). The preview checkpoint is
-`847d66d`; subsequent implementation is being checked before its source commit.
+`847d66d`; verified production source checkpoint is `3dc7197`.
 
 Implemented: nested folder library, Tiptap canvas/slash commands/tags/explicit
 links, SQLite notes plus atomic Markdown mirrors, backup merge with Study link
@@ -37,11 +37,13 @@ Fresh documenter completed `knowledge-workspace-design-record.md`, preserving
 preexisting design-context drift. No numeric 9.9 design claim.
 
 Installer ready: `release/desktop/Habit Tracker Setup 1.9.0.exe`.
-Owner confirmed closure, but fresh Windows process checks still show the original
-installed process running. A tray Quit/Exit question is pending. Obtain actual
-full closure before a consistent fresh owner baseline and install.
-Never overwrite live owner data or use the old baseline. No owner mutation has
-occurred in this continuation. Git mutations and Windows build/test processes
+After actual tray quit, fresh backup `.review/owner-upgrade-1791484959978/before-upgrade.db`
+was taken, the installer completed, and two installed launches passed. Evidence:
+`redesign-acceptance.json` in that same directory. Original primary-keyed rows
+and fields/JSON values, including imported events, survive; integrity OK,
+migration 211 present, tested package ASAR hash matches, zero renderer errors.
+The check quit Tempo cleanly. No owner sessions or notes were created for testing.
+Never overwrite live owner data or use an old baseline. Git mutations and Windows build/test processes
 require sandbox escalation; existing user authorization covers them.
 
 ## Historical selection checkpoint (superseded by production work above)
