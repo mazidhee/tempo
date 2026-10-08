@@ -1,0 +1,83 @@
+.floating-timer {
+  height: 100vh;
+  min-height: 136px;
+  padding: 10px 14px;
+  background: var(--surface-1);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  overflow: auto;
+  font-family: var(--font-sans);
+}
+.floating-timer header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.floating-timer header span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.floating-timer .icon-button {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  min-width: 30px;
+  background: transparent;
+  border: 0;
+}
+.floating-timer .icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+.floating-timer-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 68px;
+}
+.floating-timer output {
+  font-size: clamp(30px, 12vw, 54px);
+  font-weight: 500;
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.floating-timer-actions {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100px;
+}
+.floating-opacity {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.floating-opacity input {
+  width: 100%;
+  min-width: 40px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: var(--primary);
+}
+.floating-timer p {
+  font-size: 11px;
+  color: var(--danger);
+  margin: 0;
+  line-height: 1.3;
+}

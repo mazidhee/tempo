@@ -5,7 +5,9 @@ round. This is not a production release verdict or a numerical design score.
 
 The latest owner brief protects installed Home, prefers A as the foundation,
 requires a folder-first Notes library, Markdown files in production, a graph-only
-right panel, configurable main sidebar order, and Review integration in Statistics.
+right panel, configurable main sidebar order, and removal of Review from navigation.
+The later owner correction keeps Statistics metrics-only and retains saved reviews
+outside it.
 See [the preview contract](knowledge-preview-direction.md).
 
 ## Independent visual review

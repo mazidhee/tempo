@@ -1,0 +1,9 @@
+#studio{height:auto;min-height:73px;flex-wrap:wrap}
+#studio .studio-info{min-width:170px}
+#studio .options{flex-wrap:wrap}
+#studio .options button[aria-pressed=true]{background:var(--soft);color:var(--ink);outline:1px solid var(--line)}
+#app{zoom:var(--interface-scale,1)}
+#app .shell{min-height:calc((100dvh - var(--studio-height,73px)) / var(--interface-scale,1));height:calc((100dvh - var(--studio-height,73px)) / var(--interface-scale,1))}
+#app .sidebar,#app .right-graph{height:calc((100dvh - var(--studio-height,73px)) / var(--interface-scale,1))}
+#app .workspace{min-width:0}
+@media(max-width:800px){#app .shell{height:auto;min-height:calc((100dvh - var(--studio-height,73px)) / var(--interface-scale,1))}}

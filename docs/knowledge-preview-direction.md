@@ -8,7 +8,8 @@ installed Home completely, including its thought design. Sidebar order can be
 changed by the owner. Notes opens at a folder library, with Markdown export and
 an open writing canvas. Graph belongs only in a collapsible right panel, and
 every node represents a typed record. Review is removed from navigation; useful
-weekly reflections belong in Statistics. Saved production reviews must survive
+saved weekly reflections remain accessible from Settings. Statistics contains
+charts and metrics only. Saved production reviews must survive
 any later migration. No AI. Preserve the waveform and all owner records. Five
 working Notes/navigation options precede production changes.
 

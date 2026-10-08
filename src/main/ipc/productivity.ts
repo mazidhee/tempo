@@ -4,6 +4,7 @@ import { validProductivity } from '../../shared/productivity';
 import { exportBackup, importBackup } from './backup';
 import { preserveMainFocus } from '../focus/store';
 import { cleanUpTasks } from '../../shared/taskLifecycle';
+import { applyInterfaceScale } from '../interfaceScale';
 export function registerProductivityHandlers() {
   ipcMain.handle('productivity:get', () => {
     const current = JSON.parse(
@@ -11,7 +12,8 @@ export function registerProductivityHandlers() {
         .json,
     );
     const next = cleanUpTasks(current);
-    if (next !== current) getDb().prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(next));
+    if (next !== current)
+      getDb().prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(next));
     return next;
   });
   ipcMain.handle('productivity:save', (_e, state: unknown) => {
@@ -19,6 +21,7 @@ export function registerProductivityHandlers() {
       throw new Error('Invalid productivity data. Nothing was changed.');
     const next = cleanUpTasks(preserveMainFocus(getDb(), state));
     getDb().prepare('UPDATE productivity_state SET json=? WHERE id=1').run(JSON.stringify(next));
+    applyInterfaceScale();
     return true;
   });
   ipcMain.handle('productivity:notify', (_e, body: string) => {

@@ -1,16 +1,17 @@
 # Tempo knowledge workspace options
 
-This is an isolated, unapproved five-option design-selection prototype using
-fictional records. A is the owner's preferred foundation; final selection and
-production integration remain pending. The studio bar's **Choose** button saves
+This is an isolated five-option design-selection prototype using fictional
+records. A Classic workspace is approved; production work is documented in
+[the production contract](../../knowledge-workspace-direction.md).
+The studio bar's **Choose** button saves
 a local preference, not production approval. The owner app and database are
 untouched by this preview. No completed migration or 9.9 quality score is claimed.
 
 The latest brief protects the installed Home completely, including its thought
 design. The five alternatives now compare Notes and navigation. Notes opens a
 folder library; the sidebar is reorderable; the graph belongs only in a
-collapsible right panel; weekly reflection belongs in Statistics rather than a
-standalone Review route. Every graph node represents a typed fixture record and
+collapsible right panel; saved weekly reflection remains outside the metrics-only
+Statistics page. Every graph node represents a typed fixture record and
 edges represent declared relationships. Preserve the waveform and owner records;
 no AI is requested. See [the current direction contract](../../knowledge-preview-direction.md).
 Its latest corrections supersede the earlier Home redesign proposal in
@@ -33,6 +34,17 @@ node scripts/knowledge-preview-server.cjs
 ```
 
 Open [the local preview](http://127.0.0.1:5222/). Stop the server with Ctrl+C.
+
+The separate whole-app scale comparison uses the same fictional writing canvas:
+
+```powershell
+$env:TEMPO_PREVIEW_PORT='5224'
+node scripts/knowledge-preview-server.cjs
+```
+
+Open [five scale options](http://127.0.0.1:5224/density.html): 100%, 95%, 90%,
+85% and 80%. The studio controls remain unscaled. A selection here does not
+change installed preferences. Production Settings offers 80–125% interface scale.
 Use `?option=A` through `?option=E` to open a particular option, for example
 [option A](http://127.0.0.1:5222/?option=A). The query takes precedence over the
 saved option; an invalid option falls back to A. Startup opens the Notes library.

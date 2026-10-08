@@ -75,6 +75,8 @@ export interface Productivity {
     taskCleanup?: boolean;
     taskRetentionDays?: number;
     workProjects?: WorkProject[];
+    sidebarOrder?: string[];
+    interfaceScale?: number;
     name: string;
     theme: 'system' | 'light' | 'dark';
     sound: boolean;
@@ -332,6 +334,17 @@ export function validProductivity(value: unknown): value is Productivity {
     (s.settings.thoughtLibrary === undefined || validThoughtLibrary(s.settings.thoughtLibrary)) &&
     (s.settings.taskCleanup === undefined || typeof s.settings.taskCleanup === 'boolean') &&
     (s.settings.workProjects === undefined || validWorkProjects(s.settings.workProjects)) &&
+    (s.settings.interfaceScale === undefined ||
+      (Number.isFinite(s.settings.interfaceScale) &&
+        s.settings.interfaceScale >= 0.8 &&
+        s.settings.interfaceScale <= 1.25)) &&
+    (s.settings.sidebarOrder === undefined ||
+      (Array.isArray(s.settings.sidebarOrder) &&
+        s.settings.sidebarOrder.length <= 40 &&
+        new Set(s.settings.sidebarOrder).size === s.settings.sidebarOrder.length &&
+        s.settings.sidebarOrder.every(
+          (id) => typeof id === 'string' && /^[a-z-]{1,40}$/.test(id),
+        ))) &&
     (s.settings.taskRetentionDays === undefined ||
       (Number.isInteger(s.settings.taskRetentionDays) &&
         s.settings.taskRetentionDays >= 1 &&

@@ -1,7 +1,10 @@
 import './styles/approved-workspace.css';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { Search, X, Timer, Eye, EyeOff, Plus, BookOpen } from 'lucide-react';
+import { Search, X, Timer, Eye, EyeOff, Plus, BookOpen, Network, FileText } from 'lucide-react';
+import { KnowledgeGraph } from './components/KnowledgeGraph';
+import type { KnowledgeNote } from '../shared/knowledge';
+import { journalDocumentText } from '../shared/journalDocument';
 import { FocusEmergency } from './modules/focus/EmergencyExit';
 import { useFocus } from './modules/focus/useFocus';
 import type { JournalEntry } from '../shared/reflection';
@@ -31,16 +34,45 @@ export default function App() {
   const now = useMinuteClock();
   const location = useLocation();
   const navigate = useNavigate();
+  useEffect(
+    () =>
+      window.workspaceAPI.on('window:navigate', (route) => {
+        if (route === '/focus') navigate(route);
+      }),
+    [navigate],
+  );
   const [command, setCommand] = useState(false);
   const [search, setSearch] = useState('');
   const [journalResults, setJournalResults] = useState<JournalEntry[]>([]);
+  const [noteResults, setNoteResults] = useState<KnowledgeNote[]>([]);
+  const [graphOpen, setGraphOpen] = useState(false);
   useEffect(() => {
     if (!command || !search.trim()) {
       setJournalResults([]);
+      setNoteResults([]);
       return;
     }
     let alive = true;
     const timeout = setTimeout(() => {
+      void window.workspaceAPI
+        .invoke('notes:snapshot')
+        .then((s) => {
+          if (alive)
+            setNoteResults(
+              s.notes
+                .filter(
+                  (n) =>
+                    !n.archived &&
+                    `${n.title} ${n.folder} ${n.tags.join(' ')} ${journalDocumentText(n.document)}`
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                )
+                .slice(0, 5),
+            );
+        })
+        .catch(() => {
+          if (alive) setNoteResults([]);
+        });
       void window.workspaceAPI
         .invoke('journal:search', { query: search })
         .then((rows) => {
@@ -102,7 +134,9 @@ export default function App() {
       ? 'Habit details'
       : location.pathname.startsWith('/study/')
         ? 'Study'
-        : 'Workspace');
+        : location.pathname.startsWith('/notes/')
+          ? 'Notes'
+          : 'Workspace');
   return (
     <PrivacyContext.Provider value={privacy}>
       <SidebarProvider
@@ -160,6 +194,14 @@ export default function App() {
               >
                 <Search />
               </button>
+              <button
+                className="icon-button"
+                aria-label={graphOpen ? 'Hide knowledge graph' : 'Show knowledge graph'}
+                aria-pressed={graphOpen}
+                onClick={() => setGraphOpen(!graphOpen)}
+              >
+                <Network />
+              </button>
               <WindowControls />
             </div>
           </div>
@@ -199,6 +241,7 @@ export default function App() {
             )}
           </main>
         </div>
+        {graphOpen && <KnowledgeGraph onClose={() => setGraphOpen(false)} />}
         {command && (
           <Modal title="Search workspace" variant="search" onClose={() => setCommand(false)}>
             <Command>
@@ -250,6 +293,21 @@ export default function App() {
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                {noteResults.length > 0 && (
+                  <CommandGroup heading="Notes">
+                    {noteResults.map((note) => (
+                      <CommandItem
+                        key={note.id}
+                        value={`Note ${note.title} ${search}`}
+                        onSelect={() => select(`/notes/${note.id}`)}
+                      >
+                        <FileText />
+                        <span>{note.title}</span>
+                        <small>{note.folder}</small>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
                 {journalResults.length > 0 && (
                   <CommandGroup heading="Journal">
                     {journalResults.map((entry) => (

@@ -8,7 +8,7 @@ import {
   BookText,
   ChartNoAxesColumnIncreasing,
   Target,
-  NotebookPen,
+  Files,
   Settings2,
   BriefcaseBusiness,
   type LucideIcon,
@@ -29,10 +29,10 @@ export const navigationRegistry: NavigationEntry[] = [
   { id: 'work', to: '/work', label: 'Work', icon: BriefcaseBusiness },
   { id: 'focus', to: '/focus', label: 'Focus', icon: Timer },
   { id: 'study', to: '/study', label: 'Study', icon: BookOpen },
+  { id: 'notes', to: '/notes', label: 'Notes', icon: Files },
   { id: 'statistics', to: '/statistics', label: 'Statistics', icon: ChartNoAxesColumnIncreasing },
   { id: 'goals', to: '/goals', label: 'Goals', icon: Target, enabled: true },
   { id: 'journal', to: '/journal', label: 'Journal', icon: BookText },
-  { id: 'review', to: '/review', label: 'Review', icon: NotebookPen, enabled: true },
   { id: 'settings', to: '/settings', label: 'Settings', icon: Settings2 },
 ];
 export const navigation = navigationRegistry.filter((entry) => entry.enabled !== false);

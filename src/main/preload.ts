@@ -14,7 +14,8 @@ const api = {
   editHabit: (data: import('../shared/habitValidation').HabitInput & { id: number }) =>
     ipcRenderer.invoke('habits:edit', data),
   getHabitSnapshot: () => ipcRenderer.invoke('habits:snapshot'),
-  importHabitEvents: (id:number,csv:string) => ipcRenderer.invoke('habits:importEvents',id,csv),
+  importHabitEvents: (id: number, csv: string) =>
+    ipcRenderer.invoke('habits:importEvents', id, csv),
   recordHabit: (data: import('./database/db').HabitRecord) =>
     ipcRenderer.invoke('logs:record', data),
   addPause: (data: { habitId: number; start_date: string; end_date: string; reason: string }) =>
@@ -50,12 +51,15 @@ const api = {
 contextBridge.exposeInMainWorld('habitAPI', api);
 const workspaceAPI: WorkspaceAPI = {
   invoke(channel, ...args) {
-    if (!/^(focus|plan|journal|review|goals|study|window|backup):[a-zA-Z]+$/.test(channel))
+    if (!/^(focus|plan|journal|review|goals|study|window|backup|notes):[a-zA-Z]+$/.test(channel))
       throw new Error('Unsupported workspace channel.');
     return ipcRenderer.invoke(channel, ...args);
   },
   on<K extends keyof WorkspaceEvents>(channel: K, listener: (payload: WorkspaceEvents[K]) => void) {
-    if (!/^(focus|plan|journal|review|goals|study):changed$/.test(channel))
+    if (
+      !/^(focus|plan|journal|review|goals|study|notes):changed$/.test(channel) &&
+      channel !== 'window:navigate'
+    )
       throw new Error('Unsupported workspace event.');
     const handler = (_event: Electron.IpcRendererEvent, payload: unknown) =>
       listener(payload as WorkspaceEvents[K]);

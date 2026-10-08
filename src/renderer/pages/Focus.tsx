@@ -15,6 +15,7 @@ import {
   Shield,
   Timer,
   Square,
+  PictureInPicture2,
 } from 'lucide-react';
 import { useProductivity } from '../hooks/ProductivityProvider';
 import { useClock } from '../hooks/useClock';
@@ -130,6 +131,14 @@ export default function Focus({ zen, setZen }: { zen: boolean; setZen: (z: boole
         title="Focus"
         action={
           <div className="focus-actions">
+            <Button
+              variant="ghost"
+              aria-label="Show floating timer"
+              onClick={() => void window.workspaceAPI.invoke('window:widgetShow')}
+            >
+              <PictureInPicture2 />
+              Floating timer
+            </Button>
             <FocusEmergency />
             <Button variant="ghost" onClick={() => setZen(!zen)}>
               {zen ? <Minimize2 /> : <Maximize2 />}

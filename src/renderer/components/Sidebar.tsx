@@ -1,7 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Command, PanelLeft, AudioLines } from 'lucide-react';
+import { Command, PanelLeft, AudioLines, ArrowUpDown } from 'lucide-react';
+import { useState } from 'react';
+import { SidebarOrder, orderedNavigation } from './SidebarOrder';
 import { useProductivity } from '../hooks/ProductivityProvider';
-import { navigation } from '../registry/navigation';
 import {
   Sidebar as SidebarFrame,
   SidebarHeader,
@@ -15,6 +16,7 @@ import {
 export { navigation } from '../registry/navigation';
 export default function Sidebar({ openCommand }: { openCommand: () => void }) {
   const { state } = useProductivity();
+  const [arranging, setArranging] = useState(false);
   const { pathname } = useLocation();
   const { toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   return (
@@ -48,7 +50,7 @@ export default function Sidebar({ openCommand }: { openCommand: () => void }) {
           }}
         >
           <SidebarMenu>
-            {navigation.map(({ to, label, icon: Icon }) => (
+            {orderedNavigation(state.settings.sidebarOrder).map(({ to, label, icon: Icon }) => (
               <SidebarMenuItem key={to}>
                 <NavLink
                   to={to}
@@ -84,6 +86,10 @@ export default function Sidebar({ openCommand }: { openCommand: () => void }) {
         </nav>
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenuButton tooltip="Arrange sidebar" onClick={() => setArranging(true)}>
+          <ArrowUpDown />
+          <span>Arrange sidebar</span>
+        </SidebarMenuButton>
         <div className="tempo-profile">
           <div className="avatar">
             {state.settings.avatar ? (
@@ -102,6 +108,7 @@ export default function Sidebar({ openCommand }: { openCommand: () => void }) {
           <span>Collapse sidebar</span>
         </SidebarMenuButton>
       </SidebarFooter>
+      {arranging && <SidebarOrder onClose={() => setArranging(false)} />}
     </SidebarFrame>
   );
 }

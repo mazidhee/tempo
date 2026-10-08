@@ -10,6 +10,7 @@ import { settingsSections } from '../registry/settings';
 import Personalization from '../components/Personalization';
 import { useSearchParams } from 'react-router-dom';
 import licenseText from '../../../LICENSE.md?raw';
+import { Link } from 'react-router-dom';
 export default function Settings() {
   const [params, setParams] = useSearchParams();
   const section = params.get('section') || 'general';
@@ -43,6 +44,9 @@ export default function Settings() {
         </nav>
         <div>{Section ? <Section /> : <GeneralSettings />}</div>
       </div>
+      <Link className="text-button" to="/review">
+        Saved reviews
+      </Link>
     </div>
   );
 }
@@ -122,6 +126,21 @@ function GeneralSettings() {
           </div>
         </div>
         <div className="theme-palette-section">
+          <div className="setting-row">
+            <strong>Interface scale</strong>
+            <select
+              className="input"
+              aria-label="Interface scale"
+              value={settings.interfaceScale ?? 1}
+              onChange={(e) => set('interfaceScale', Number(e.target.value))}
+            >
+              {[0.8, 0.85, 0.9, 0.95, 1, 1.1, 1.25].map((value) => (
+                <option key={value} value={value}>
+                  {Math.round(value * 100)}%
+                </option>
+              ))}
+            </select>
+          </div>
           <h3>Surface palette</h3>
           <p className="muted">
             Choose a workspace atmosphere. Each palette supports Light, Dark and System; your accent

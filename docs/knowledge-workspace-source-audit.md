@@ -14,8 +14,8 @@ owner data were not changed for this audit.
   as the workspace foundation. Notes opens at an organised folder tree; Markdown
   storage is required for production. Graph belongs only in a collapsible right
   panel, with typed database records as nodes and actual relationships as edges.
-  Sidebar order is owner-configurable. Fold Review into Statistics while
-  retaining saved reviews. Keep the waveform logo.
+  Sidebar order is owner-configurable. Remove Review from navigation while
+  retaining saved reviews outside the metrics-only Statistics page. Keep the waveform logo.
 - Show five working visual options before implementing a changed screen.
 
 ## Source inspection and reuse boundaries

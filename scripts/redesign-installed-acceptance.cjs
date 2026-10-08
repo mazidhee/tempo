@@ -72,7 +72,8 @@ function verify() {
       .prepare('SELECT version FROM schema_migrations ORDER BY version')
       .all()
       .map((row) => row.version);
-    for (const version of [203, 204, 205, 206, 207, 208, 209, 210]) assert.ok(versions.includes(version));
+    for (const version of [203, 204, 205, 206, 207, 208, 209, 210, 211])
+      assert.ok(versions.includes(version));
     const curricula = after
         .prepare('SELECT json FROM study_curricula')
         .all()
@@ -126,7 +127,7 @@ async function launch() {
       'Study',
       'Plan',
       'Journal',
-      'Review',
+      'Notes',
       'Goals',
       'Settings',
     ]) {
@@ -149,9 +150,15 @@ async function launch() {
         await page.getByRole('textbox', { name: 'Daily journal' }).waitFor();
         assert.equal(await page.getByRole('textbox', { name: 'Daily journal' }).count(), 1);
       }
+      if (label === 'Notes') {
+        await page.getByPlaceholder('Search notes', { exact: true }).waitFor();
+      }
       if (label === 'Settings') {
         await page.getByRole('button', { name: 'Backups', exact: true }).click();
-        const saveSnapshot = page.getByRole('button', { name: 'Save local snapshot now', exact: true });
+        const saveSnapshot = page.getByRole('button', {
+          name: 'Save local snapshot now',
+          exact: true,
+        });
         await saveSnapshot.waitFor({ state: 'visible' });
         assert.ok(await saveSnapshot.isVisible());
       }

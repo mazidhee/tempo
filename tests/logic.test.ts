@@ -7,6 +7,7 @@ import './redesign.test';
 import './workspace.test';
 import './habitEvents.test';
 import './taskBoard.test';
+import './knowledge.test';
 import assert from 'node:assert/strict';
 import {
   defaultProductivity,

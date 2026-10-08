@@ -1,5 +1,51 @@
 # Current work — October 8, 2026
 
+## Production continuation checkpoint
+
+Tempo **1.9.0** source implements approved **Notes A Classic workspace** and
+**floating Focus timer E Session card**. Installed app remains 1.8.0 until the
+new package and installed-owner acceptance finish. See
+[production direction](knowledge-workspace-direction.md) and
+[release status](knowledge-workspace-release.md). The preview checkpoint is
+`847d66d`; subsequent implementation is being checked before its source commit.
+
+Implemented: nested folder library, Tiptap canvas/slash commands/tags/explicit
+links, SQLite notes plus atomic Markdown mirrors, backup merge with Study link
+remapping, real DB graph in a collapsible right panel, persisted sidebar order,
+Review removed from sidebar with saved reviews in Settings, native always-on-top
+timer with shared controls, resize and opacity. External Markdown edits are
+preserved as conflicts, not automatically imported. Home source/original logo
+are unchanged. Rehab import is already done; never repeat it.
+
+Latest scale answer: **across Tempo, including sidebar**. Five working size
+options are at `http://127.0.0.1:5224/density.html` (100/95/90/85/80). Specific
+default pending; Settings offers 80–125%, old profiles retain 100% until chosen.
+No Home composition redesign. Test-profile native zoom persists across restart.
+
+Checks: **140/140 tests**, build/Windows package, and six real Electron workflow groups passed
+on the exact packaged app in `.review/knowledge-workspace-package-final/results.json`. Includes Markdown
+files, backup idempotence, real graph navigation, sidebar order/search, shared
+pause/resume, native bounds/opacity, two restarts and scale persistence. Windows
+DPI rounding is excluded from canonical saved timer dimensions to prevent drift.
+Production Notes light/dark/390px/1440px captures are under
+`.review/knowledge-workspace-final-tags/captures/`.
+Settled scale and sidebar controls are under
+`.review/knowledge-workspace-final-tags/scale-captures/`. The independent reviewer
+scored sole finding F1 resolved (ship verdict on that fix), with all 18 refreshed
+captures valid. Tag typing retains spaces/commas through save/reopen/export.
+Fresh documenter completed `knowledge-workspace-design-record.md`, preserving
+preexisting design-context drift. No numeric 9.9 design claim.
+
+Installer ready: `release/desktop/Habit Tracker Setup 1.9.0.exe`.
+Owner confirmed closure, but fresh Windows process checks still show the original
+installed process running. A tray Quit/Exit question is pending. Obtain actual
+full closure before a consistent fresh owner baseline and install.
+Never overwrite live owner data or use the old baseline. No owner mutation has
+occurred in this continuation. Git mutations and Windows build/test processes
+require sandbox escalation; existing user authorization covers them.
+
+## Historical selection checkpoint (superseded by production work above)
+
 The installed app remains **Tempo 1.8.0**, tag `tempo-1.8.0`. Current work is an
 isolated knowledge-workspace selection preview at `http://127.0.0.1:5222/`.
 Build with `node scripts/knowledge-preview-build.cjs`, serve with

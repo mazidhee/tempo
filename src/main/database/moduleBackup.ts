@@ -2,6 +2,7 @@ import type Database from './sqlite';
 import { studyBackup } from '../study/backup';
 import { focusBackup } from '../focus/backup';
 import { reflectionBackup } from '../reflection/backup';
+import { knowledgeBackup } from '../knowledge/backup';
 export interface BackupLinks {
   activeTimer?: boolean;
   habits: Map<number, number>;
@@ -19,6 +20,7 @@ export const moduleBackupAdapters: ModuleBackupAdapter[] = [
   studyBackup,
   focusBackup,
   reflectionBackup,
+  knowledgeBackup,
 ];
 export function exportModuleData(db: Database) {
   return Object.fromEntries(

@@ -7,6 +7,7 @@ import { localDate } from '../shared/productivity';
 import { mainModules } from './modules/registry';
 import type { ModuleLifecycle } from './modules/contracts';
 import { registerBackups } from './backup/module';
+import { applyInterfaceScale } from './interfaceScale';
 
 if (process.env.HABIT_TRACKER_DATA_DIR)
   app.setPath('userData', path.resolve(process.env.HABIT_TRACKER_DATA_DIR));
@@ -47,6 +48,7 @@ function createWindow(): void {
   mainWindow.on('close', (event) => {
     if (!quitting && lifecycles.some((module) => module.onWindowClose?.())) event.preventDefault();
   });
+  mainWindow.webContents.on('did-finish-load', applyInterfaceScale);
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -99,7 +101,7 @@ app.whenReady().then(() => {
     } else if (action === 'close') mainWindow?.close();
     else throw new Error('Unsupported window action.');
   });
-  for (const register of [...mainModules,registerBackups]) {
+  for (const register of [...mainModules, registerBackups]) {
     const lifecycle = register({
       db: getDb(),
       getWindow: () => mainWindow,
@@ -135,7 +137,10 @@ app.on('before-quit', (event) => {
       quitting = false;
       mainWindow?.show();
       console.error('Could not safely quit:', error);
-      dialog.showErrorBox('Tempo could not finish cleanup', `Tempo is staying open so you can repair its Focus Guard settings and retry quitting.\n\n${String(error)}`);
+      dialog.showErrorBox(
+        'Tempo could not finish cleanup',
+        `Tempo is staying open so you can repair its Focus Guard settings and retry quitting.\n\n${String(error)}`,
+      );
     });
 });
 

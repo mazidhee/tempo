@@ -18,6 +18,7 @@ import {
   type FocusSettings,
 } from '../../shared/focus';
 import { FocusStore } from './store';
+import { FocusWidgetWindow } from './widget';
 import { cleanUpTasks } from '../../shared/taskLifecycle';
 import { FocusGuard } from './guard';
 import { FileHostsAdapter, SystemHostsAdapter } from './hosts';
@@ -29,6 +30,7 @@ import {
   type Productivity,
 } from '../../shared/productivity';
 export function registerFocus(context: ModuleContext) {
+  const widget = new FocusWidgetWindow(context);
   const store = new FocusStore(context.db, Date.now, (ended) => phaseEnded(ended)),
     isolated = !!process.env.HABIT_TRACKER_DATA_DIR;
   const fixture = path.join(app.getPath('userData'), 'guard-hosts.fixture');
@@ -88,6 +90,7 @@ export function registerFocus(context: ModuleContext) {
   const emit = () => {
     const data = snapshot();
     context.getWindow()?.webContents.send('focus:changed', data);
+    widget.sync(data);
     updateTray();
     return data;
   };
@@ -345,8 +348,12 @@ export function registerFocus(context: ModuleContext) {
       let cleaned = false;
       if (Date.now() - lastCleanup >= 60000) {
         lastCleanup = Date.now();
-        const current = store.productivity(), next = cleanUpTasks(current, lastCleanup);
-        if (next !== current) { store.save(next); cleaned = true; }
+        const current = store.productivity(),
+          next = cleanUpTasks(current, lastCleanup);
+        if (next !== current) {
+          store.save(next);
+          cleaned = true;
+        }
       }
       if (JSON.stringify(store.settings().shortcuts) !== shortcutConfiguration)
         shortcuts(store.settings());
@@ -380,6 +387,7 @@ export function registerFocus(context: ModuleContext) {
       clearInterval(interval);
       ownedShortcuts.forEach((s) => globalShortcut.unregister(s));
       tray?.destroy();
+      widget.dispose();
     },
   };
 }
