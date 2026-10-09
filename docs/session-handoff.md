@@ -1,4 +1,30 @@
-# Current work — October 8, 2026
+# Current work — October 9, 2026
+
+## Writing workspace selection — current task
+
+Owner rejected the installed writing experience and confirmed **Markdown with
+live preview, like Obsidian**. Five working isolated layouts are now at
+`http://127.0.0.1:5225/`: A Vault desk, B Notebook, C Reference desk, D Study desk,
+E Writing room. Owner layout selection is pending; production integration has
+not started. Keep installed Home and original logo. Preserve existing Study
+library, time, topic counts and progress while adding a persistent deep tree.
+
+Actual CodeMirror 6 supplies editing, undo and Markdown parsing; a preview
+adapter formats inactive syntax. Markdown-it supplies Read. Canonical content
+is Markdown; preview fixtures/local storage are separate from owner records.
+Per-section tabs, expansion and explorer position, per-note cursor/editing/Read
+positions, resizable panels and keyboard search are implemented in the preview.
+Undo survives section changes in memory, not browser restarts. Export's actual
+downloaded-file acceptance remains unverified after browser observation timed
+out; do not claim it passed. Robust Markdown migration, external edits, assets,
+rename/move and real curriculum integration remain production work after choice.
+
+Build `node scripts/writing-preview-build.cjs`; serve
+`node scripts/writing-preview-server.cjs`. Dependencies are separately pinned in
+`docs/prototypes/writing-next/`. See `writing-workspace-direction.md`,
+`writing-workspace-preview-review.md` and the preview README for exact scope.
+The installed release checkpoint below remains valid. Do not repeat the Rehab
+import or installation while continuing this design selection task.
 
 ## Production continuation checkpoint
 
